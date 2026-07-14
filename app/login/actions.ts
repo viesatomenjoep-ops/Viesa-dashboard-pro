@@ -24,6 +24,28 @@ export async function login(formData: FormData) {
   redirect("/");
 }
 
+/**
+ * Start "Log in met Google" (Supabase OAuth). Optioneel naast e-mail/wachtwoord.
+ * Vereist dat de Google-provider in Supabase is ingeschakeld.
+ */
+export async function loginMetGoogle() {
+  const supabase = createClient();
+  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: `${site}/auth/callback` },
+  });
+  if (error || !data?.url) {
+    redirect(
+      "/login?fout=" +
+        encodeURIComponent(
+          error?.message ?? "Google-login niet beschikbaar (provider uit?).",
+        ),
+    );
+  }
+  redirect(data.url);
+}
+
 /** Vertaalt bekende Supabase-auth-fouten naar begrijpelijke NL-tekst. */
 function leesbareFout(bericht: string): string {
   const b = bericht.toLowerCase();

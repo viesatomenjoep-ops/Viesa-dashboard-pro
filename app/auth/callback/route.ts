@@ -1,0 +1,23 @@
+import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+
+/**
+ * OAuth-callback voor "Log in met Google": wisselt de code in voor een sessie
+ * (zet de auth-cookies) en stuurt door naar het dashboard.
+ */
+export async function GET(request: Request) {
+  const { searchParams, origin } = new URL(request.url);
+  const code = searchParams.get("code");
+  const site = process.env.NEXT_PUBLIC_SITE_URL ?? origin;
+
+  if (code) {
+    const supabase = createClient();
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error) {
+      return NextResponse.redirect(
+        `${site}/login?fout=${encodeURIComponent(error.message)}`,
+      );
+    }
+  }
+  return NextResponse.redirect(`${site}/`);
+}
