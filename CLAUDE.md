@@ -3,7 +3,8 @@
 ## 1. Doel
 
 Intern **administratie- en salesdashboard** voor **Viesa Automations**.
-**Single-user**: er is één gebruiker (de eigenaar), geen team- of rollenbeheer.
+**Gedeelde werkruimte**: één of enkele door de eigenaar aangemaakte gebruikers
+delen dezelfde data. Geen publieke signup, geen rollenbeheer.
 
 ## 2. Stack
 
@@ -67,8 +68,11 @@ API-routes: `POST /api/leads/import` (prospector-ingest), `GET /api/cron/facture
 ## 7. Datamodel & omgeving
 
 - SQL-migraties staan in `supabase/migrations` (`0001_init.sql`,
-  `0002_rls_performance.sql`). Voer ze op volgorde uit in de Supabase SQL Editor.
-- RLS staat op elke tabel: `(select auth.uid()) = owner_id`, met index op `owner_id`.
+  `0002_rls_performance.sql`, `0003_gedeelde_toegang.sql`). Voer ze op volgorde
+  uit in de Supabase SQL Editor.
+- RLS staat op elke tabel. Vanaf `0003` is het een **gedeelde werkruimte**: elke
+  geauthenticeerde gebruiker mag alle rijen (`using (true)`). `owner_id` blijft als
+  "aangemaakt door"-metadata. Veilig omdat er geen publieke signup is.
 - Alle env-keys staan in `.env.example`. Server-only geheimen (service-role,
   `LEADS_INGEST_SECRET`, `CRON_SECRET`, `GITHUB_TOKEN`, `OWNER_USER_ID`) nooit met
   `NEXT_PUBLIC_`-prefix.
