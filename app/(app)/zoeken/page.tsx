@@ -16,7 +16,9 @@ export default async function ZoekPagina({
 
   if (q) {
     const supabase = createClient();
-    const like = `%${q}%`;
+    // Speciale tekens die de PostgREST .or()-filtersyntax kunnen breken weghalen.
+    const veiligeTerm = q.replace(/[,()%*\\]/g, " ").trim();
+    const like = `%${veiligeTerm}%`;
 
     const [leads, projecten, notities, offertes] = await Promise.all([
       supabase

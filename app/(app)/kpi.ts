@@ -44,19 +44,112 @@ export async function haalDashboardData(): Promise<DashboardData> {
 
   const nu = new Date();
   const huidigeKey = maandKey(nu);
+  const vandaag = nu.toISOString().slice(0, 10);
 
-  // Omzet per maand (view) → laatste 6 maanden.
-  const omzetRijen = await veilig(
-    async () => {
-      const { data, error } = await supabase
-        .from("omzet_per_maand")
-        .select("maand, omzet");
-      if (error) throw error;
-      return (data ?? []) as { maand: string; omzet: number }[];
-    },
-    [],
-    mark,
-  );
+  // Alle onafhankelijke queries TEGELIJK (i.p.v. na elkaar) — scheelt veel tijd.
+  const [
+    omzetRijen,
+    openstaandBedrag,
+    leadInfo,
+    lopendeOffertes,
+    followups,
+    recenteActiviteiten,
+  ] = await Promise.all([
+    veilig<{ maand: string; omzet: number }[]>(
+      async () => {
+        const { data, error } = await supabase.from("omzet_per_maand").select("maand, omzet");
+        if (error) throw error;
+        return (data ?? []) as { maand: string; omzet: number }[];
+      },
+      [],
+      mark,
+    ),
+    veilig<number>(
+      async () => {
+        const { data, error } = await supabase
+          .from("facturen")
+          .select("bedrag, status")
+          .in("status", ["open", "vervallen"]);
+        if (error) throw error;
+        return (data ?? []).reduce((s, f) => s + Number(f.bedrag ?? 0), 0);
+      },
+      0,
+      mark,
+    ),
+    veilig<{ pipelineWaarde: number; recenteLeads: Lead[] }>(
+      async () => {
+        const { data, error } = await supabase
+          .from("leads")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        const leads = (data ?? []) as Lead[];
+        return {
+          pipelineWaarde: leads
+            .filter((l) => l.status !== "gewonnen")
+            .reduce((s, l) => s + Number(l.verwachte_waarde ?? 0), 0),
+          recenteLeads: leads.slice(0, 5),
+        };
+      },
+      { pipelineWaarde: 0, recenteLeads: [] },
+      mark,
+    ),
+    veilig<number>(
+      async () => {
+        const { count, error } = await supabase
+          .from("offertes")
+          .select("*", { count: "exact", head: true })
+          .in("status", ["concept", "verzonden", "opvolgen"]);
+        if (error) throw error;
+        return count ?? 0;
+      },
+      0,
+      mark,
+    ),
+    veilig<FollowupVandaag[]>(
+      async () => {
+        const { data, error } = await supabase
+          .from("activiteiten")
+          .select("id, titel, lead_id, leads(bedrijf)")
+          .eq("status", "open")
+          .eq("follow_up_datum", vandaag);
+        if (error) throw error;
+        return (data ?? []).map((r) => {
+          const rec = r as {
+            id: string;
+            titel: string | null;
+            lead_id: string | null;
+            leads?: { bedrijf?: string } | null;
+          };
+          return {
+            id: rec.id,
+            titel: rec.titel,
+            lead_id: rec.lead_id,
+            bedrijf: rec.leads?.bedrijf ?? null,
+          };
+        });
+      },
+      [],
+      mark,
+    ),
+    veilig<(Activiteit & { bedrijf: string | null })[]>(
+      async () => {
+        const { data, error } = await supabase
+          .from("activiteiten")
+          .select("*, leads(bedrijf)")
+          .order("created_at", { ascending: false })
+          .limit(8);
+        if (error) throw error;
+        return (data ?? []).map((r) => {
+          const rec = r as Activiteit & { leads?: { bedrijf?: string } | null };
+          return { ...rec, bedrijf: rec.leads?.bedrijf ?? null };
+        });
+      },
+      [],
+      mark,
+    ),
+  ]);
+
   const omzetPerKey = new Map(
     omzetRijen.map((r) => [maandKey(new Date(r.maand)), Number(r.omzet ?? 0)]),
   );
@@ -70,101 +163,15 @@ export async function haalDashboardData(): Promise<DashboardData> {
       actief: key === huidigeKey,
     });
   }
-  const omzetMaand = omzetPerKey.get(huidigeKey) ?? 0;
-
-  const openstaandBedrag = await veilig(
-    async () => {
-      const { data, error } = await supabase
-        .from("facturen")
-        .select("bedrag, status")
-        .in("status", ["open", "vervallen"]);
-      if (error) throw error;
-      return (data ?? []).reduce((s, f) => s + Number(f.bedrag ?? 0), 0);
-    },
-    0,
-    mark,
-  );
-
-  const { pipelineWaarde, recenteLeads } = await veilig(
-    async () => {
-      const { data, error } = await supabase
-        .from("leads")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      const leads = (data ?? []) as Lead[];
-      return {
-        pipelineWaarde: leads
-          .filter((l) => l.status !== "gewonnen")
-          .reduce((s, l) => s + Number(l.verwachte_waarde ?? 0), 0),
-        recenteLeads: leads.slice(0, 5),
-      };
-    },
-    { pipelineWaarde: 0, recenteLeads: [] as Lead[] },
-    mark,
-  );
-
-  const lopendeOffertes = await veilig(
-    async () => {
-      const { count, error } = await supabase
-        .from("offertes")
-        .select("*", { count: "exact", head: true })
-        .in("status", ["concept", "verzonden", "opvolgen"]);
-      if (error) throw error;
-      return count ?? 0;
-    },
-    0,
-    mark,
-  );
-
-  const vandaag = nu.toISOString().slice(0, 10);
-  const followups = await veilig(
-    async () => {
-      const { data, error } = await supabase
-        .from("activiteiten")
-        .select("id, titel, lead_id, leads(bedrijf)")
-        .eq("status", "open")
-        .eq("follow_up_datum", vandaag);
-      if (error) throw error;
-      return (data ?? []).map((r) => {
-        const rec = r as { id: string; titel: string | null; lead_id: string | null; leads?: { bedrijf?: string } | null };
-        return {
-          id: rec.id,
-          titel: rec.titel,
-          lead_id: rec.lead_id,
-          bedrijf: rec.leads?.bedrijf ?? null,
-        };
-      }) as FollowupVandaag[];
-    },
-    [],
-    mark,
-  );
-
-  const recenteActiviteiten = await veilig(
-    async () => {
-      const { data, error } = await supabase
-        .from("activiteiten")
-        .select("*, leads(bedrijf)")
-        .order("created_at", { ascending: false })
-        .limit(8);
-      if (error) throw error;
-      return (data ?? []).map((r) => {
-        const rec = r as Activiteit & { leads?: { bedrijf?: string } | null };
-        return { ...rec, bedrijf: rec.leads?.bedrijf ?? null };
-      });
-    },
-    [],
-    mark,
-  );
 
   return {
-    omzetMaand,
+    omzetMaand: omzetPerKey.get(huidigeKey) ?? 0,
     openstaandBedrag,
-    pipelineWaarde,
+    pipelineWaarde: leadInfo.pipelineWaarde,
     lopendeOffertes,
     omzetGrafiek,
     followups,
-    recenteLeads,
+    recenteLeads: leadInfo.recenteLeads,
     recenteActiviteiten,
     schemaOntbreekt,
   };

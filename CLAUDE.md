@@ -51,19 +51,22 @@ gelden. Raadpleeg deze bestanden vóór het bouwen of wijzigen van UI:
 Beveiligde pagina's staan in de route-group `app/(app)`; `/login` staat erbuiten.
 De middleware (`middleware.ts`) beschermt alle routes.
 
-- `/` — dashboard met KPI's + follow-ups van vandaag
-- `/leads` — leads & pipeline-kanban (drag & drop), `/leads/[id]` detail
-- `/taken` — follow-up-taken
-- `/offertes` (+ `/templates`, `/[id]`) — offertes en templates
-- `/facturen` (+ `/[id]`) — facturen, btw, herinneringen
+- `/` — dashboard met KPI's, omzetgrafiek, follow-ups van vandaag, recente leads
+- `/leads` — leads & pipeline-kanban (drag & drop), `/leads/[id]` detail met
+  activiteitenlog + follow-up plannen
+- `/offertes` (+ `/[id]`) — offertes, Claude-generator, "Maak factuur"
+- `/facturen` (+ `/[id]`) — facturen, btw, statusflow, herinneringen
 - `/projecten` (+ `/[id]`) — projecten, markdown-notities, Drive-links
 - `/bestanden` — centrale Drive-links (nooit bestanden zelf)
-- `/design` — markdown-editor voor `/design-systems` met GitHub-sync
-- `/whiteboard` — sleepbare sticky notes
-- `/koppelingen` — status van Drive/Sheets/Docs/Slack/Gmail/Outlook/Claude API
+- `/whiteboard` — meerdere borden met sleepbare sticky notes
+- `/koppelingen` — status van diensten (o.a. Gmail-OAuth)
+- `/zoeken` — globale zoekbalk over leads/projecten/notities/offertes
+- `/design` — markdown-editor voor design_docs met GitHub-sync
+  (**bewust niet in de navigatie**; alleen via directe URL)
 
-API-routes: `POST /api/leads/import` (prospector-ingest), `GET /api/cron/facturen`
-(dagelijkse te-laat-bewaking, Vercel Cron in `vercel.json`).
+API-routes: `POST /api/prospector` (prospector-ingest), `GET /api/cron/facturen`
+(dagelijkse vervallen-bewaking), `POST /api/genereer-offerte` (Claude),
+`GET /api/google/oauth/{start,callback}` (Gmail). Cron-config: `vercel.json`.
 
 ## 7. Datamodel & beveiliging
 
