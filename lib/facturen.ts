@@ -1,10 +1,11 @@
 /** Types en constanten voor facturen (canoniek datamodel). */
 
-export type FactuurStatus = "open" | "betaald" | "vervallen";
+export type FactuurStatus = "concept" | "open" | "betaald" | "vervallen";
 
 export type Factuur = {
   id: string;
   lead_id: string | null;
+  offerte_id: string | null;
   klant: string | null;
   nummer: string;
   bedrag: number;
@@ -19,6 +20,7 @@ export type Factuur = {
 };
 
 export const FACTUUR_STATUSSEN: { key: FactuurStatus; label: string }[] = [
+  { key: "concept", label: "Concept" },
   { key: "open", label: "Open" },
   { key: "betaald", label: "Betaald" },
   { key: "vervallen", label: "Vervallen" },
@@ -26,9 +28,10 @@ export const FACTUUR_STATUSSEN: { key: FactuurStatus; label: string }[] = [
 
 export function factuurStatusToon(
   s: FactuurStatus,
-): "navy" | "groen" | "rood" {
+): "navy" | "groen" | "rood" | "grijs" {
   if (s === "betaald") return "groen";
   if (s === "vervallen") return "rood";
+  if (s === "concept") return "grijs";
   return "navy";
 }
 

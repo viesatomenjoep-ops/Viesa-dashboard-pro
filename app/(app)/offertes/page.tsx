@@ -21,14 +21,16 @@ export default async function OffertesPagina({
 }) {
   const supabase = createClient();
   let offertes: Offerte[] = [];
+  let leads: { id: string; bedrijf: string }[] = [];
   let schemaOntbreekt = false;
   try {
-    const { data, error } = await supabase
-      .from("offertes")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) throw error;
-    offertes = (data ?? []) as Offerte[];
+    const [o, l] = await Promise.all([
+      supabase.from("offertes").select("*").order("created_at", { ascending: false }),
+      supabase.from("leads").select("id, bedrijf").order("bedrijf"),
+    ]);
+    if (o.error) throw o.error;
+    offertes = (o.data ?? []) as Offerte[];
+    leads = l.data ?? [];
   } catch {
     schemaOntbreekt = true;
   }
@@ -59,7 +61,7 @@ export default async function OffertesPagina({
 
       <form
         action={maakOfferte}
-        className="mb-8 grid gap-2 rounded-xl border border-navy/10 bg-white p-3 shadow-sm sm:grid-cols-[2fr_1fr_1fr_auto]"
+        className="mb-8 grid gap-2 rounded-xl border border-navy/10 bg-white p-3 shadow-sm sm:grid-cols-[2fr_1fr_1fr_1fr_auto]"
       >
         <input
           name="titel"
@@ -67,6 +69,17 @@ export default async function OffertesPagina({
           placeholder="Titel offerte *"
           className="rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
         />
+        <select
+          name="lead_id"
+          className="rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
+        >
+          <option value="">Geen lead</option>
+          {leads.map((l) => (
+            <option key={l.id} value={l.id}>
+              {l.bedrijf}
+            </option>
+          ))}
+        </select>
         <input
           name="klant"
           placeholder="Klant"

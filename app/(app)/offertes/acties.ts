@@ -11,8 +11,8 @@ async function volgendNummer(supabase: SupabaseClient): Promise<string> {
   const { count } = await supabase
     .from("offertes")
     .select("*", { count: "exact", head: true })
-    .ilike("nummer", `${jaar}-%`);
-  return `${jaar}-${String((count ?? 0) + 1).padStart(4, "0")}`;
+    .ilike("nummer", `VA-${jaar}-%`);
+  return `VA-${jaar}-${String((count ?? 0) + 1).padStart(3, "0")}`;
 }
 
 export async function maakOfferte(formData: FormData) {
@@ -28,6 +28,7 @@ export async function maakOfferte(formData: FormData) {
       nummer,
       titel,
       klant: leeg(formData.get("klant")),
+      lead_id: leeg(formData.get("lead_id")),
       bedrag: Number(formData.get("bedrag") ?? 0) || 0,
     })
     .select("id")
@@ -37,6 +38,44 @@ export async function maakOfferte(formData: FormData) {
   }
   revalidatePath("/offertes");
   redirect(`/offertes/${data.id}`);
+}
+
+/** Maakt een concept-factuur uit een geaccepteerde offerte. */
+export async function maakFactuurVanOfferte(offerteId: string) {
+  const supabase = createClient();
+  const { data: offerte, error } = await supabase
+    .from("offertes")
+    .select("*")
+    .eq("id", offerteId)
+    .single();
+  if (error || !offerte) {
+    redirect(`/offertes/${offerteId}?fout=` + encodeURIComponent("Offerte niet gevonden."));
+  }
+
+  const jaar = new Date().getFullYear();
+  const { count } = await supabase
+    .from("facturen")
+    .select("*", { count: "exact", head: true })
+    .ilike("nummer", `VF-${jaar}-%`);
+  const nummer = `VF-${jaar}-${String((count ?? 0) + 1).padStart(3, "0")}`;
+
+  const { data: factuur, error: fFout } = await supabase
+    .from("facturen")
+    .insert({
+      nummer,
+      klant: offerte.klant,
+      lead_id: offerte.lead_id,
+      offerte_id: offerte.id,
+      bedrag: offerte.bedrag,
+      status: "concept",
+    })
+    .select("id")
+    .single();
+  if (fFout || !factuur) {
+    redirect(`/offertes/${offerteId}?fout=` + encodeURIComponent(fFout?.message ?? "Mislukt."));
+  }
+  revalidatePath("/facturen");
+  redirect(`/facturen/${factuur.id}`);
 }
 
 export async function werkOfferteBij(id: string, formData: FormData) {

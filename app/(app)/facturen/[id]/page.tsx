@@ -13,6 +13,7 @@ import { euro } from "@/lib/format";
 import {
   werkFactuurBij,
   markeerBetaald,
+  markeerOpen,
   markeerVervallen,
   heropenFactuur,
   verwijderFactuur,
@@ -68,7 +69,21 @@ export default async function FactuurDetail({
           {/* Statusflow */}
           <Kaart>
             <p className="mb-3 text-sm font-medium text-navy">Status</p>
-            {f.status !== "betaald" ? (
+            {f.status === "concept" ? (
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-sm text-navy/60">
+                  Concept — nog niet verstuurd.
+                </span>
+                <form action={markeerOpen.bind(null, f.id)}>
+                  <button
+                    type="submit"
+                    className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"
+                  >
+                    Op open zetten
+                  </button>
+                </form>
+              </div>
+            ) : f.status !== "betaald" ? (
               <div className="flex flex-wrap items-end gap-3">
                 <form action={markeerBetaald.bind(null, f.id)} className="flex items-end gap-2">
                   <div>

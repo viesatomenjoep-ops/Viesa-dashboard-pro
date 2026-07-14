@@ -82,6 +82,14 @@ export async function markeerBetaald(id: string, formData: FormData) {
   revalidatePath("/");
 }
 
+/** Concept-factuur versturen: status naar open. */
+export async function markeerOpen(id: string) {
+  const supabase = createClient();
+  await supabase.from("facturen").update({ status: "open" }).eq("id", id);
+  revalidatePath(`/facturen/${id}`);
+  revalidatePath("/facturen");
+}
+
 export async function markeerVervallen(id: string) {
   const supabase = createClient();
   await supabase.from("facturen").update({ status: "vervallen" }).eq("id", id);

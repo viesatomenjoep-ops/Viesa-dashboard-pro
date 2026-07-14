@@ -10,7 +10,13 @@ import {
   OFFERTE_STATUSSEN,
   type Offerte,
 } from "@/lib/offertes";
-import { werkOfferteBij, wijzigOfferteStatus, verwijderOfferte } from "../acties";
+import {
+  werkOfferteBij,
+  wijzigOfferteStatus,
+  verwijderOfferte,
+  maakFactuurVanOfferte,
+} from "../acties";
+import { GenereerKnop } from "../GenereerKnop";
 
 export default async function OfferteDetail({
   params,
@@ -80,6 +86,19 @@ export default async function OfferteDetail({
               </button>
             </form>
           ))}
+        </div>
+        <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-navy/10 pt-4">
+          <GenereerKnop offerteId={offerte.id} />
+          {offerte.status === "geaccepteerd" && (
+            <form action={maakFactuurVanOfferte.bind(null, offerte.id)}>
+              <button
+                type="submit"
+                className="rounded-lg bg-oranje px-3 py-1.5 text-sm font-medium text-white hover:bg-oranje/90"
+              >
+                Maak factuur
+              </button>
+            </form>
+          )}
         </div>
       </Kaart>
 
