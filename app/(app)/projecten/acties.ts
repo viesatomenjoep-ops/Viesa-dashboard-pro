@@ -1,0 +1,90 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import type { ProjectStatus } from "@/lib/projecten";
+import type { DriveLinkType } from "@/lib/drivelinks";
+
+export async function maakProject(formData: FormData) {
+  const naam = String(formData.get("naam") ?? "").trim();
+  if (!naam) redirect("/projecten?fout=" + encodeURIComponent("Naam is verplicht."));
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("projecten")
+    .insert({
+      naam,
+      omschrijving: leegAlsLeeg(formData.get("omschrijving")),
+      klant_id: leegAlsLeeg(formData.get("klant_id")),
+    })
+    .select("id")
+    .single();
+  if (error || !data) {
+    redirect("/projecten?fout=" + encodeURIComponent(error?.message ?? "Mislukt."));
+  }
+  revalidatePath("/projecten");
+  redirect(`/projecten/${data.id}`);
+}
+
+export async function werkProjectBij(id: string, formData: FormData) {
+  const supabase = createClient();
+  await supabase
+    .from("projecten")
+    .update({
+      naam: String(formData.get("naam") ?? "").trim(),
+      omschrijving: leegAlsLeeg(formData.get("omschrijving")),
+      status: (String(formData.get("status") ?? "actief") || "actief") as ProjectStatus,
+    })
+    .eq("id", id);
+  revalidatePath(`/projecten/${id}`);
+  revalidatePath("/projecten");
+  redirect(`/projecten/${id}?opgeslagen=1`);
+}
+
+export async function verwijderProject(id: string) {
+  const supabase = createClient();
+  await supabase.from("projecten").delete().eq("id", id);
+  revalidatePath("/projecten");
+  redirect("/projecten");
+}
+
+export async function maakNotitie(projectId: string, formData: FormData) {
+  const supabase = createClient();
+  await supabase.from("project_notities").insert({
+    project_id: projectId,
+    titel: String(formData.get("titel") ?? "Notitie").trim() || "Notitie",
+    inhoud_markdown: String(formData.get("inhoud_markdown") ?? ""),
+  });
+  revalidatePath(`/projecten/${projectId}`);
+}
+
+export async function verwijderNotitie(id: string, projectId: string) {
+  const supabase = createClient();
+  await supabase.from("project_notities").delete().eq("id", id);
+  revalidatePath(`/projecten/${projectId}`);
+}
+
+export async function voegProjectLinkToe(projectId: string, formData: FormData) {
+  const url = String(formData.get("url") ?? "").trim();
+  if (!url) return;
+  const supabase = createClient();
+  await supabase.from("drive_links").insert({
+    titel: String(formData.get("titel") ?? "").trim() || url,
+    url,
+    type: (String(formData.get("type") ?? "drive") || "drive") as DriveLinkType,
+    context_type: "project",
+    context_id: projectId,
+  });
+  revalidatePath(`/projecten/${projectId}`);
+}
+
+export async function verwijderProjectLink(id: string, projectId: string) {
+  const supabase = createClient();
+  await supabase.from("drive_links").delete().eq("id", id);
+  revalidatePath(`/projecten/${projectId}`);
+}
+
+function leegAlsLeeg(waarde: FormDataEntryValue | null): string | null {
+  const s = String(waarde ?? "").trim();
+  return s.length ? s : null;
+}
