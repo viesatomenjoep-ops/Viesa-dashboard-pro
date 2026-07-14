@@ -1,17 +1,12 @@
-/** Types en constanten voor facturen. */
+/** Types en constanten voor facturen (canoniek datamodel). */
 
-export type FactuurStatus =
-  | "concept"
-  | "verzonden"
-  | "betaald"
-  | "te_laat"
-  | "geannuleerd";
+export type FactuurStatus = "open" | "betaald" | "vervallen";
 
 export type Factuur = {
   id: string;
+  lead_id: string | null;
+  klant: string | null;
   nummer: string;
-  klant_id: string | null;
-  offerte_id: string | null;
   bedrag: number;
   btw_percentage: number;
   status: FactuurStatus;
@@ -23,42 +18,34 @@ export type Factuur = {
   updated_at: string;
 };
 
-export type Herinnering = {
-  id: string;
-  factuur_id: string;
-  kanaal: "gmail" | "outlook";
-  status: "gepland" | "verzonden" | "mislukt";
-  bericht: string | null;
-  verzonden_op: string | null;
-  created_at: string;
-};
-
 export const FACTUUR_STATUSSEN: { key: FactuurStatus; label: string }[] = [
-  { key: "concept", label: "Concept" },
-  { key: "verzonden", label: "Verzonden" },
+  { key: "open", label: "Open" },
   { key: "betaald", label: "Betaald" },
-  { key: "te_laat", label: "Te laat" },
-  { key: "geannuleerd", label: "Geannuleerd" },
+  { key: "vervallen", label: "Vervallen" },
 ];
 
 export function factuurStatusToon(
   s: FactuurStatus,
-): "grijs" | "navy" | "groen" | "rood" {
-  switch (s) {
-    case "concept":
-      return "grijs";
-    case "verzonden":
-      return "navy";
-    case "betaald":
-      return "groen";
-    case "te_laat":
-      return "rood";
-    case "geannuleerd":
-      return "grijs";
-  }
+): "navy" | "groen" | "rood" {
+  if (s === "betaald") return "groen";
+  if (s === "vervallen") return "rood";
+  return "navy";
+}
+
+export function factuurStatusLabel(s: FactuurStatus): string {
+  return FACTUUR_STATUSSEN.find((x) => x.key === s)?.label ?? s;
 }
 
 /** Totaalbedrag inclusief btw. */
 export function inclBtw(bedrag: number, btwPercentage: number): number {
   return bedrag * (1 + (btwPercentage || 0) / 100);
+}
+
+/** Betaaltermijn in dagen (betaald_op − factuurdatum), of null. */
+export function betaaltermijnDagen(f: Factuur): number | null {
+  if (!f.betaald_op) return null;
+  const d =
+    (new Date(f.betaald_op).getTime() - new Date(f.factuurdatum).getTime()) /
+    86400000;
+  return Math.max(0, Math.round(d));
 }

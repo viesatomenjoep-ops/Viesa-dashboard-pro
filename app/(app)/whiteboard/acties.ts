@@ -20,7 +20,7 @@ export async function maakNote(
 ): Promise<StickyNote | null> {
   const supabase = createClient();
   const { data } = await supabase
-    .from("sticky_notes")
+    .from("stickies")
     .insert({ whiteboard_id: whiteboardId, x, y, tekst: "" })
     .select("id, tekst, kleur, x, y, breedte, hoogte, z_index")
     .single();
@@ -29,20 +29,20 @@ export async function maakNote(
 
 export async function werkNotePositie(id: string, x: number, y: number) {
   const supabase = createClient();
-  await supabase.from("sticky_notes").update({ x, y }).eq("id", id);
+  await supabase.from("stickies").update({ x, y }).eq("id", id);
 }
 
 export async function werkNoteTekst(id: string, tekst: string) {
   const supabase = createClient();
-  await supabase.from("sticky_notes").update({ tekst }).eq("id", id);
+  await supabase.from("stickies").update({ tekst }).eq("id", id);
 }
 
 export async function werkNoteKleur(id: string, kleur: string) {
   const supabase = createClient();
-  await supabase.from("sticky_notes").update({ kleur }).eq("id", id);
+  await supabase.from("stickies").update({ kleur }).eq("id", id);
 }
 
 export async function verwijderNote(id: string) {
   const supabase = createClient();
-  await supabase.from("sticky_notes").delete().eq("id", id);
+  await supabase.from("stickies").delete().eq("id", id);
 }

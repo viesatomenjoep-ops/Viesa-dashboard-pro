@@ -3,12 +3,12 @@ import { PaginaKop } from "@/components/ui/PaginaKop";
 import { KpiKaart } from "@/components/ui/KpiKaart";
 import { Kaart } from "@/components/ui/Kaart";
 import { Badge } from "@/components/ui/Badge";
-import { KnopLink } from "@/components/ui/Knop";
 import { LegeStaat } from "@/components/ui/LegeStaat";
 import { createClient } from "@/lib/supabase/server";
 import {
   offerteStatusToon,
-  OFFERTE_STATUSSEN,
+  offerteStatusLabel,
+  LOPENDE_OFFERTE_STATUS,
   type Offerte,
 } from "@/lib/offertes";
 import { euro, datumKort } from "@/lib/format";
@@ -20,50 +20,33 @@ export default async function OffertesPagina({
   searchParams: { fout?: string };
 }) {
   const supabase = createClient();
-  let schemaOntbreekt = false;
   let offertes: Offerte[] = [];
-  let klanten: { id: string; bedrijfsnaam: string }[] = [];
-  let templates: { id: string; naam: string }[] = [];
-
+  let schemaOntbreekt = false;
   try {
-    const [o, k, t] = await Promise.all([
-      supabase.from("offertes").select("*").order("created_at", { ascending: false }),
-      supabase.from("klanten").select("id, bedrijfsnaam").order("bedrijfsnaam"),
-      supabase.from("offerte_templates").select("id, naam").order("naam"),
-    ]);
-    if (o.error) throw o.error;
-    offertes = (o.data ?? []) as Offerte[];
-    klanten = k.data ?? [];
-    templates = t.data ?? [];
+    const { data, error } = await supabase
+      .from("offertes")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    offertes = (data ?? []) as Offerte[];
   } catch {
     schemaOntbreekt = true;
   }
 
-  const concept = offertes.filter((o) => o.status === "concept").length;
-  const teVolgen = offertes.filter((o) =>
-    ["verzonden", "opvolgen"].includes(o.status),
-  ).length;
+  const lopend = offertes.filter((o) => LOPENDE_OFFERTE_STATUS.includes(o.status));
   const geaccepteerd = offertes.filter((o) => o.status === "geaccepteerd");
-  const waardeGeaccepteerd = geaccepteerd.reduce(
-    (s, o) => s + Number(o.bedrag || 0),
-    0,
-  );
+  const waardeGeaccepteerd = geaccepteerd.reduce((s, o) => s + Number(o.bedrag || 0), 0);
 
   return (
     <>
       <PaginaKop
         titel="Offertes"
-        omschrijving="Genereer uit een template, volg de status en bewaar de PDF-link."
-        actie={
-          <KnopLink href="/offertes/templates" variant="secundair">
-            Templates
-          </KnopLink>
-        }
+        omschrijving="Stel offertes op, volg de status en bewaar de PDF-link."
       />
 
       <section className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <KpiKaart label="Concept" waarde={String(concept)} />
-        <KpiKaart label="Te volgen" waarde={String(teVolgen)} accent={teVolgen > 0} />
+        <KpiKaart label="Totaal" waarde={String(offertes.length)} />
+        <KpiKaart label="Lopend" waarde={String(lopend.length)} accent={lopend.length > 0} />
         <KpiKaart label="Geaccepteerd" waarde={String(geaccepteerd.length)} />
         <KpiKaart label="Waarde geaccepteerd" waarde={euro(waardeGeaccepteerd)} />
       </section>
@@ -74,7 +57,6 @@ export default async function OffertesPagina({
         </p>
       )}
 
-      {/* Nieuwe offerte */}
       <form
         action={maakOfferte}
         className="mb-8 grid gap-2 rounded-xl border border-navy/10 bg-white p-3 shadow-sm sm:grid-cols-[2fr_1fr_1fr_auto]"
@@ -85,28 +67,18 @@ export default async function OffertesPagina({
           placeholder="Titel offerte *"
           className="rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
         />
-        <select
-          name="klant_id"
+        <input
+          name="klant"
+          placeholder="Klant"
           className="rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
-        >
-          <option value="">Geen klant</option>
-          {klanten.map((k) => (
-            <option key={k.id} value={k.id}>
-              {k.bedrijfsnaam}
-            </option>
-          ))}
-        </select>
-        <select
-          name="template_id"
+        />
+        <input
+          name="bedrag"
+          type="number"
+          step="0.01"
+          placeholder="Bedrag"
           className="rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
-        >
-          <option value="">Geen template</option>
-          {templates.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.naam}
-            </option>
-          ))}
-        </select>
+        />
         <button
           type="submit"
           className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"
@@ -118,10 +90,7 @@ export default async function OffertesPagina({
       {schemaOntbreekt ? (
         <SchemaMelding />
       ) : offertes.length === 0 ? (
-        <LegeStaat
-          titel="Nog geen offertes"
-          omschrijving="Maak je eerste offerte hierboven aan."
-        />
+        <LegeStaat titel="Nog geen offertes" omschrijving="Maak je eerste offerte hierboven aan." />
       ) : (
         <Kaart className="p-0">
           <table className="w-full text-sm">
@@ -129,6 +98,7 @@ export default async function OffertesPagina({
               <tr className="border-b border-navy/10 text-left text-navy/50">
                 <th className="px-5 py-3 font-medium">Nummer</th>
                 <th className="px-5 py-3 font-medium">Titel</th>
+                <th className="px-5 py-3 font-medium">Klant</th>
                 <th className="px-5 py-3 font-medium">Status</th>
                 <th className="px-5 py-3 font-medium">Bedrag</th>
                 <th className="px-5 py-3 font-medium">Aangemaakt</th>
@@ -146,9 +116,10 @@ export default async function OffertesPagina({
                     </Link>
                   </td>
                   <td className="px-5 py-3 text-navy">{o.titel}</td>
+                  <td className="px-5 py-3 text-navy/70">{o.klant ?? "—"}</td>
                   <td className="px-5 py-3">
                     <Badge toon={offerteStatusToon(o.status)}>
-                      {OFFERTE_STATUSSEN.find((s) => s.key === o.status)?.label}
+                      {offerteStatusLabel(o.status)}
                     </Badge>
                   </td>
                   <td className="px-5 py-3 text-navy">{euro(o.bedrag)}</td>
@@ -167,9 +138,7 @@ function SchemaMelding() {
   return (
     <div className="rounded-xl border border-oranje/40 bg-oranje/5 p-4 text-sm text-navy">
       <p className="font-medium text-oranje">Datamodel nog niet actief</p>
-      <p className="mt-1 text-navy/70">
-        Voer de migraties uit in de Supabase SQL Editor.
-      </p>
+      <p className="mt-1 text-navy/70">Voer 0004 uit in de Supabase SQL Editor.</p>
     </div>
   );
 }

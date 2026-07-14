@@ -1,4 +1,4 @@
-/** Types en constanten voor projecten. */
+/** Types en constanten voor projecten & notities (canoniek datamodel). */
 
 export type ProjectStatus = "actief" | "on_hold" | "afgerond";
 
@@ -6,15 +6,16 @@ export type Project = {
   id: string;
   naam: string;
   omschrijving: string | null;
+  klant: string | null;
   status: ProjectStatus;
-  klant_id: string | null;
   created_at: string;
   updated_at: string;
 };
 
-export type ProjectNotitie = {
+export type Notitie = {
   id: string;
-  project_id: string;
+  project_id: string | null;
+  lead_id: string | null;
   titel: string;
   inhoud_markdown: string;
   created_at: string;

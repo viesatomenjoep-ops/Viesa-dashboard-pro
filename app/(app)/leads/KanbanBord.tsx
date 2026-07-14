@@ -14,37 +14,36 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core";
 import {
-  LEAD_STAGES,
+  LEAD_STATUSSEN,
   scoreToon,
   type Lead,
-  type LeadStage,
+  type LeadStatus,
 } from "@/lib/leads";
 import { Badge } from "@/components/ui/Badge";
 import { euro } from "@/lib/format";
 import { verplaatsLead } from "./acties";
 
-type Kolommen = Record<LeadStage, Lead[]>;
+type Kolommen = Record<LeadStatus, Lead[]>;
 
 function groepeer(leads: Lead[]): Kolommen {
   const start = Object.fromEntries(
-    LEAD_STAGES.map((s) => [s.key, [] as Lead[]]),
+    LEAD_STATUSSEN.map((s) => [s.key, [] as Lead[]]),
   ) as Kolommen;
-  for (const lead of leads) start[lead.stage]?.push(lead);
+  for (const lead of leads) (start[lead.status] ??= []).push(lead);
   return start;
 }
 
 export function KanbanBord({ leads }: { leads: Lead[] }) {
   const [kolommen, setKolommen] = useState<Kolommen>(() => groepeer(leads));
   const [actief, setActief] = useState<Lead | null>(null);
-
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
   );
 
   function onDragStart(e: DragStartEvent) {
     const id = String(e.active.id);
-    for (const stage of LEAD_STAGES) {
-      const lead = kolommen[stage.key].find((l) => l.id === id);
+    for (const s of LEAD_STATUSSEN) {
+      const lead = kolommen[s.key].find((l) => l.id === id);
       if (lead) return setActief(lead);
     }
   }
@@ -53,75 +52,58 @@ export function KanbanBord({ leads }: { leads: Lead[] }) {
     setActief(null);
     const { active, over } = e;
     if (!over) return;
-
     const leadId = String(active.id);
-    const doelStage = over.id as LeadStage;
-    if (!LEAD_STAGES.some((s) => s.key === doelStage)) return;
+    const doel = over.id as LeadStatus;
+    if (!LEAD_STATUSSEN.some((s) => s.key === doel)) return;
 
-    // Vind de bronkolom.
-    const bronStage = (Object.keys(kolommen) as LeadStage[]).find((s) =>
+    const bron = (Object.keys(kolommen) as LeadStatus[]).find((s) =>
       kolommen[s].some((l) => l.id === leadId),
     );
-    if (!bronStage || bronStage === doelStage) return;
+    if (!bron || bron === doel) return;
 
-    const lead = kolommen[bronStage].find((l) => l.id === leadId)!;
-    const nieuwePositie =
-      Math.max(0, ...kolommen[doelStage].map((l) => l.positie)) + 1;
-    const verplaatst = { ...lead, stage: doelStage, positie: nieuwePositie };
+    const lead = kolommen[bron].find((l) => l.id === leadId)!;
+    const positie = Math.max(0, ...kolommen[doel].map((l) => l.positie)) + 1;
+    const verplaatst = { ...lead, status: doel, positie };
 
-    // Optimistisch bijwerken.
     setKolommen((prev) => ({
       ...prev,
-      [bronStage]: prev[bronStage].filter((l) => l.id !== leadId),
-      [doelStage]: [...prev[doelStage], verplaatst],
+      [bron]: prev[bron].filter((l) => l.id !== leadId),
+      [doel]: [...prev[doel], verplaatst],
     }));
 
-    const res = await verplaatsLead(leadId, doelStage, nieuwePositie);
+    const res = await verplaatsLead(leadId, doel, positie);
     if (res && !res.ok) {
-      // Terugdraaien bij fout.
       setKolommen((prev) => ({
         ...prev,
-        [doelStage]: prev[doelStage].filter((l) => l.id !== leadId),
-        [bronStage]: [...prev[bronStage], lead],
+        [doel]: prev[doel].filter((l) => l.id !== leadId),
+        [bron]: [...prev[bron], lead],
       }));
     }
   }
 
   return (
-    <DndContext
-      sensors={sensors}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-    >
+    <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
       <div className="flex gap-4 overflow-x-auto pb-4">
-        {LEAD_STAGES.map((stage) => (
-          <Kolom
-            key={stage.key}
-            stage={stage.key}
-            label={stage.label}
-            leads={kolommen[stage.key]}
-          />
+        {LEAD_STATUSSEN.map((s) => (
+          <Kolom key={s.key} status={s.key} label={s.label} leads={kolommen[s.key]} />
         ))}
       </div>
-      <DragOverlay>
-        {actief ? <Kaartje lead={actief} sleep /> : null}
-      </DragOverlay>
+      <DragOverlay>{actief ? <Kaartje lead={actief} sleep /> : null}</DragOverlay>
     </DndContext>
   );
 }
 
 function Kolom({
-  stage,
+  status,
   label,
   leads,
 }: {
-  stage: LeadStage;
+  status: LeadStatus;
   label: string;
   leads: Lead[];
 }) {
-  const { setNodeRef, isOver } = useDroppable({ id: stage });
-  const totaal = leads.reduce((s, l) => s + Number(l.geschatte_waarde || 0), 0);
-
+  const { setNodeRef, isOver } = useDroppable({ id: status });
+  const totaal = leads.reduce((s, l) => s + Number(l.verwachte_waarde || 0), 0);
   return (
     <div
       ref={setNodeRef}
@@ -134,9 +116,7 @@ function Kolom({
           {label}
           <span className="ml-1.5 text-navy/40">{leads.length}</span>
         </span>
-        {totaal > 0 && (
-          <span className="text-xs text-navy/50">{euro(totaal)}</span>
-        )}
+        {totaal > 0 && <span className="text-xs text-navy/50">{euro(totaal)}</span>}
       </div>
       <div className="flex flex-1 flex-col gap-2">
         {leads.map((lead) => (
@@ -181,16 +161,16 @@ function Kaartje({ lead, sleep = false }: { lead: Lead; sleep?: boolean }) {
           className="text-sm font-medium text-navy hover:underline"
           onClick={(e) => e.stopPropagation()}
         >
-          {lead.bedrijfsnaam}
+          {lead.bedrijf}
         </Link>
         <Badge toon={scoreToon(lead.score)}>{lead.score}</Badge>
       </div>
-      {lead.website && (
-        <p className="mt-1 truncate text-xs text-navy/50">{lead.website}</p>
+      {lead.plaats && (
+        <p className="mt-1 text-xs text-navy/50">{lead.plaats}</p>
       )}
-      {lead.geschatte_waarde > 0 && (
+      {lead.verwachte_waarde > 0 && (
         <p className="mt-2 text-xs font-medium text-navy/70">
-          {euro(lead.geschatte_waarde)}
+          {euro(lead.verwachte_waarde)}
         </p>
       )}
     </div>

@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Kaart } from "@/components/ui/Kaart";
 import { Markdown } from "@/components/ui/Markdown";
 import { MarkdownEditor } from "@/components/MarkdownEditor";
-import { PROJECT_STATUSSEN, type Project, type ProjectNotitie } from "@/lib/projecten";
+import { PROJECT_STATUSSEN, type Project, type Notitie } from "@/lib/projecten";
 import { DRIVE_LINK_TYPES, driveTypeLabel, type DriveLink } from "@/lib/drivelinks";
 import { datumKort } from "@/lib/format";
 import {
@@ -34,7 +34,7 @@ export default async function ProjectDetail({
 
   const [{ data: nData }, { data: lData }] = await Promise.all([
     supabase
-      .from("project_notities")
+      .from("notities")
       .select("*")
       .eq("project_id", project.id)
       .order("created_at", { ascending: false }),
@@ -45,7 +45,7 @@ export default async function ProjectDetail({
       .eq("context_id", project.id)
       .order("created_at", { ascending: false }),
   ]);
-  const notities = (nData ?? []) as ProjectNotitie[];
+  const notities = (nData ?? []) as Notitie[];
   const links = (lData ?? []) as DriveLink[];
 
   return (
@@ -72,11 +72,10 @@ export default async function ProjectDetail({
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          {/* Projectgegevens */}
           <form action={werkProjectBij.bind(null, project.id)}>
             <Kaart>
-              <div className="grid gap-4 sm:grid-cols-[2fr_1fr]">
-                <div>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="sm:col-span-2">
                   <label className="mb-1 block text-sm font-medium text-navy">Naam</label>
                   <input
                     name="naam"
@@ -101,6 +100,14 @@ export default async function ProjectDetail({
                 </div>
               </div>
               <div className="mt-4">
+                <label className="mb-1 block text-sm font-medium text-navy">Klant</label>
+                <input
+                  name="klant"
+                  defaultValue={project.klant ?? ""}
+                  className="w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
+                />
+              </div>
+              <div className="mt-4">
                 <label className="mb-1 block text-sm font-medium text-navy">Omschrijving</label>
                 <textarea
                   name="omschrijving"
@@ -120,7 +127,6 @@ export default async function ProjectDetail({
             </Kaart>
           </form>
 
-          {/* Notities */}
           <section>
             <h2 className="mb-3 text-lg font-medium text-navy">Notities</h2>
             <form action={maakNotitie.bind(null, project.id)} className="mb-4">
@@ -163,7 +169,6 @@ export default async function ProjectDetail({
           </section>
         </div>
 
-        {/* Drive-links */}
         <div>
           <Kaart>
             <h2 className="text-sm font-medium text-navy">Drive-links</h2>
@@ -201,9 +206,7 @@ export default async function ProjectDetail({
             </form>
 
             <ul className="mt-4 space-y-2">
-              {links.length === 0 && (
-                <li className="text-sm text-navy/50">Nog geen links.</li>
-              )}
+              {links.length === 0 && <li className="text-sm text-navy/50">Nog geen links.</li>}
               {links.map((l) => (
                 <li key={l.id} className="flex items-center justify-between gap-2">
                   <a
@@ -213,9 +216,7 @@ export default async function ProjectDetail({
                     className="truncate text-sm text-navy hover:underline"
                   >
                     {l.titel}
-                    <span className="ml-1 text-xs text-navy/40">
-                      {driveTypeLabel(l.type)}
-                    </span>
+                    <span className="ml-1 text-xs text-navy/40">{driveTypeLabel(l.type)}</span>
                   </a>
                   <form action={verwijderProjectLink.bind(null, l.id, project.id)}>
                     <button type="submit" className="text-navy/30 hover:text-red-500">

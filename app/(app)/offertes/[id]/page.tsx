@@ -6,14 +6,11 @@ import { Badge } from "@/components/ui/Badge";
 import { MarkdownEditor } from "@/components/MarkdownEditor";
 import {
   offerteStatusToon,
+  offerteStatusLabel,
   OFFERTE_STATUSSEN,
   type Offerte,
 } from "@/lib/offertes";
-import {
-  werkOfferteBij,
-  wijzigOfferteStatus,
-  verwijderOfferte,
-} from "../acties";
+import { werkOfferteBij, wijzigOfferteStatus, verwijderOfferte } from "../acties";
 
 export default async function OfferteDetail({
   params,
@@ -31,9 +28,6 @@ export default async function OfferteDetail({
   if (error || !data) notFound();
   const offerte = data as Offerte;
 
-  const opslaan = werkOfferteBij.bind(null, offerte.id);
-  const verwijder = verwijderOfferte.bind(null, offerte.id);
-
   return (
     <>
       <div className="mb-6 flex items-center justify-between gap-4">
@@ -44,11 +38,11 @@ export default async function OfferteDetail({
           <h1 className="mt-1 flex items-center gap-2 text-2xl font-semibold text-navy">
             {offerte.nummer}
             <Badge toon={offerteStatusToon(offerte.status)}>
-              {OFFERTE_STATUSSEN.find((s) => s.key === offerte.status)?.label}
+              {offerteStatusLabel(offerte.status)}
             </Badge>
           </h1>
         </div>
-        <form action={verwijder}>
+        <form action={verwijderOfferte.bind(null, offerte.id)}>
           <button
             type="submit"
             className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
@@ -69,7 +63,6 @@ export default async function OfferteDetail({
         </p>
       )}
 
-      {/* Statusflow */}
       <Kaart className="mb-6">
         <p className="mb-2 text-sm font-medium text-navy">Status wijzigen</p>
         <div className="flex flex-wrap gap-2">
@@ -90,11 +83,10 @@ export default async function OfferteDetail({
         </div>
       </Kaart>
 
-      {/* Bewerken */}
-      <form action={opslaan}>
+      <form action={werkOfferteBij.bind(null, offerte.id)}>
         <Kaart>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="sm:col-span-2">
               <label className="mb-1 block text-sm font-medium text-navy">Titel</label>
               <input
                 name="titel"
@@ -104,9 +96,7 @@ export default async function OfferteDetail({
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-navy">
-                Bedrag (€, excl. btw)
-              </label>
+              <label className="mb-1 block text-sm font-medium text-navy">Bedrag (€)</label>
               <input
                 name="bedrag"
                 type="number"
@@ -117,34 +107,32 @@ export default async function OfferteDetail({
             </div>
           </div>
 
-          <div className="mt-4">
-            <label className="mb-1 block text-sm font-medium text-navy">
-              PDF-link (Google Drive)
-            </label>
-            <input
-              name="drive_pdf_url"
-              type="url"
-              placeholder="https://drive.google.com/..."
-              defaultValue={offerte.drive_pdf_url ?? ""}
-              className="w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
-            />
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-navy">Klant</label>
+              <input
+                name="klant"
+                defaultValue={offerte.klant ?? ""}
+                className="w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-navy">
+                PDF-link (Google Drive)
+              </label>
+              <input
+                name="drive_pdf_url"
+                type="url"
+                defaultValue={offerte.drive_pdf_url ?? ""}
+                placeholder="https://drive.google.com/..."
+                className="w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
+              />
+            </div>
           </div>
 
           <div className="mt-4">
-            <label className="mb-1 block text-sm font-medium text-navy">
-              Inhoud offerte
-            </label>
+            <label className="mb-1 block text-sm font-medium text-navy">Inhoud offerte</label>
             <MarkdownEditor naam="inhoud_markdown" beginwaarde={offerte.inhoud_markdown} />
-          </div>
-
-          <div className="mt-4">
-            <label className="mb-1 block text-sm font-medium text-navy">Notities</label>
-            <textarea
-              name="notities"
-              defaultValue={offerte.notities ?? ""}
-              rows={3}
-              className="w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
-            />
           </div>
 
           <div className="mt-5">

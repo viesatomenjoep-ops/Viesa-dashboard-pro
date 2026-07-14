@@ -40,7 +40,7 @@ export async function bewaarDesign(formData: FormData) {
   try {
     const supabase = createClient();
     await supabase
-      .from("design_documenten")
+      .from("design_docs")
       .upsert(
         {
           pad,
@@ -48,7 +48,7 @@ export async function bewaarDesign(formData: FormData) {
           github_sha: nieuweSha,
           laatst_gesynct_op: new Date().toISOString(),
         },
-        { onConflict: "owner_id,pad" },
+        { onConflict: "pad" },
       );
   } catch {
     // negeren; GitHub is de bron van waarheid

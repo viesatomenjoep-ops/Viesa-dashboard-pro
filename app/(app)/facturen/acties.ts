@@ -3,27 +3,24 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import type { FactuurStatus } from "@/lib/facturen";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+/** Genereert een factuurnummer VF-JJJJ-NNN, oplopend per jaar. */
 async function volgendNummer(supabase: SupabaseClient): Promise<string> {
   const jaar = new Date().getFullYear();
   const { count } = await supabase
     .from("facturen")
     .select("*", { count: "exact", head: true })
-    .ilike("nummer", `${jaar}-%`);
-  return `${jaar}-${String((count ?? 0) + 1).padStart(4, "0")}`;
+    .ilike("nummer", `VF-${jaar}-%`);
+  return `VF-${jaar}-${String((count ?? 0) + 1).padStart(3, "0")}`;
 }
 
 export async function maakFactuur(formData: FormData) {
   const supabase = createClient();
 
   const factuurdatum =
-    leegAlsLeeg(formData.get("factuurdatum")) ??
-    new Date().toISOString().slice(0, 10);
-
-  // Standaard vervaldatum = factuurdatum + 14 dagen.
-  let vervaldatum = leegAlsLeeg(formData.get("vervaldatum"));
+    leeg(formData.get("factuurdatum")) ?? new Date().toISOString().slice(0, 10);
+  let vervaldatum = leeg(formData.get("vervaldatum"));
   if (!vervaldatum) {
     const d = new Date(factuurdatum);
     d.setDate(d.getDate() + 14);
@@ -35,22 +32,18 @@ export async function maakFactuur(formData: FormData) {
     .from("facturen")
     .insert({
       nummer,
-      klant_id: leegAlsLeeg(formData.get("klant_id")),
-      offerte_id: leegAlsLeeg(formData.get("offerte_id")),
+      klant: leeg(formData.get("klant")),
       bedrag: Number(formData.get("bedrag") ?? 0) || 0,
       btw_percentage: Number(formData.get("btw_percentage") ?? 21),
       factuurdatum,
       vervaldatum,
-      status: "concept",
+      status: "open",
     })
     .select("id")
     .single();
 
   if (error || !data) {
-    redirect(
-      "/facturen?fout=" +
-        encodeURIComponent(error?.message ?? "Aanmaken mislukt."),
-    );
+    redirect("/facturen?fout=" + encodeURIComponent(error?.message ?? "Mislukt."));
   }
   revalidatePath("/facturen");
   redirect(`/facturen/${data.id}`);
@@ -61,11 +54,12 @@ export async function werkFactuurBij(id: string, formData: FormData) {
   const { error } = await supabase
     .from("facturen")
     .update({
+      klant: leeg(formData.get("klant")),
       bedrag: Number(formData.get("bedrag") ?? 0) || 0,
       btw_percentage: Number(formData.get("btw_percentage") ?? 21),
-      factuurdatum: leegAlsLeeg(formData.get("factuurdatum")),
-      vervaldatum: leegAlsLeeg(formData.get("vervaldatum")),
-      drive_pdf_url: leegAlsLeeg(formData.get("drive_pdf_url")),
+      factuurdatum: leeg(formData.get("factuurdatum")),
+      vervaldatum: leeg(formData.get("vervaldatum")),
+      drive_pdf_url: leeg(formData.get("drive_pdf_url")),
     })
     .eq("id", id);
   if (error) redirect(`/facturen/${id}?fout=` + encodeURIComponent(error.message));
@@ -74,12 +68,33 @@ export async function werkFactuurBij(id: string, formData: FormData) {
   redirect(`/facturen/${id}?opgeslagen=1`);
 }
 
-export async function wijzigFactuurStatus(id: string, status: FactuurStatus) {
+/** Zet op betaald met een gevraagde betaaldatum (werkt de omzet-view door). */
+export async function markeerBetaald(id: string, formData: FormData) {
+  const betaaldOp =
+    leeg(formData.get("betaald_op")) ?? new Date().toISOString().slice(0, 10);
   const supabase = createClient();
-  const patch: Record<string, unknown> = { status };
-  patch.betaald_op =
-    status === "betaald" ? new Date().toISOString().slice(0, 10) : null;
-  await supabase.from("facturen").update(patch).eq("id", id);
+  await supabase
+    .from("facturen")
+    .update({ status: "betaald", betaald_op: betaaldOp })
+    .eq("id", id);
+  revalidatePath(`/facturen/${id}`);
+  revalidatePath("/facturen");
+  revalidatePath("/");
+}
+
+export async function markeerVervallen(id: string) {
+  const supabase = createClient();
+  await supabase.from("facturen").update({ status: "vervallen" }).eq("id", id);
+  revalidatePath(`/facturen/${id}`);
+  revalidatePath("/facturen");
+}
+
+export async function heropenFactuur(id: string) {
+  const supabase = createClient();
+  await supabase
+    .from("facturen")
+    .update({ status: "open", betaald_op: null })
+    .eq("id", id);
   revalidatePath(`/facturen/${id}`);
   revalidatePath("/facturen");
   revalidatePath("/");
@@ -92,22 +107,7 @@ export async function verwijderFactuur(id: string) {
   redirect("/facturen");
 }
 
-/**
- * Plant een betaalherinnering in. De daadwerkelijke verzending gebeurt via de
- * Gmail/Outlook-koppeling (Fase 10) of de dagelijkse cron.
- */
-export async function planHerinnering(id: string) {
-  const supabase = createClient();
-  await supabase.from("factuur_herinneringen").insert({
-    factuur_id: id,
-    kanaal: "gmail",
-    status: "gepland",
-    bericht: "Vriendelijke herinnering: deze factuur staat nog open.",
-  });
-  revalidatePath(`/facturen/${id}`);
-}
-
-function leegAlsLeeg(waarde: FormDataEntryValue | null): string | null {
-  const s = String(waarde ?? "").trim();
+function leeg(v: FormDataEntryValue | null): string | null {
+  const s = String(v ?? "").trim();
   return s.length ? s : null;
 }

@@ -1,6 +1,6 @@
 import { maakLead } from "./acties";
 
-/** Compacte "snel een lead toevoegen"-balk — alleen bedrijfsnaam verplicht. */
+/** Compacte "snel een lead toevoegen"-balk — alleen bedrijf verplicht. */
 export function SnelToevoegen() {
   return (
     <form
@@ -8,19 +8,19 @@ export function SnelToevoegen() {
       className="mb-6 flex flex-wrap items-center gap-2 rounded-xl border border-navy/10 bg-white p-3 shadow-sm"
     >
       <input
-        name="bedrijfsnaam"
+        name="bedrijf"
         required
-        placeholder="Bedrijfsnaam *"
+        placeholder="Bedrijf *"
         className="min-w-40 flex-1 rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
+      />
+      <input
+        name="plaats"
+        placeholder="Plaats"
+        className="min-w-32 flex-1 rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
       />
       <input
         name="website"
         placeholder="Website"
-        className="min-w-40 flex-1 rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
-      />
-      <input
-        name="contact_naam"
-        placeholder="Contactpersoon"
         className="min-w-40 flex-1 rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
       />
       <button

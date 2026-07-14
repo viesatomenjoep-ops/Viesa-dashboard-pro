@@ -14,8 +14,8 @@ export async function maakProject(formData: FormData) {
     .from("projecten")
     .insert({
       naam,
-      omschrijving: leegAlsLeeg(formData.get("omschrijving")),
-      klant_id: leegAlsLeeg(formData.get("klant_id")),
+      omschrijving: leeg(formData.get("omschrijving")),
+      klant: leeg(formData.get("klant")),
     })
     .select("id")
     .single();
@@ -32,7 +32,8 @@ export async function werkProjectBij(id: string, formData: FormData) {
     .from("projecten")
     .update({
       naam: String(formData.get("naam") ?? "").trim(),
-      omschrijving: leegAlsLeeg(formData.get("omschrijving")),
+      omschrijving: leeg(formData.get("omschrijving")),
+      klant: leeg(formData.get("klant")),
       status: (String(formData.get("status") ?? "actief") || "actief") as ProjectStatus,
     })
     .eq("id", id);
@@ -50,7 +51,7 @@ export async function verwijderProject(id: string) {
 
 export async function maakNotitie(projectId: string, formData: FormData) {
   const supabase = createClient();
-  await supabase.from("project_notities").insert({
+  await supabase.from("notities").insert({
     project_id: projectId,
     titel: String(formData.get("titel") ?? "Notitie").trim() || "Notitie",
     inhoud_markdown: String(formData.get("inhoud_markdown") ?? ""),
@@ -60,7 +61,7 @@ export async function maakNotitie(projectId: string, formData: FormData) {
 
 export async function verwijderNotitie(id: string, projectId: string) {
   const supabase = createClient();
-  await supabase.from("project_notities").delete().eq("id", id);
+  await supabase.from("notities").delete().eq("id", id);
   revalidatePath(`/projecten/${projectId}`);
 }
 
@@ -84,7 +85,7 @@ export async function verwijderProjectLink(id: string, projectId: string) {
   revalidatePath(`/projecten/${projectId}`);
 }
 
-function leegAlsLeeg(waarde: FormDataEntryValue | null): string | null {
-  const s = String(waarde ?? "").trim();
+function leeg(v: FormDataEntryValue | null): string | null {
+  const s = String(v ?? "").trim();
   return s.length ? s : null;
 }

@@ -19,16 +19,14 @@ export default async function ProjectenPagina({
 }) {
   const supabase = createClient();
   let projecten: Project[] = [];
-  let klanten: { id: string; bedrijfsnaam: string }[] = [];
   let schemaOntbreekt = false;
   try {
-    const [p, k] = await Promise.all([
-      supabase.from("projecten").select("*").order("created_at", { ascending: false }),
-      supabase.from("klanten").select("id, bedrijfsnaam").order("bedrijfsnaam"),
-    ]);
-    if (p.error) throw p.error;
-    projecten = (p.data ?? []) as Project[];
-    klanten = k.data ?? [];
+    const { data, error } = await supabase
+      .from("projecten")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    projecten = (data ?? []) as Project[];
   } catch {
     schemaOntbreekt = true;
   }
@@ -39,7 +37,7 @@ export default async function ProjectenPagina({
   return (
     <>
       <PaginaKop
-        titel="Projecten"
+        titel="Projecten & notities"
         omschrijving="Houd per project notities en Drive-links bij."
       />
 
@@ -70,17 +68,11 @@ export default async function ProjectenPagina({
           placeholder="Korte omschrijving"
           className="rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
         />
-        <select
-          name="klant_id"
+        <input
+          name="klant"
+          placeholder="Klant"
           className="rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
-        >
-          <option value="">Geen klant</option>
-          {klanten.map((k) => (
-            <option key={k.id} value={k.id}>
-              {k.bedrijfsnaam}
-            </option>
-          ))}
-        </select>
+        />
         <button
           type="submit"
           className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"
@@ -92,7 +84,7 @@ export default async function ProjectenPagina({
       {schemaOntbreekt ? (
         <div className="rounded-xl border border-oranje/40 bg-oranje/5 p-4 text-sm text-navy">
           <p className="font-medium text-oranje">Datamodel nog niet actief</p>
-          <p className="mt-1 text-navy/70">Voer de migraties uit in de Supabase SQL Editor.</p>
+          <p className="mt-1 text-navy/70">Voer 0004 uit in de Supabase SQL Editor.</p>
         </div>
       ) : projecten.length === 0 ? (
         <LegeStaat titel="Nog geen projecten" omschrijving="Maak je eerste project hierboven aan." />
@@ -107,10 +99,9 @@ export default async function ProjectenPagina({
                     {PROJECT_STATUSSEN.find((s) => s.key === p.status)?.label}
                   </Badge>
                 </div>
+                {p.klant && <p className="mt-1 text-xs text-navy/50">{p.klant}</p>}
                 {p.omschrijving && (
-                  <p className="mt-2 line-clamp-3 text-sm text-navy/60">
-                    {p.omschrijving}
-                  </p>
+                  <p className="mt-2 line-clamp-3 text-sm text-navy/60">{p.omschrijving}</p>
                 )}
               </Kaart>
             </Link>

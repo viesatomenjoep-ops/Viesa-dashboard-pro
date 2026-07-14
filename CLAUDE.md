@@ -65,14 +65,19 @@ De middleware (`middleware.ts`) beschermt alle routes.
 API-routes: `POST /api/leads/import` (prospector-ingest), `GET /api/cron/facturen`
 (dagelijkse te-laat-bewaking, Vercel Cron in `vercel.json`).
 
-## 7. Datamodel & omgeving
+## 7. Datamodel & beveiliging
 
-- SQL-migraties staan in `supabase/migrations` (`0001_init.sql`,
-  `0002_rls_performance.sql`, `0003_gedeelde_toegang.sql`). Voer ze op volgorde
-  uit in de Supabase SQL Editor.
-- RLS staat op elke tabel. Vanaf `0003` is het een **gedeelde werkruimte**: elke
-  geauthenticeerde gebruiker mag alle rijen (`using (true)`). `owner_id` blijft als
-  "aangemaakt door"-metadata. Veilig omdat er geen publieke signup is.
+- Het canonieke datamodel staat in `supabase/migrations/0004_canoniek_datamodel.sql`
+  (tabellen: leads, activiteiten, offertes, facturen, projecten, notities,
+  design_docs, whiteboards, stickies, drive_links, prospector_runs, integraties;
+  + view `omzet_per_maand`). Voorbeelddata: `supabase/seed.sql`.
+- **Auth**: alleen e-mail/wachtwoord-login, single-/gedeelde gebruiker, **registratie
+  uitgeschakeld** (Supabase → Authentication → Sign In / Providers: signups uit).
+  Geen publieke signup, geen rollenbeheer.
+- **RLS-regel — geen uitzonderingen**: *elke nieuwe tabel krijgt direct RLS aan +
+  een policy die uitsluitend geauthenticeerde toegang toestaat*
+  (`for all to authenticated using (true) with check (true)`). Nooit een tabel
+  zonder policy laten staan; anoniem = geen toegang. Bewijs met `scripts/test-rls.mjs`.
 - Alle env-keys staan in `.env.example`. Server-only geheimen (service-role,
   `LEADS_INGEST_SECRET`, `CRON_SECRET`, `GITHUB_TOKEN`, `OWNER_USER_ID`) nooit met
   `NEXT_PUBLIC_`-prefix.

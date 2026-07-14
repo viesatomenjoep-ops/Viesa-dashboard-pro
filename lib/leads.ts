@@ -1,16 +1,8 @@
-/** Gedeelde types en constanten voor de leads-/pipeline-module. */
+/** Types en constanten voor de leads-/pipeline-module (canoniek datamodel). */
 
-export type LeadStage =
-  | "nieuw"
-  | "gekwalificeerd"
-  | "contact"
-  | "offerte"
-  | "gewonnen"
-  | "verloren";
-
+export type LeadStatus = "nieuw" | "contact_gehad" | "audit_offerte" | "gewonnen";
 export type LeadBron = "prospector" | "handmatig";
 
-/** Eén signaal zoals de webshop-prospector dat aanlevert. */
 export type LeadSignaal = {
   type: string;
   waarde?: string;
@@ -19,46 +11,36 @@ export type LeadSignaal = {
 
 export type Lead = {
   id: string;
-  bedrijfsnaam: string;
+  bedrijf: string;
+  plaats: string | null;
   website: string | null;
   contact_naam: string | null;
   email: string | null;
   telefoon: string | null;
   bron: LeadBron;
   score: number;
+  verwachte_waarde: number;
   signalen: LeadSignaal[];
   openingszin: string | null;
-  stage: LeadStage;
+  status: LeadStatus;
   positie: number;
-  geschatte_waarde: number;
-  klant_id: string | null;
   notities: string | null;
   created_at: string;
   updated_at: string;
 };
 
-/** De pipeline-kolommen, in volgorde. */
-export const LEAD_STAGES: { key: LeadStage; label: string }[] = [
+/** De kanban-kolommen, in volgorde. */
+export const LEAD_STATUSSEN: { key: LeadStatus; label: string }[] = [
   { key: "nieuw", label: "Nieuw" },
-  { key: "gekwalificeerd", label: "Gekwalificeerd" },
-  { key: "contact", label: "Contact" },
-  { key: "offerte", label: "Offerte" },
+  { key: "contact_gehad", label: "Contact gehad" },
+  { key: "audit_offerte", label: "Audit/offerte" },
   { key: "gewonnen", label: "Gewonnen" },
-  { key: "verloren", label: "Verloren" },
 ];
 
-export const LEAD_STAGE_KEYS = LEAD_STAGES.map((s) => s.key);
+export const LEAD_STATUS_KEYS = LEAD_STATUSSEN.map((s) => s.key);
 
-/** Stages die als "actieve deal" tellen (niet gewonnen/verloren). */
-export const ACTIEVE_STAGES: LeadStage[] = [
-  "nieuw",
-  "gekwalificeerd",
-  "contact",
-  "offerte",
-];
-
-export function stageLabel(stage: LeadStage): string {
-  return LEAD_STAGES.find((s) => s.key === stage)?.label ?? stage;
+export function leadStatusLabel(status: LeadStatus): string {
+  return LEAD_STATUSSEN.find((s) => s.key === status)?.label ?? status;
 }
 
 /** Kleurtoon voor de score-badge. */

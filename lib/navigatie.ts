@@ -1,18 +1,33 @@
-/** Centrale navigatie-configuratie voor de zijbalk. */
-export type NavItem = {
-  label: string;
-  href: string;
-};
+/** Gesecteerde navigatie voor de zijbalk. */
+export type NavItem = { label: string; href: string };
+export type NavSectie = { titel: string; items: NavItem[] };
 
-export const navItems: NavItem[] = [
-  { label: "Dashboard", href: "/" },
-  { label: "Leads & pipeline", href: "/leads" },
-  { label: "Taken", href: "/taken" },
-  { label: "Offertes", href: "/offertes" },
-  { label: "Facturen", href: "/facturen" },
-  { label: "Projecten", href: "/projecten" },
-  { label: "Bestanden", href: "/bestanden" },
-  { label: "Design-editor", href: "/design" },
-  { label: "Whiteboard", href: "/whiteboard" },
-  { label: "Koppelingen", href: "/koppelingen" },
+export const navSecties: NavSectie[] = [
+  {
+    titel: "Overzicht",
+    items: [{ label: "Dashboard", href: "/" }],
+  },
+  {
+    titel: "Commercieel",
+    items: [
+      { label: "Leads & pipeline", href: "/leads" },
+      { label: "Offertes", href: "/offertes" },
+      { label: "Facturen", href: "/facturen" },
+    ],
+  },
+  {
+    titel: "Werk",
+    items: [
+      { label: "Projecten & notities", href: "/projecten" },
+      { label: "Design systems", href: "/design" },
+      { label: "Ideeën-whiteboard", href: "/whiteboard" },
+    ],
+  },
+  {
+    titel: "Bibliotheek",
+    items: [
+      { label: "Bestanden", href: "/bestanden" },
+      { label: "Koppelingen", href: "/koppelingen" },
+    ],
+  },
 ];

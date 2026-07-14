@@ -1,11 +1,10 @@
-/** Types en constanten voor Drive-links (bestanden-module en koppelingen). */
+/** Types en constanten voor Drive-links (bestanden-module). */
 
 export type DriveLinkType = "drive" | "sheet" | "doc" | "map" | "pdf" | "overig";
 
 export type DriveContextType =
   | "algemeen"
   | "lead"
-  | "klant"
   | "project"
   | "offerte"
   | "factuur";

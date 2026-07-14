@@ -33,7 +33,7 @@ export default async function WhiteboardPagina() {
 
     if (whiteboardId) {
       const { data } = await supabase
-        .from("sticky_notes")
+        .from("stickies")
         .select("id, tekst, kleur, x, y, breedte, hoogte, z_index")
         .eq("whiteboard_id", whiteboardId)
         .order("created_at", { ascending: true });
