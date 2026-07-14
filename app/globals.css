@@ -13,3 +13,45 @@ body {
   color: var(--navy);
   -webkit-font-smoothing: antialiased;
 }
+
+/* Eenvoudige markdown-opmaak (design-context: rustig, navy) */
+.prose-viesa h1,
+.prose-viesa h2,
+.prose-viesa h3 {
+  font-weight: 600;
+  margin: 0.75em 0 0.35em;
+  line-height: 1.25;
+}
+.prose-viesa h1 { font-size: 1.35rem; }
+.prose-viesa h2 { font-size: 1.15rem; }
+.prose-viesa h3 { font-size: 1rem; }
+.prose-viesa p { margin: 0.5em 0; }
+.prose-viesa ul,
+.prose-viesa ol { margin: 0.5em 0; padding-left: 1.25em; }
+.prose-viesa ul { list-style: disc; }
+.prose-viesa ol { list-style: decimal; }
+.prose-viesa a { color: var(--oranje); text-decoration: underline; }
+.prose-viesa code {
+  background: rgba(25, 68, 91, 0.06);
+  padding: 0.1em 0.3em;
+  border-radius: 0.25rem;
+  font-size: 0.85em;
+}
+.prose-viesa pre {
+  background: rgba(25, 68, 91, 0.06);
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+}
+.prose-viesa blockquote {
+  border-left: 3px solid rgba(25, 68, 91, 0.2);
+  padding-left: 0.75rem;
+  color: rgba(25, 68, 91, 0.7);
+}
+.prose-viesa table { border-collapse: collapse; width: 100%; }
+.prose-viesa th,
+.prose-viesa td {
+  border: 1px solid rgba(25, 68, 91, 0.15);
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+}
