@@ -56,7 +56,7 @@ export default async function DesignPagina({
       {schemaOntbreekt ? (
         <div className="rounded-xl border border-oranje/40 bg-oranje/5 p-4 text-sm text-navy">
           <p className="font-medium text-oranje">Datamodel nog niet actief</p>
-          <p className="mt-1 text-navy/70">Voer 0004 + seed uit in de Supabase SQL Editor.</p>
+          <p className="mt-1 text-navy/70">Voer 0004 uit in de Supabase SQL Editor.</p>
         </div>
       ) : docs.length === 0 ? (
         <LegeStaat

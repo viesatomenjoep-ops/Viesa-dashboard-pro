@@ -1,8 +1,12 @@
+import Image from "next/image";
+
 /**
- * Viesa-beeldmerk als schaalbaar SVG: afgeronde hexagon met de "V" + pijl.
- * `variant`:
- *  - "navy"  → navy hexagon met witte mark (op lichte achtergrond)
- *  - "wit"   → witte hexagon met navy mark (op navy achtergrond)
+ * Viesa-logo — toont het ECHTE logobestand `public/viesa-logo.png`
+ * (niet nagetekend/bewerkt). Upload dat bestand één keer naar /public.
+ *
+ * `variant="wit"` plaatst het logo op een witte tegel, zodat het navy-logo
+ * ook op een donkere achtergrond (zijbalk/banner) zichtbaar blijft — het logo
+ * zelf wordt niet aangepast.
  */
 export function Logo({
   size = 40,
@@ -13,49 +17,24 @@ export function Logo({
   variant?: "navy" | "wit";
   className?: string;
 }) {
-  const hex = variant === "navy" ? "#19445B" : "#FFFFFF";
-  const mark = variant === "navy" ? "#FFFFFF" : "#19445B";
-
-  return (
-    <svg
+  const img = (
+    <Image
+      src="/viesa-logo.png"
       width={size}
       height={size}
-      viewBox="0 0 100 108"
+      alt="Viesa"
+      priority
       className={className}
-      role="img"
-      aria-label="Viesa"
-    >
-      <polygon
-        points="50,7 90,31 90,77 50,101 10,77 10,31"
-        fill={hex}
-        stroke={hex}
-        strokeWidth={13}
-        strokeLinejoin="round"
-      />
-      {/* V — twee samenkomende strepen */}
-      <path
-        d="M31 33 L49 76"
-        fill="none"
-        stroke={mark}
-        strokeWidth={7}
-        strokeLinecap="round"
-      />
-      <path
-        d="M69 33 L52 76"
-        fill="none"
-        stroke={mark}
-        strokeWidth={7}
-        strokeLinecap="round"
-      />
-      <path
-        d="M44 33 L50 57"
-        fill="none"
-        stroke={mark}
-        strokeWidth={7}
-        strokeLinecap="round"
-      />
-      {/* pijl onderaan */}
-      <path d="M44 82 L50 71 L56 82 Z" fill={mark} />
-    </svg>
+      style={{ height: "auto", width: size }}
+    />
   );
+
+  if (variant === "wit") {
+    return (
+      <span className="inline-flex items-center justify-center rounded-xl bg-white p-1.5">
+        {img}
+      </span>
+    );
+  }
+  return img;
 }

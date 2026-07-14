@@ -5,6 +5,7 @@ import { PaginaKop } from "@/components/ui/PaginaKop";
 import { LegeStaat } from "@/components/ui/LegeStaat";
 import { Badge } from "@/components/ui/Badge";
 import { StaafGrafiek } from "@/components/ui/StaafGrafiek";
+import { Logo } from "@/components/ui/Logo";
 import { euro, datumKort } from "@/lib/format";
 import { scoreToon } from "@/lib/leads";
 import { activiteitTypeLabel, activiteitToon } from "@/lib/activiteiten";
@@ -18,6 +19,7 @@ export default async function DashboardPagina() {
       <PaginaKop
         titel="Dashboard"
         omschrijving="Alles in één scherm — van lead tot betaalde factuur."
+        actie={<Logo size={52} />}
       />
 
       {/* KPI's bovenaan */}
@@ -41,8 +43,9 @@ export default async function DashboardPagina() {
           <p className="font-medium text-oranje">Datamodel nog niet actief</p>
           <p className="mt-1 text-navy/70">
             Voer <code className="rounded bg-navy/5 px-1">0004_canoniek_datamodel.sql</code>{" "}
-            en <code className="rounded bg-navy/5 px-1">seed.sql</code> uit in de Supabase
-            SQL Editor.
+            (en <code className="rounded bg-navy/5 px-1">0005</code>) uit in de Supabase
+            SQL Editor. Daarna is dit dashboard leeg tot je je eerste echte lead of
+            factuur toevoegt.
           </p>
         </div>
       )}

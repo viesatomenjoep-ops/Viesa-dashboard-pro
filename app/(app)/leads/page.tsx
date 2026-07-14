@@ -76,8 +76,7 @@ function SchemaMelding() {
       <p className="font-medium text-oranje">Datamodel nog niet actief</p>
       <p className="mt-1 text-navy/70">
         Voer <code className="rounded bg-navy/5 px-1">0004_canoniek_datamodel.sql</code>{" "}
-        (en optioneel <code className="rounded bg-navy/5 px-1">seed.sql</code>) uit in
-        de Supabase SQL Editor.
+        uit in de Supabase SQL Editor.
       </p>
     </div>
   );
