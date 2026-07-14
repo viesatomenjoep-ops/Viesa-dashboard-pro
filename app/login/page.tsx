@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { Logo } from "@/components/ui/Logo";
 import { login } from "./actions";
 
 export default async function LoginPage({
@@ -19,7 +20,13 @@ export default async function LoginPage({
   return (
     <main className="flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-sm rounded-xl border border-navy/10 bg-white p-8 shadow-sm">
-        <h1 className="text-xl font-semibold text-navy">Viesa Dashboard</h1>
+        <div className="mb-4 flex items-center gap-3">
+          <Logo size={44} />
+          <div className="leading-tight">
+            <div className="text-lg font-semibold text-navy">Viesa</div>
+            <div className="text-sm text-navy/60">Command Center</div>
+          </div>
+        </div>
         <p className="mt-1 text-sm text-navy/60">Log in om verder te gaan.</p>
 
         <form action={login} className="mt-6 space-y-4">

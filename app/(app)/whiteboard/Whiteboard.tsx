@@ -18,7 +18,8 @@ import {
   type StickyNote,
 } from "./acties";
 
-const KLEUREN = ["#FDE68A", "#BFDBFE", "#BBF7D0", "#FBCFE8", "#FED7AA"];
+// Vier vaste kleuren: geel, oranje, blauw, groen.
+const KLEUREN = ["#FDE68A", "#FDBA74", "#BFDBFE", "#BBF7D0"];
 
 export function Whiteboard({
   whiteboardId,
@@ -33,8 +34,8 @@ export function Whiteboard({
   );
 
   async function voegToe() {
-    const x = 40 + Math.round((notes.length % 5) * 20);
-    const y = 40 + Math.round((notes.length % 5) * 20);
+    const x = 40 + Math.round((notes.length % 5) * 24);
+    const y = 40 + Math.round((notes.length % 5) * 24);
     const note = await maakNote(whiteboardId, x, y);
     if (note) setNotes((n) => [...n, note]);
   }
@@ -62,7 +63,7 @@ export function Whiteboard({
           + Sticky note
         </button>
         <span className="text-sm text-navy/50">
-          Sleep aan de bovenrand; klik in de note om te typen.
+          Sleep aan de bovenrand · dubbelklik om te typen.
         </span>
       </div>
 
@@ -70,8 +71,7 @@ export function Whiteboard({
         <div
           className="relative h-[70vh] overflow-auto rounded-xl border border-navy/10"
           style={{
-            backgroundImage:
-              "radial-gradient(rgba(25,68,91,0.08) 1px, transparent 1px)",
+            backgroundImage: "radial-gradient(rgba(25,68,91,0.08) 1px, transparent 1px)",
             backgroundSize: "24px 24px",
             backgroundColor: "#fff",
           }}
@@ -81,18 +81,12 @@ export function Whiteboard({
               key={note.id}
               note={note}
               onTekst={(t) =>
-                setNotes((n) =>
-                  n.map((x) => (x.id === note.id ? { ...x, tekst: t } : x)),
-                )
+                setNotes((n) => n.map((x) => (x.id === note.id ? { ...x, tekst: t } : x)))
               }
               onKleur={(k) =>
-                setNotes((n) =>
-                  n.map((x) => (x.id === note.id ? { ...x, kleur: k } : x)),
-                )
+                setNotes((n) => n.map((x) => (x.id === note.id ? { ...x, kleur: k } : x)))
               }
-              onVerwijder={() =>
-                setNotes((n) => n.filter((x) => x.id !== note.id))
-              }
+              onVerwijder={() => setNotes((n) => n.filter((x) => x.id !== note.id))}
             />
           ))}
           {notes.length === 0 && (
@@ -117,9 +111,8 @@ function NoteKaart({
   onKleur: (k: string) => void;
   onVerwijder: () => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
-    id: note.id,
-  });
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: note.id });
+  const [bewerk, setBewerk] = useState(false);
   const dx = transform?.x ?? 0;
   const dy = transform?.y ?? 0;
 
@@ -136,7 +129,6 @@ function NoteKaart({
       }}
       className="flex flex-col rounded-md shadow-md"
     >
-      {/* Sleep-handvat + acties */}
       <div
         {...listeners}
         {...attributes}
@@ -167,13 +159,26 @@ function NoteKaart({
           ×
         </button>
       </div>
-      <textarea
-        defaultValue={note.tekst}
-        onChange={(e) => onTekst(e.target.value)}
-        onBlur={(e) => werkNoteTekst(note.id, e.target.value)}
-        placeholder="Typ hier…"
-        className="flex-1 resize-none rounded-b-md bg-transparent p-2 text-sm text-navy outline-none placeholder:text-navy/30"
-      />
+
+      {bewerk ? (
+        <textarea
+          autoFocus
+          defaultValue={note.tekst}
+          onChange={(e) => onTekst(e.target.value)}
+          onBlur={(e) => {
+            werkNoteTekst(note.id, e.target.value);
+            setBewerk(false);
+          }}
+          className="flex-1 resize-none rounded-b-md bg-transparent p-2 text-sm text-navy outline-none"
+        />
+      ) : (
+        <div
+          onDoubleClick={() => setBewerk(true)}
+          className="flex-1 whitespace-pre-wrap p-2 text-sm text-navy"
+        >
+          {note.tekst || <span className="text-navy/30">Dubbelklik om te typen…</span>}
+        </div>
+      )}
     </div>
   );
 }

@@ -10,12 +10,16 @@ import {
 import { Kaart } from "@/components/ui/Kaart";
 import { Badge } from "@/components/ui/Badge";
 import { datumKort } from "@/lib/format";
+import { Markdown } from "@/components/ui/Markdown";
+import type { Notitie } from "@/lib/projecten";
 import {
   werkLeadBij,
   verwijderLead,
   planFollowup,
   maakActiviteit,
   rondActiviteitAf,
+  maakLeadNotitie,
+  verwijderLeadNotitie,
 } from "../acties";
 
 export default async function LeadDetail({
@@ -34,12 +38,20 @@ export default async function LeadDetail({
   if (error || !data) notFound();
   const lead = data as Lead;
 
-  const { data: aData } = await supabase
-    .from("activiteiten")
-    .select("*")
-    .eq("lead_id", lead.id)
-    .order("created_at", { ascending: false });
+  const [{ data: aData }, { data: nData }] = await Promise.all([
+    supabase
+      .from("activiteiten")
+      .select("*")
+      .eq("lead_id", lead.id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("notities")
+      .select("*")
+      .eq("lead_id", lead.id)
+      .order("created_at", { ascending: false }),
+  ]);
   const activiteiten = (aData ?? []) as Activiteit[];
+  const notities = (nData ?? []) as Notitie[];
 
   return (
     <>
@@ -267,6 +279,48 @@ export default async function LeadDetail({
               </div>
             </Kaart>
           </form>
+
+          {/* Belnotities */}
+          <form action={maakLeadNotitie.bind(null, lead.id)} className="mt-6">
+            <Kaart>
+              <h2 className="text-sm font-medium text-navy">Belnotities</h2>
+              <input
+                name="titel"
+                placeholder="Titel"
+                className="mt-3 w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
+              />
+              <textarea
+                name="inhoud_markdown"
+                rows={3}
+                placeholder="Wat is er besproken?"
+                className="mt-2 w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
+              />
+              <button
+                type="submit"
+                className="mt-2 w-full rounded-lg border border-navy/20 px-3 py-2 text-sm font-medium text-navy hover:bg-navy/5"
+              >
+                Notitie opslaan
+              </button>
+            </Kaart>
+          </form>
+
+          {notities.length > 0 && (
+            <div className="mt-4 space-y-3">
+              {notities.map((n) => (
+                <Kaart key={n.id}>
+                  <div className="mb-1 flex items-center justify-between">
+                    <h3 className="text-sm font-medium text-navy">{n.titel}</h3>
+                    <form action={verwijderLeadNotitie.bind(null, n.id, lead.id)}>
+                      <button type="submit" className="text-xs text-navy/40 hover:text-red-500">
+                        ×
+                      </button>
+                    </form>
+                  </div>
+                  <Markdown tekst={n.inhoud_markdown} />
+                </Kaart>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </>

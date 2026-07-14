@@ -79,5 +79,30 @@ API-routes: `POST /api/leads/import` (prospector-ingest), `GET /api/cron/facture
   (`for all to authenticated using (true) with check (true)`). Nooit een tabel
   zonder policy laten staan; anoniem = geen toegang. Bewijs met `scripts/test-rls.mjs`.
 - Alle env-keys staan in `.env.example`. Server-only geheimen (service-role,
-  `LEADS_INGEST_SECRET`, `CRON_SECRET`, `GITHUB_TOKEN`, `OWNER_USER_ID`) nooit met
-  `NEXT_PUBLIC_`-prefix.
+  `LEADS_INGEST_SECRET`, `CRON_SECRET`, `GITHUB_TOKEN`, `ANTHROPIC_API_KEY`,
+  `GOOGLE_CLIENT_SECRET`, `OWNER_USER_ID`) nooit met `NEXT_PUBLIC_`-prefix.
+
+## 8. Geleerde lessen
+
+Bij elke gemelde fout die niet nog eens mag gebeuren: hier bijwerken.
+
+- **Elke nieuwe tabel** krijgt direct RLS + policy (`to authenticated`), geen
+  uitzonderingen. Bewijs met `scripts/test-rls.mjs`.
+- **`/api`-routes** worden in de middleware uitgesloten van de login-redirect;
+  ze doen hun eigen auth (gedeeld geheim / `getUser()`).
+- **Supabase-gebruiker** altijd met **Auto Confirm** aanmaken, anders weigert
+  inloggen ("Email not confirmed").
+- **Anon-key** nooit gemaskeerd kopiëren: een bullet-teken (`•`, U+2022) in de
+  key geeft bij het inloggen `Cannot convert argument to a ByteString`. Kopieer
+  de echte waarde via Supabase → Project Settings → API.
+- **Accent-kleur**: het Tailwind-token heet historisch `oranje` maar bevat nu
+  teal `#1E9E93`; de klassenaam is bewust behouden zodat het accent op één plek
+  te wijzigen is. Sticky-notes gebruiken eigen hex-kleuren.
+- **Env-wijzigingen** in Vercel vereisen een **redeploy** voordat ze meetellen.
+
+## 9. Kwaliteitsborging
+
+Na elke grote bouwronde: draai de **code-reviewer-subagent**
+(`.claude/agents/code-reviewer.md`). Die beoordeelt de wijzigingen objectief op
+huisstijl (navy/teal, geen zebra, KPI's bovenaan), RLS (elke tabel een policy) en
+Nederlandse UI-teksten.

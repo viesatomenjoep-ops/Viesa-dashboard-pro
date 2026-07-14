@@ -11,6 +11,7 @@ import {
   betaaltermijnDagen,
   type Factuur,
 } from "@/lib/facturen";
+import { Logo } from "@/components/ui/Logo";
 import { euro, datumKort } from "@/lib/format";
 import { maakFactuur } from "./acties";
 
@@ -60,6 +61,7 @@ export default async function FacturenPagina({
       <PaginaKop
         titel="Facturen"
         omschrijving="Inschieten, vervaldatum bewaken en betaald zetten."
+        actie={<Logo size={48} />}
       />
 
       <section className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -133,8 +135,8 @@ export default async function FacturenPagina({
       ) : facturen.length === 0 ? (
         <LegeStaat titel="Nog geen facturen" omschrijving="Schiet je eerste factuur hierboven in." />
       ) : (
-        <Kaart className="p-0">
-          <table className="w-full text-sm">
+        <Kaart className="overflow-x-auto p-0">
+          <table className="w-full min-w-[560px] text-sm">
             <thead>
               <tr className="border-b border-navy/10 text-left text-navy/50">
                 <th className="px-5 py-3 font-medium">Nummer</th>

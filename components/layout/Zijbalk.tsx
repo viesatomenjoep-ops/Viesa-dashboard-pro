@@ -3,30 +3,28 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { navSecties } from "@/lib/navigatie";
+import { Logo } from "@/components/ui/Logo";
 
 /**
- * Vaste donkerblauwe zijbalk (232px) met secties. Het actieve item krijgt de
- * oranje accentkleur.
+ * Navigatie-inhoud van de zijbalk (donkerblauw). Actief item = teal accent.
+ * `onNavigate` wordt aangeroepen bij een klik (om het mobiele menu te sluiten).
  */
-export function Zijbalk() {
+export function Zijbalk({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
-
   const isActief = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
-    <aside
-      style={{ width: 232 }}
-      className="flex shrink-0 flex-col bg-navy text-white"
-    >
-      <div className="px-5 py-6">
-        <span className="text-lg font-semibold">Viesa</span>
-        <span className="ml-1 text-lg font-light text-white/50">
-          Command Center
-        </span>
+    <div className="flex h-full flex-col bg-navy text-white">
+      <div className="flex items-center gap-3 px-5 py-6">
+        <Logo size={40} variant="wit" />
+        <div className="leading-tight">
+          <div className="text-lg font-semibold text-white">Viesa</div>
+          <div className="text-sm font-medium text-white/80">Command Center</div>
+        </div>
       </div>
 
-      <nav className="flex-1 space-y-6 px-3 pb-6">
+      <nav className="flex-1 space-y-6 overflow-y-auto px-3 pb-6">
         {navSecties.map((sectie) => (
           <div key={sectie.titel}>
             <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-white/40">
@@ -39,10 +37,11 @@ export function Zijbalk() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`block rounded-lg px-3 py-2 text-sm transition-colors ${
+                    onClick={onNavigate}
+                    className={`block rounded-lg px-3 py-2.5 text-[15px] transition-colors ${
                       actief
-                        ? "bg-white/10 font-medium text-oranje"
-                        : "text-white/70 hover:bg-white/5 hover:text-white"
+                        ? "bg-white/10 font-semibold text-oranje"
+                        : "font-medium text-white hover:bg-white/10"
                     }`}
                   >
                     {item.label}
@@ -53,6 +52,6 @@ export function Zijbalk() {
           </div>
         ))}
       </nav>
-    </aside>
+    </div>
   );
 }

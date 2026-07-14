@@ -86,18 +86,15 @@ export async function schrijfBestand(
   sha: string,
   bericht: string,
 ): Promise<{ sha: string }> {
+  const body: Record<string, unknown> = {
+    message: bericht,
+    content: Buffer.from(inhoud, "utf8").toString("base64"),
+    branch: cfg.branch,
+  };
+  if (sha) body.sha = sha; // sha weglaten = nieuw bestand aanmaken
   const res = await fetch(
     `${API}/repos/${cfg.owner}/${cfg.repo}/contents/${pad}`,
-    {
-      method: "PUT",
-      headers: headers(cfg),
-      body: JSON.stringify({
-        message: bericht,
-        content: Buffer.from(inhoud, "utf8").toString("base64"),
-        sha,
-        branch: cfg.branch,
-      }),
-    },
+    { method: "PUT", headers: headers(cfg), body: JSON.stringify(body) },
   );
   if (!res.ok) {
     const tekst = await res.text();

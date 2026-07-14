@@ -98,6 +98,23 @@ export async function planFollowup(leadId: string, formData: FormData) {
   revalidatePath("/");
 }
 
+/** Belnotitie: een notitie (notities-tabel) gekoppeld aan een lead. */
+export async function maakLeadNotitie(leadId: string, formData: FormData) {
+  const supabase = createClient();
+  await supabase.from("notities").insert({
+    lead_id: leadId,
+    titel: String(formData.get("titel") ?? "Belnotitie").trim() || "Belnotitie",
+    inhoud_markdown: String(formData.get("inhoud_markdown") ?? ""),
+  });
+  revalidatePath(`/leads/${leadId}`);
+}
+
+export async function verwijderLeadNotitie(id: string, leadId: string) {
+  const supabase = createClient();
+  await supabase.from("notities").delete().eq("id", id);
+  revalidatePath(`/leads/${leadId}`);
+}
+
 export async function rondActiviteitAf(id: string, leadId: string) {
   const supabase = createClient();
   await supabase

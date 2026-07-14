@@ -1,6 +1,7 @@
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { Kaart } from "@/components/ui/Kaart";
 import { Badge } from "@/components/ui/Badge";
+import { Logo } from "@/components/ui/Logo";
 import { createClient } from "@/lib/supabase/server";
 import {
   DIENSTEN,
@@ -44,6 +45,17 @@ export default async function KoppelingenPagina() {
         omschrijving="Beheer de verbindingen met je diensten. Geheimen staan in de omgeving/Vault, nooit in de database."
       />
 
+      {/* Navy banner met het beeldmerk */}
+      <div className="mb-8 flex items-center gap-4 rounded-xl bg-navy px-6 py-5 text-white">
+        <Logo size={52} variant="wit" />
+        <div>
+          <p className="text-lg font-semibold">Viesa Command Center</p>
+          <p className="text-sm text-white/70">
+            Eén werkruimte voor je administratie, sales en koppelingen.
+          </p>
+        </div>
+      </div>
+
       {schemaOntbreekt ? (
         <div className="rounded-xl border border-oranje/40 bg-oranje/5 p-4 text-sm text-navy">
           <p className="font-medium text-oranje">Datamodel nog niet actief</p>
@@ -66,21 +78,30 @@ export default async function KoppelingenPagina() {
                   </div>
                   <p className="mt-2 text-sm text-navy/60">{d.omschrijving}</p>
                 </div>
-                <form
-                  action={wijzigIntegratieStatus.bind(null, d.key, nieuweStatus)}
-                  className="mt-4"
-                >
-                  <button
-                    type="submit"
-                    className={`w-full rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
-                      verbonden
-                        ? "border-navy/20 text-navy hover:bg-navy/5"
-                        : "border-oranje bg-oranje text-white hover:bg-oranje/90"
-                    }`}
+                {d.key === "gmail" && !verbonden ? (
+                  <a
+                    href="/api/google/oauth/start"
+                    className="mt-4 block w-full rounded-lg border border-oranje bg-oranje px-3 py-2 text-center text-sm font-medium text-white hover:bg-oranje/90"
                   >
-                    {verbonden ? "Verbinding verbreken" : "Verbinden"}
-                  </button>
-                </form>
+                    Verbind met Google
+                  </a>
+                ) : (
+                  <form
+                    action={wijzigIntegratieStatus.bind(null, d.key, nieuweStatus)}
+                    className="mt-4"
+                  >
+                    <button
+                      type="submit"
+                      className={`w-full rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                        verbonden
+                          ? "border-navy/20 text-navy hover:bg-navy/5"
+                          : "border-oranje bg-oranje text-white hover:bg-oranje/90"
+                      }`}
+                    >
+                      {verbonden ? "Verbinding verbreken" : "Verbinden"}
+                    </button>
+                  </form>
+                )}
               </Kaart>
             );
           })}

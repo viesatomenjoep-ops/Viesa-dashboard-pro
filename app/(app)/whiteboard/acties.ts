@@ -1,6 +1,27 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+
+export async function maakBord(formData: FormData) {
+  const naam = String(formData.get("naam") ?? "Bord").trim() || "Bord";
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("whiteboards")
+    .insert({ naam })
+    .select("id")
+    .single();
+  revalidatePath("/whiteboard");
+  redirect(data ? `/whiteboard?bord=${data.id}` : "/whiteboard");
+}
+
+export async function verwijderBord(id: string) {
+  const supabase = createClient();
+  await supabase.from("whiteboards").delete().eq("id", id);
+  revalidatePath("/whiteboard");
+  redirect("/whiteboard");
+}
 
 export type StickyNote = {
   id: string;

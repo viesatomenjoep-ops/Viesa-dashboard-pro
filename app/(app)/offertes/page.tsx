@@ -105,8 +105,8 @@ export default async function OffertesPagina({
       ) : offertes.length === 0 ? (
         <LegeStaat titel="Nog geen offertes" omschrijving="Maak je eerste offerte hierboven aan." />
       ) : (
-        <Kaart className="p-0">
-          <table className="w-full text-sm">
+        <Kaart className="overflow-x-auto p-0">
+          <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="border-b border-navy/10 text-left text-navy/50">
                 <th className="px-5 py-3 font-medium">Nummer</th>

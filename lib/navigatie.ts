@@ -19,7 +19,6 @@ export const navSecties: NavSectie[] = [
     titel: "Werk",
     items: [
       { label: "Projecten & notities", href: "/projecten" },
-      { label: "Design systems", href: "/design" },
       { label: "Ideeën-whiteboard", href: "/whiteboard" },
     ],
   },
