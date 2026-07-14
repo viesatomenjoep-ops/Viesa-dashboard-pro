@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --navy: #19445b;
+  --oranje: #f26b21;
+  --achtergrond: #f4f6f9;
+}
+
+body {
+  background-color: var(--achtergrond);
+  color: var(--navy);
+  -webkit-font-smoothing: antialiased;
+}
