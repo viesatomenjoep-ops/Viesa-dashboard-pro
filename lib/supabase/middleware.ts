@@ -45,8 +45,12 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
+  // /api-routes doen hun eigen authenticatie (gedeeld geheim / CRON_SECRET),
+  // dus die niet naar /login omleiden.
   const isPubliek =
-    pathname.startsWith("/login") || pathname.startsWith("/auth");
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/api");
 
   if (!user && !isPubliek) {
     const url = request.nextUrl.clone();

@@ -44,3 +44,31 @@ gelden. Raadpleeg deze bestanden vóór het bouwen of wijzigen van UI:
 
 - `design-systems/huisstijl.md` — kleuren, typografie, taal
 - `design-systems/patronen.md` — KPI's, tabellen, knoppen, layout
+
+## 6. Modules (routes)
+
+Beveiligde pagina's staan in de route-group `app/(app)`; `/login` staat erbuiten.
+De middleware (`middleware.ts`) beschermt alle routes.
+
+- `/` — dashboard met KPI's + follow-ups van vandaag
+- `/leads` — leads & pipeline-kanban (drag & drop), `/leads/[id]` detail
+- `/taken` — follow-up-taken
+- `/offertes` (+ `/templates`, `/[id]`) — offertes en templates
+- `/facturen` (+ `/[id]`) — facturen, btw, herinneringen
+- `/projecten` (+ `/[id]`) — projecten, markdown-notities, Drive-links
+- `/bestanden` — centrale Drive-links (nooit bestanden zelf)
+- `/design` — markdown-editor voor `/design-systems` met GitHub-sync
+- `/whiteboard` — sleepbare sticky notes
+- `/koppelingen` — status van Drive/Sheets/Docs/Slack/Gmail/Outlook/Claude API
+
+API-routes: `POST /api/leads/import` (prospector-ingest), `GET /api/cron/facturen`
+(dagelijkse te-laat-bewaking, Vercel Cron in `vercel.json`).
+
+## 7. Datamodel & omgeving
+
+- SQL-migraties staan in `supabase/migrations` (`0001_init.sql`,
+  `0002_rls_performance.sql`). Voer ze op volgorde uit in de Supabase SQL Editor.
+- RLS staat op elke tabel: `(select auth.uid()) = owner_id`, met index op `owner_id`.
+- Alle env-keys staan in `.env.example`. Server-only geheimen (service-role,
+  `LEADS_INGEST_SECRET`, `CRON_SECRET`, `GITHUB_TOKEN`, `OWNER_USER_ID`) nooit met
+  `NEXT_PUBLIC_`-prefix.
