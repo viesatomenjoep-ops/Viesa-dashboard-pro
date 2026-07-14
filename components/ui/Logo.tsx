@@ -1,12 +1,15 @@
 import Image from "next/image";
 
+// Verhouding van public/viesa-logo.png (1443×1600).
+const RATIO = 1600 / 1443;
+
 /**
- * Viesa-logo — toont het ECHTE logobestand `public/viesa-logo.png`
- * (niet nagetekend/bewerkt). Upload dat bestand één keer naar /public.
+ * Viesa-logo — toont het echte bestand `public/viesa-logo.png` (navy hexagon
+ * met witte V op transparant).
  *
- * `variant="wit"` plaatst het logo op een witte tegel, zodat het navy-logo
- * ook op een donkere achtergrond (zijbalk/banner) zichtbaar blijft — het logo
- * zelf wordt niet aangepast.
+ * `variant="wit"` plaatst het op een witte tegel, zodat het navy-logo ook op
+ * een donkere achtergrond (zijbalk/banner) zichtbaar blijft. Het logo zelf
+ * wordt niet aangepast.
  */
 export function Logo({
   size = 40,
@@ -21,11 +24,10 @@ export function Logo({
     <Image
       src="/viesa-logo.png"
       width={size}
-      height={size}
+      height={Math.round(size * RATIO)}
       alt="Viesa"
       priority
       className={className}
-      style={{ height: "auto", width: size }}
     />
   );
 
