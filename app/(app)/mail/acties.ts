@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { verstuurMail, mailHtml } from "@/lib/resend";
+import { verstuurMail, mailHtml, mailHtmlRijk, saniteerHtml } from "@/lib/resend";
 import { BEDRIJF } from "@/lib/bedrijf";
 
 type MailMap = "inbox" | "verzonden" | "concepten" | "prullenbak" | "archief";
@@ -15,14 +15,19 @@ export async function verstuurBericht(formData: FormData) {
   const bcc = String(formData.get("bcc") ?? "").trim() || null;
   const onderwerp = String(formData.get("onderwerp") ?? "").trim();
   const tekst = String(formData.get("tekst") ?? "").trim();
+  const rijkeHtml = String(formData.get("html") ?? "").trim();
   const antwoordNaar = String(formData.get("antwoord_naar") ?? "").trim() || undefined;
   const klantId = String(formData.get("klant_id") ?? "").trim() || null;
 
-  if (!naar || !onderwerp || !tekst) {
+  if (!naar || !onderwerp || (!tekst && !rijkeHtml)) {
     redirect("/mail?fout=" + encodeURIComponent("Vul ontvanger, onderwerp en bericht in."));
   }
 
-  const html = mailHtml(onderwerp, tekst);
+  // Opgemaakte HTML uit de rich-editor gebruiken indien aanwezig (gesaniteerd);
+  // anders de platte tekst in de huisstijl-wikkel.
+  const html = rijkeHtml
+    ? mailHtmlRijk(onderwerp, saniteerHtml(rijkeHtml))
+    : mailHtml(onderwerp, tekst);
   const supabase = createClient();
 
   try {

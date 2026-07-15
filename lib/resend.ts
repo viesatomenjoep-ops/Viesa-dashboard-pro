@@ -78,14 +78,37 @@ export function mailHandtekening(): string {
   </table>`;
 }
 
-/** Eenvoudige, huisstijl-conforme HTML-wikkel voor een platte tekstboodschap. */
-export function mailHtml(titel: string, tekst: string): string {
-  const body = tekst.replace(/\n/g, "<br/>");
+/**
+ * Lichte server-side sanitatie van door de gebruiker opgemaakte HTML: verwijdert
+ * script/style/iframe-achtige tags, inline event-handlers (onclick e.d.) en
+ * javascript:-URLs. Best effort — de rich-editor produceert alleen simpele
+ * opmaak; dit dekt geplakte of gemanipuleerde inhoud af.
+ */
+export function saniteerHtml(html: string): string {
+  return html
+    .replace(
+      /<\s*(script|style|iframe|object|embed|form|link|meta)\b[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi,
+      "",
+    )
+    .replace(/<\s*(script|style|iframe|object|embed|form|link|meta)\b[^>]*\/?>/gi, "")
+    .replace(/\son\w+\s*=\s*"(?:[^"]*)"/gi, "")
+    .replace(/\son\w+\s*=\s*'(?:[^']*)'/gi, "")
+    .replace(/\son\w+\s*=\s*[^\s>]+/gi, "")
+    .replace(/(href|src)\s*=\s*("|')\s*javascript:[^"']*\2/gi, '$1="#"');
+}
+
+/** Huisstijl-conforme HTML-wikkel om een reeds-opgemaakte HTML-body. */
+export function mailHtmlRijk(titel: string, bodyHtml: string): string {
   return `
   <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px;">
     <h1 style="color:#19445B; font-size:22px; font-weight:bold; margin:0 0 16px; border-bottom:2px solid #1E9E93; padding-bottom:10px;">${titel}</h1>
-    <div style="color:#1e293b; line-height:1.6; font-size:15px;">${body}</div>
+    <div style="color:#1e293b; line-height:1.6; font-size:15px;">${bodyHtml}</div>
     <hr style="margin:28px 0; border:none; border-top:1px solid #e2e8f0;" />
     ${mailHandtekening()}
   </div>`;
+}
+
+/** Eenvoudige, huisstijl-conforme HTML-wikkel voor een platte tekstboodschap. */
+export function mailHtml(titel: string, tekst: string): string {
+  return mailHtmlRijk(titel, tekst.replace(/\n/g, "<br/>"));
 }

@@ -2,11 +2,21 @@
 
 import { useId, useState } from "react";
 import { MAIL_TEMPLATES } from "@/lib/mailtemplates";
+import { RijkeEditor } from "@/components/RijkeEditor";
 
 const inputCls =
   "w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy";
 
 type KlantOptie = { id: string; bedrijf: string; email: string | null };
+
+/** Zet platte sjabloontekst om naar veilige HTML (voor de rich-editor). */
+function tekstNaarHtml(tekst: string): string {
+  const veilig = tekst
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  return veilig.replace(/\n/g, "<br/>");
+}
 
 /**
  * Opstelvenster voor een e-mail. Kies een sjabloon (vult onderwerp + bericht),
@@ -27,16 +37,19 @@ export function MailOpstellen({
   initieelOnderwerp?: string;
 }) {
   const [onderwerp, setOnderwerp] = useState(initieelOnderwerp);
-  const [tekst, setTekst] = useState("");
   const [naar, setNaar] = useState(initieelNaar);
   const [toonCcBcc, setToonCcBcc] = useState(false);
+  const [editorHtml, setEditorHtml] = useState("");
+  const [editorSleutel, setEditorSleutel] = useState(0);
   const listId = useId();
 
   function kiesTemplate(key: string) {
     const t = MAIL_TEMPLATES.find((x) => x.key === key);
     if (!t) return;
     setOnderwerp(t.onderwerp);
-    setTekst(t.tekst);
+    // Editor opnieuw opbouwen met de sjabloontekst als startinhoud.
+    setEditorHtml(tekstNaarHtml(t.tekst));
+    setEditorSleutel((n) => n + 1);
   }
 
   function kiesKlant(bedrijf: string) {
@@ -131,15 +144,9 @@ export function MailOpstellen({
         onChange={(e) => setOnderwerp(e.target.value)}
         className={`${inputCls} mt-3`}
       />
-      <textarea
-        name="tekst"
-        required
-        rows={10}
-        placeholder="Bericht *"
-        value={tekst}
-        onChange={(e) => setTekst(e.target.value)}
-        className={`${inputCls} mt-3`}
-      />
+      <div className="mt-3">
+        <RijkeEditor key={editorSleutel} beginHtml={editorHtml} />
+      </div>
       <div className="mt-4">
         <button
           type="submit"
