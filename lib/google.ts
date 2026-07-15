@@ -115,6 +115,54 @@ export async function gmailSend(
   if (!res.ok) throw new Error(`Gmail send ${res.status}: ${await res.text()}`);
 }
 
+/** Eén bericht uit de Gmail-inbox, genormaliseerd voor de E-mail-pagina. */
+export type GmailBericht = {
+  id: string;
+  van: string;
+  onderwerp: string;
+  datum: string; // ISO
+  snippet: string;
+};
+
+/** Haalt de laatste inbox-berichten op uit Gmail (read-only). */
+export async function gmailBerichten(
+  accessToken: string,
+  max = 15,
+): Promise<GmailBericht[]> {
+  const lijst = await fetch(
+    `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${max}&labelIds=INBOX`,
+    { headers: { Authorization: `Bearer ${accessToken}` }, cache: "no-store" },
+  );
+  if (!lijst.ok) throw new Error(`Gmail ${lijst.status}: ${await lijst.text()}`);
+  const data = (await lijst.json()) as { messages?: { id: string }[] };
+  const ids = (data.messages ?? []).map((m) => m.id);
+
+  const berichten = await Promise.all(
+    ids.map(async (id) => {
+      const r = await fetch(
+        `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date`,
+        { headers: { Authorization: `Bearer ${accessToken}` }, cache: "no-store" },
+      );
+      if (!r.ok) return null;
+      const m = (await r.json()) as {
+        snippet?: string;
+        internalDate?: string;
+        payload?: { headers?: { name: string; value: string }[] };
+      };
+      const kop = (naam: string) =>
+        m.payload?.headers?.find((h) => h.name.toLowerCase() === naam.toLowerCase())?.value ?? "";
+      return {
+        id,
+        van: kop("From"),
+        onderwerp: kop("Subject") || "(geen onderwerp)",
+        datum: m.internalDate ? new Date(Number(m.internalDate)).toISOString() : "",
+        snippet: m.snippet ?? "",
+      } as GmailBericht;
+    }),
+  );
+  return berichten.filter(Boolean) as GmailBericht[];
+}
+
 /** Eén afspraak uit Google Calendar, genormaliseerd voor de Agenda-pagina. */
 export type AgendaItem = {
   id: string;

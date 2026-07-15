@@ -6,6 +6,12 @@ import { Badge } from "@/components/ui/Badge";
 import { LegeStaat } from "@/components/ui/LegeStaat";
 import { createClient } from "@/lib/supabase/server";
 import { resendGeconfigureerd } from "@/lib/resend";
+import {
+  googleConfig,
+  accessTokenFromRefresh,
+  gmailBerichten,
+  type GmailBericht,
+} from "@/lib/google";
 import { datumKort } from "@/lib/format";
 import { leesFout } from "@/lib/fout";
 import { MailOpstellen } from "@/components/MailOpstellen";
@@ -67,6 +73,31 @@ export default async function MailPagina({
     /* klanten-tabel nog niet aanwezig */
   }
 
+  // Live Gmail-inbox (alleen als Google gekoppeld is via Koppelingen).
+  let gmail: GmailBericht[] = [];
+  let gmailVerbonden = false;
+  let gmailFout = "";
+  try {
+    const { data: integ } = await supabase
+      .from("integraties")
+      .select("config")
+      .eq("dienst", "gmail")
+      .maybeSingle();
+    const refresh = (integ?.config as { refresh_token?: string } | null)?.refresh_token;
+    const cfg = googleConfig();
+    if (refresh && cfg) {
+      gmailVerbonden = true;
+      try {
+        const at = await accessTokenFromRefresh(cfg, refresh);
+        gmail = await gmailBerichten(at, 15);
+      } catch (e) {
+        gmailFout = leesFout(e);
+      }
+    }
+  } catch {
+    /* integraties-tabel nog niet aanwezig */
+  }
+
   const uitgaand = emails.filter((e) => e.richting === "uitgaand").length;
   const inkomend = emails.filter((e) => e.richting === "inkomend").length;
 
@@ -123,6 +154,52 @@ export default async function MailPagina({
             Zet <code>RESEND_API_KEY</code> in Vercel en redeploy. Verifieer het domein{" "}
             <code>viesa-automations.nl</code> in Resend.
           </p>
+        </div>
+      )}
+
+      {/* Live Gmail-inbox (postvak IN via Google) */}
+      {!opstellen && (gmailVerbonden || gmail.length > 0) && (
+        <div className="mb-8">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-sm font-medium text-navy">Postvak IN — Gmail (live)</h2>
+            <span className="text-xs text-navy/40">rechtstreeks uit je Google-account</span>
+          </div>
+          {gmailFout ? (
+            <div className="rounded-xl border border-oranje/40 bg-oranje/5 p-3 text-xs text-navy/70">
+              Kon Gmail niet laden — {gmailFout}. Verbind (opnieuw) via Koppelingen.
+            </div>
+          ) : gmail.length === 0 ? (
+            <Kaart>
+              <p className="text-sm text-navy/50">Geen berichten in het postvak IN.</p>
+            </Kaart>
+          ) : (
+            <Kaart className="p-0">
+              <ul>
+                {gmail.map((m, i) => (
+                  <li key={m.id} className={i > 0 ? "border-t border-navy/10" : ""}>
+                    <a
+                      href={`https://mail.google.com/mail/u/0/#inbox/${m.id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-navy/[0.02] sm:px-5"
+                    >
+                      <Badge toon="groen">Gmail</Badge>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-navy">{m.onderwerp}</p>
+                        <p className="truncate text-xs text-navy/50">
+                          {m.van}
+                          {m.snippet ? ` — ${m.snippet}` : ""}
+                        </p>
+                      </div>
+                      <span className="hidden shrink-0 text-xs text-navy/40 sm:inline">
+                        {m.datum ? datumKort(m.datum) : ""}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </Kaart>
+          )}
         </div>
       )}
 
