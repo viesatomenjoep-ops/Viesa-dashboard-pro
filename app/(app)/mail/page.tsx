@@ -27,12 +27,19 @@ type Email = {
 export default async function MailPagina({
   searchParams,
 }: {
-  searchParams: { fout?: string; verzonden?: string; box?: string; nieuw?: string };
+  searchParams: {
+    fout?: string;
+    verzonden?: string;
+    box?: string;
+    nieuw?: string;
+    naar?: string;
+  };
 }) {
   const supabase = createClient();
   const geconfigureerd = resendGeconfigureerd();
   const box = searchParams.box; // "verzonden" | "inkomend" | undefined (alles)
-  const opstellen = searchParams.nieuw === "1";
+  // Opstelmodus ook openen als er een 'naar' meekomt (vanuit 'Mail deze klant').
+  const opstellen = searchParams.nieuw === "1" || Boolean(searchParams.naar);
 
   let emails: Email[] = [];
   let klanten: { id: string; bedrijf: string; email: string | null }[] = [];
@@ -127,6 +134,7 @@ export default async function MailPagina({
             verstuurActie={verstuurBericht}
             geconfigureerd={geconfigureerd}
             klanten={klanten}
+            initieelNaar={searchParams.naar ?? ""}
           />
         </Kaart>
       ) : schemaOntbreekt ? (

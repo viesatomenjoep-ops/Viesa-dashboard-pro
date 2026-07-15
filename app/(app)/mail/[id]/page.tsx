@@ -4,6 +4,7 @@ import { PaginaKop } from "@/components/ui/PaginaKop";
 import { Kaart } from "@/components/ui/Kaart";
 import { Badge } from "@/components/ui/Badge";
 import { createClient } from "@/lib/supabase/server";
+import { verwijderMail } from "../acties";
 
 export const dynamic = "force-dynamic";
 
@@ -45,12 +46,22 @@ export default async function MailDetail({ params }: { params: { id: string } })
       <PaginaKop
         titel="Bericht"
         actie={
-          <Link
-            href="/mail"
-            className="rounded-lg border border-navy/20 px-4 py-2 text-sm font-medium text-navy hover:bg-navy/5"
-          >
-            ← Naar inbox
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/mail"
+              className="rounded-lg border border-navy/20 px-4 py-2 text-sm font-medium text-navy hover:bg-navy/5"
+            >
+              ← Naar inbox
+            </Link>
+            <form action={verwijderMail.bind(null, e.id)}>
+              <button
+                type="submit"
+                className="rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+              >
+                Verwijderen
+              </button>
+            </form>
+          </div>
         }
       />
 

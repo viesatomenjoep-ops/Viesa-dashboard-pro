@@ -5,6 +5,14 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { verstuurMail, mailHtml } from "@/lib/resend";
 
+/** Verwijdert een e-mail uit het dashboard (log). */
+export async function verwijderMail(id: string) {
+  const supabase = createClient();
+  await supabase.from("emails").delete().eq("id", id);
+  revalidatePath("/mail");
+  redirect("/mail");
+}
+
 /** Verstuurt een e-mail via Resend en logt 'm in de emails-tabel. */
 export async function verstuurBericht(formData: FormData) {
   const naar = String(formData.get("naar") ?? "").trim();

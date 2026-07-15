@@ -17,14 +17,16 @@ export function MailOpstellen({
   verstuurActie,
   geconfigureerd,
   klanten = [],
+  initieelNaar = "",
 }: {
   verstuurActie: (formData: FormData) => void;
   geconfigureerd: boolean;
   klanten?: KlantOptie[];
+  initieelNaar?: string;
 }) {
   const [onderwerp, setOnderwerp] = useState("");
   const [tekst, setTekst] = useState("");
-  const [naar, setNaar] = useState("");
+  const [naar, setNaar] = useState(initieelNaar);
   const listId = useId();
 
   function kiesTemplate(key: string) {

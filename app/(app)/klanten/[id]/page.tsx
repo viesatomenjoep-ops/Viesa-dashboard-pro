@@ -96,6 +96,14 @@ export default async function KlantDetail({
           </h1>
         </div>
         <div className="flex flex-wrap gap-2">
+          {klant.email && (
+            <Link
+              href={`/mail?naar=${encodeURIComponent(klant.email)}`}
+              className="rounded-lg border border-navy/20 px-3 py-1.5 text-sm font-medium text-navy hover:bg-navy/5"
+            >
+              Mail deze klant
+            </Link>
+          )}
           <form action={maakOfferteVoorKlant.bind(null, klant.id)}>
             <button className="rounded-lg bg-oranje px-3 py-1.5 text-sm font-medium text-white hover:bg-oranje/90">
               Nieuwe offerte
