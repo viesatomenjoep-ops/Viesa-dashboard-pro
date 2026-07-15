@@ -109,6 +109,75 @@ export async function heropenFactuur(id: string) {
   revalidatePath("/");
 }
 
+/** Stuurt de klant een betaalherinnering (Resend), logt 'm en dateert de factuur. */
+export async function stuurFactuurHerinnering(id: string) {
+  const supabase = createClient();
+  const { data: f } = await supabase
+    .from("facturen")
+    .select("nummer, klant, klant_id, bedrag, btw_percentage, vervaldatum")
+    .eq("id", id)
+    .single();
+  if (!f) redirect(`/facturen/${id}?fout=` + encodeURIComponent("Factuur niet gevonden."));
+
+  let email: string | null = null;
+  if (f.klant_id) {
+    const { data: k } = await supabase
+      .from("klanten")
+      .select("email")
+      .eq("id", f.klant_id)
+      .single();
+    email = (k?.email as string | null) ?? null;
+  }
+  if (!email) {
+    redirect(
+      `/facturen/${id}?fout=` +
+        encodeURIComponent("Geen e-mailadres bij deze klant — koppel eerst een klant met e-mail."),
+    );
+  }
+
+  const totaal = f.bedrag * (1 + (f.btw_percentage || 0) / 100);
+  const totaalTekst = totaal.toLocaleString("nl-NL", { style: "currency", currency: "EUR" });
+  const onderwerp = `Herinnering: factuur ${f.nummer} nog openstaand`;
+  const tekst = `Beste ${f.klant ?? "relatie"},
+
+Uit onze administratie blijkt dat factuur ${f.nummer} van ${totaalTekst} nog niet is voldaan${
+    f.vervaldatum ? ` (vervaldatum ${new Date(f.vervaldatum).toLocaleDateString("nl-NL")})` : ""
+  }.
+
+Wellicht is het aan uw aandacht ontsnapt. Zou u de betaling op korte termijn willen voldoen? Heeft u de factuur inmiddels betaald, dan kunt u dit bericht als niet verzonden beschouwen.
+
+Bij vragen over deze factuur horen we het graag.`;
+
+  const { mailHtml, verstuurMail } = await import("@/lib/resend");
+  const html = mailHtml(onderwerp, tekst);
+
+  try {
+    const { id: providerId } = await verstuurMail({ naar: email, onderwerp, html, tekst });
+    await supabase.from("emails").insert({
+      richting: "uitgaand",
+      naar: email,
+      onderwerp,
+      html,
+      tekst,
+      status: "verzonden",
+      provider_id: providerId,
+      klant_id: f.klant_id ?? null,
+    });
+  } catch (e) {
+    redirect(
+      `/facturen/${id}?fout=` +
+        encodeURIComponent(e instanceof Error ? e.message : "Versturen mislukt."),
+    );
+  }
+
+  await supabase
+    .from("facturen")
+    .update({ herinnering_verstuurd_op: new Date().toISOString().slice(0, 10) })
+    .eq("id", id);
+  revalidatePath(`/facturen/${id}`);
+  redirect(`/facturen/${id}?opgeslagen=1`);
+}
+
 export async function verwijderFactuur(id: string) {
   const supabase = createClient();
   await supabase.from("facturen").delete().eq("id", id);

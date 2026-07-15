@@ -50,14 +50,19 @@ export default async function KlantDetail({
     { data: leads },
     { data: offertes },
     { data: facturen },
+    { data: audits },
     { data: projecten },
     { data: bestanden },
     { data: cats },
   ] = await Promise.all([
-    supabase.from("leads").select("id, bedrijf, status").eq("klant_id", klant.id),
-    supabase.from("offertes").select("id, nummer, titel, status, bedrag").eq("klant_id", klant.id),
-    supabase.from("facturen").select("id, nummer, status, bedrag").eq("klant_id", klant.id),
-    supabase.from("projecten").select("id, naam, status").eq("klant_id", klant.id),
+    supabase.from("leads").select("id, bedrijf, status, created_at").eq("klant_id", klant.id),
+    supabase
+      .from("offertes")
+      .select("id, nummer, titel, status, bedrag, created_at")
+      .eq("klant_id", klant.id),
+    supabase.from("facturen").select("id, nummer, status, bedrag, created_at").eq("klant_id", klant.id),
+    supabase.from("audits").select("id, nummer, titel, created_at").eq("klant_id", klant.id),
+    supabase.from("projecten").select("id, naam, status, created_at").eq("klant_id", klant.id),
     supabase
       .from("drive_links")
       .select("*")
@@ -66,6 +71,19 @@ export default async function KlantDetail({
       .order("created_at", { ascending: false }),
     supabase.from("bestand_categorieen").select("naam").order("naam"),
   ]);
+
+  // Klant-tijdlijn: alle gekoppelde gebeurtenissen chronologisch samengevoegd.
+  type TijdlijnItem = { datum: string; soort: string; toon: Parameters<typeof Badge>[0]["toon"]; tekst: string; href: string };
+  const tijdlijn: TijdlijnItem[] = [
+    { datum: klant.created_at, soort: "Klant", toon: "navy" as const, tekst: `${klant.bedrijf} toegevoegd`, href: `/klanten/${klant.id}` },
+    ...(leads ?? []).map((l) => ({ datum: l.created_at as string, soort: "Lead", toon: "grijs" as const, tekst: l.bedrijf as string, href: `/leads/${l.id}` })),
+    ...(offertes ?? []).map((o) => ({ datum: o.created_at as string, soort: "Offerte", toon: "oranje" as const, tekst: `${o.nummer}${o.titel ? ` — ${o.titel}` : ""}`, href: `/offertes/${o.id}` })),
+    ...(facturen ?? []).map((f) => ({ datum: f.created_at as string, soort: "Factuur", toon: "navy" as const, tekst: `${f.nummer} · ${euro(f.bedrag)}`, href: `/facturen/${f.id}` })),
+    ...(audits ?? []).map((a) => ({ datum: a.created_at as string, soort: "Audit", toon: "grijs" as const, tekst: `${a.nummer}${a.titel ? ` — ${a.titel}` : ""}`, href: `/audits/${a.id}` })),
+    ...(projecten ?? []).map((p) => ({ datum: p.created_at as string, soort: "Project", toon: "navy" as const, tekst: p.naam as string, href: `/projecten/${p.id}` })),
+  ]
+    .filter((t) => t.datum)
+    .sort((a, b) => b.datum.localeCompare(a.datum));
 
   const klantBestanden = (bestanden ?? []) as DriveLink[];
   const categorieen = Array.from(
@@ -192,6 +210,11 @@ export default async function KlantDetail({
               <Rij key={f.id} href={`/facturen/${f.id}`} links={f.nummer} rechts={euro(f.bedrag)} />
             ))}
           </Gekoppeld>
+          <Gekoppeld titel="Audits" leeg="Geen audits">
+            {(audits ?? []).map((a) => (
+              <Rij key={a.id} href={`/audits/${a.id}`} links={a.nummer} rechts={a.titel ?? ""} />
+            ))}
+          </Gekoppeld>
           <Gekoppeld titel="Projecten" leeg="Geen projecten">
             {(projecten ?? []).map((p) => (
               <Rij key={p.id} href={`/projecten/${p.id}`} links={p.naam} rechts={p.status} />
@@ -266,6 +289,28 @@ export default async function KlantDetail({
               ))}
             </ul>
           )}
+        </Kaart>
+      </div>
+
+      {/* Tijdlijn — alle gebeurtenissen van deze klant op een rij */}
+      <div className="mt-6">
+        <Kaart>
+          <h2 className="text-sm font-medium text-navy">Tijdlijn</h2>
+          <p className="mt-1 text-xs text-navy/60">
+            Alle leads, offertes, facturen, audits en projecten van deze klant — nieuwste eerst.
+          </p>
+          <ol className="mt-4 space-y-3 border-l border-navy/10 pl-4">
+            {tijdlijn.map((t, i) => (
+              <li key={i} className="relative">
+                <span className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-navy/30" />
+                <Link href={t.href} className="flex flex-wrap items-center gap-2 hover:opacity-80">
+                  <span className="w-24 shrink-0 text-xs text-navy/40">{datumKort(t.datum)}</span>
+                  <Badge toon={t.toon}>{t.soort}</Badge>
+                  <span className="text-sm text-navy">{t.tekst}</span>
+                </Link>
+              </li>
+            ))}
+          </ol>
         </Kaart>
       </div>
 

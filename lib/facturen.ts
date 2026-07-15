@@ -14,10 +14,18 @@ export type Factuur = {
   factuurdatum: string;
   vervaldatum: string | null;
   betaald_op: string | null;
+  herinnering_verstuurd_op: string | null;
   drive_pdf_url: string | null;
   created_at: string;
   updated_at: string;
 };
+
+/** Aantal dagen dat een openstaande factuur over de vervaldatum is (of null). */
+export function dagenTeLaat(f: Factuur): number | null {
+  if (!f.vervaldatum || f.status === "betaald" || f.status === "concept") return null;
+  const d = (Date.now() - new Date(f.vervaldatum).getTime()) / 86_400_000;
+  return d > 0 ? Math.floor(d) : null;
+}
 
 export const FACTUUR_STATUSSEN: { key: FactuurStatus; label: string }[] = [
   { key: "concept", label: "Concept" },

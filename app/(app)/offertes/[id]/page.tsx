@@ -97,6 +97,30 @@ export default async function OfferteDetail({
             </form>
           ))}
         </div>
+        {offerte.verzonden_op && (
+          <p className="mt-3 text-xs text-navy/50">
+            Verzonden op {new Date(offerte.verzonden_op).toLocaleDateString("nl-NL")}
+            {(() => {
+              const dagen = Math.floor(
+                (Date.now() - new Date(offerte.verzonden_op).getTime()) / 86_400_000,
+              );
+              return dagen > 0 ? ` · ${dagen} dag${dagen === 1 ? "" : "en"} geleden` : "";
+            })()}
+          </p>
+        )}
+        {(() => {
+          if (offerte.status !== "verzonden" && offerte.status !== "opvolgen") return null;
+          if (!offerte.verzonden_op) return null;
+          const dagen = Math.floor(
+            (Date.now() - new Date(offerte.verzonden_op).getTime()) / 86_400_000,
+          );
+          if (dagen < 5) return null;
+          return (
+            <p className="mt-3 rounded-lg bg-oranje/10 px-3 py-2 text-sm text-oranje">
+              Deze offerte staat al {dagen} dagen open — tijd om de klant op te volgen.
+            </p>
+          );
+        })()}
         <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-navy/10 pt-4">
           {offerte.status === "geaccepteerd" && (
             <form action={maakFactuurVanOfferte.bind(null, offerte.id)}>
