@@ -38,18 +38,6 @@ export default async function DashboardPagina() {
         </Link>
       </section>
 
-      {data.schemaOntbreekt && (
-        <div className="mt-6 rounded-xl border border-oranje/40 bg-oranje/5 p-4 text-sm text-navy">
-          <p className="font-medium text-oranje">Datamodel nog niet actief</p>
-          <p className="mt-1 text-navy/70">
-            Voer <code className="rounded bg-navy/5 px-1">0004_canoniek_datamodel.sql</code>{" "}
-            (en <code className="rounded bg-navy/5 px-1">0005</code>) uit in de Supabase
-            SQL Editor. Daarna is dit dashboard leeg tot je je eerste echte lead of
-            factuur toevoegt.
-          </p>
-        </div>
-      )}
-
       {/* Grafiek + follow-ups */}
       <section className="mt-8 grid gap-6 lg:grid-cols-3">
         <Kaart className="lg:col-span-2">
