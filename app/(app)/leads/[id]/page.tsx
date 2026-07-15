@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { LEAD_STATUSSEN, scoreToon, type Lead } from "@/lib/leads";
+import { LEAD_BRONNEN, LEAD_STATUSSEN, scoreToon, type Lead } from "@/lib/leads";
+import { haalCategorieen } from "@/lib/categorieen";
 import {
   activiteitTypeLabel,
   activiteitToon,
@@ -9,6 +10,7 @@ import {
 } from "@/lib/activiteiten";
 import { Kaart } from "@/components/ui/Kaart";
 import { Badge } from "@/components/ui/Badge";
+import { LandRegio } from "@/components/LandRegio";
 import { datumKort } from "@/lib/format";
 import { Markdown } from "@/components/ui/Markdown";
 import type { Notitie } from "@/lib/projecten";
@@ -40,7 +42,7 @@ export default async function LeadDetail({
   if (error || !data) notFound();
   const lead = data as Lead;
 
-  const [{ data: aData }, { data: nData }] = await Promise.all([
+  const [{ data: aData }, { data: nData }, categorieen] = await Promise.all([
     supabase
       .from("activiteiten")
       .select("*")
@@ -51,6 +53,7 @@ export default async function LeadDetail({
       .select("*")
       .eq("lead_id", lead.id)
       .order("created_at", { ascending: false }),
+    haalCategorieen(supabase),
   ]);
   const activiteiten = (aData ?? []) as Activiteit[];
   const notities = (nData ?? []) as Notitie[];
@@ -110,27 +113,49 @@ export default async function LeadDetail({
         {/* Bewerken */}
         <form action={werkLeadBij.bind(null, lead.id)} className="lg:col-span-2">
           <Kaart>
+            <Groep>Bedrijf &amp; vindplaats</Groep>
             <div className="grid gap-4 sm:grid-cols-2">
               <Veld label="Bedrijf" naam="bedrijf" waarde={lead.bedrijf} verplicht />
               <Veld label="Plaats" naam="plaats" waarde={lead.plaats} />
+              <Veld label="Adres" naam="adres" waarde={lead.adres} />
               <Veld label="Website" naam="website" waarde={lead.website} />
+              <LandRegio
+                land={lead.land ?? "Nederland"}
+                regio={lead.provincie ?? ""}
+                regioVeld="provincie"
+                regioLabel="Provincie"
+                className="w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
+                toonLabels
+              />
+              <Veld label="Google rating" naam="rating_google" waarde={lead.rating_google !== null ? String(lead.rating_google) : ""} type="number" />
+              <Veld label="Aantal reviews" naam="aantal_reviews" waarde={lead.aantal_reviews !== null ? String(lead.aantal_reviews) : ""} type="number" />
+              <Veld label="Google place_id" naam="place_id" waarde={lead.place_id} />
+            </div>
+
+            <Groep>Contactpersoon</Groep>
+            <div className="grid gap-4 sm:grid-cols-2">
               <Veld label="Contactpersoon" naam="contact_naam" waarde={lead.contact_naam} />
+              <Veld label="Functie" naam="functie" waarde={lead.functie} />
+              <Veld label="Voornaam" naam="voornaam" waarde={lead.voornaam} />
+              <Veld label="Achternaam" naam="achternaam" waarde={lead.achternaam} />
+              <Veld label="Seniority" naam="seniority" waarde={lead.seniority} />
+              <Veld label="Afdeling" naam="afdeling" waarde={lead.afdeling} />
               <Veld label="E-mail" naam="email" waarde={lead.email} type="email" />
-              <Veld label="Telefoon" naam="telefoon" waarde={lead.telefoon} />
-              <div>
-                <Etiket>Status</Etiket>
-                <select
-                  name="status"
-                  defaultValue={lead.status}
-                  className="w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
-                >
-                  {LEAD_STATUSSEN.map((s) => (
-                    <option key={s.key} value={s.key}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Veld label="Telefoon (algemeen)" naam="telefoon" waarde={lead.telefoon} />
+              <Veld label="Direct telefoonnr" naam="telefoon_contact" waarde={lead.telefoon_contact} />
+              <Veld label="LinkedIn" naam="linkedin" waarde={lead.linkedin} />
+              <Veld label="Twitter / X" naam="twitter" waarde={lead.twitter} />
+            </div>
+
+            <Groep>Kwalificatie &amp; pipeline</Groep>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Kies label="Bron" naam="bron" waarde={lead.bron} opties={LEAD_BRONNEN} />
+              <Kies label="Status" naam="status" waarde={lead.status} opties={LEAD_STATUSSEN} />
+              <KiesVrij label="IT-aanbod" naam="it_aanbod" waarde={lead.it_aanbod} opties={categorieen.it_aanbod} lijstId="lead-it_aanbod" />
+              <KiesVrij label="Platform" naam="platform" waarde={lead.platform} opties={categorieen.platform} lijstId="lead-platform" />
+              <KiesVrij label="Branche" naam="branche" waarde={lead.branche} opties={categorieen.branche} lijstId="lead-branche" />
+              <KiesVrij label="Bedrijfsgrootte" naam="bedrijfsgrootte" waarde={lead.bedrijfsgrootte} opties={categorieen.bedrijfsgrootte} lijstId="lead-bedrijfsgrootte" />
+              <Veld label="Aantal medewerkers" naam="aantal_medewerkers" waarde={lead.aantal_medewerkers !== null ? String(lead.aantal_medewerkers) : ""} type="number" />
               <Veld label="Score (0-100)" naam="score" waarde={String(lead.score)} type="number" />
               <Veld
                 label="Verwachte waarde (€)"
@@ -139,6 +164,7 @@ export default async function LeadDetail({
                 type="number"
               />
             </div>
+
             <div className="mt-4">
               <Etiket>Notities</Etiket>
               <textarea
@@ -348,6 +374,80 @@ export default async function LeadDetail({
 
 function Etiket({ children }: { children: React.ReactNode }) {
   return <label className="mb-1 block text-sm font-medium text-navy">{children}</label>;
+}
+
+/** Subkopje binnen het formulier. */
+function Groep({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="mb-3 mt-6 text-xs font-semibold uppercase tracking-wide text-navy/50 first:mt-0">
+      {children}
+    </p>
+  );
+}
+
+const veldCls =
+  "w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy";
+
+/** Vaste keuzelijst (bron, status). */
+function Kies<T extends string>({
+  label,
+  naam,
+  waarde,
+  opties,
+}: {
+  label: string;
+  naam: string;
+  waarde: T;
+  opties: { key: T; label: string }[];
+}) {
+  return (
+    <div>
+      <Etiket>{label}</Etiket>
+      <select name={naam} defaultValue={waarde} className={veldCls}>
+        {opties.map((o) => (
+          <option key={o.key} value={o.key}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+/**
+ * Combobox: kies een bestaande categorie of typ een nieuwe. De nieuwe waarde
+ * wordt bij opslaan als echte categorie bewaard (zie lib/categorieen.ts).
+ */
+function KiesVrij({
+  label,
+  naam,
+  waarde,
+  opties,
+  lijstId,
+}: {
+  label: string;
+  naam: string;
+  waarde: string | null;
+  opties: string[];
+  lijstId: string;
+}) {
+  return (
+    <div>
+      <Etiket>{label}</Etiket>
+      <input
+        name={naam}
+        defaultValue={waarde ?? ""}
+        list={lijstId}
+        placeholder="Kies of typ nieuw…"
+        className={veldCls}
+      />
+      <datalist id={lijstId}>
+        {opties.map((o) => (
+          <option key={o} value={o} />
+        ))}
+      </datalist>
+    </div>
+  );
 }
 
 function Veld({

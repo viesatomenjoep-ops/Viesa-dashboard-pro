@@ -6,14 +6,13 @@ import { LegeStaat } from "@/components/ui/LegeStaat";
 import { MassaImport } from "@/components/MassaImport";
 import { createClient } from "@/lib/supabase/server";
 import {
-  BRANCHES,
-  LANDEN,
   KLANT_TYPES,
   klantTypeToon,
   klantTypeLabel,
   klantTypeKort,
   type Klant,
 } from "@/lib/klanten";
+import { haalCategorieen } from "@/lib/categorieen";
 import { LandRegio } from "@/components/LandRegio";
 import { KlantFilters } from "@/components/KlantFilters";
 import { RijLink } from "@/components/ui/RijLink";
@@ -54,6 +53,16 @@ export default async function KlantenPagina({
     schemaOntbreekt = true;
     foutmelding = leesFout(e);
   }
+
+  // Branche-filter vullen met de werkelijke (vrije) categorieën + wat er al op
+  // klanten staat, zodat een net toegevoegde branche meteen filterbaar is.
+  const catLijsten = await haalCategorieen(supabase);
+  const brancheOpties = Array.from(
+    new Set([
+      ...catLijsten.branche,
+      ...klanten.map((k) => k.branche).filter((b): b is string => !!b),
+    ]),
+  ).sort((a, b) => a.localeCompare(b, "nl"));
 
   const q = (searchParams.q ?? "").toLowerCase();
   // Standaard op Nederland bij het openen; kiest de gebruiker 'Alle landen'
@@ -114,6 +123,7 @@ export default async function KlantenPagina({
         regio={searchParams.regio ?? ""}
         branche={searchParams.branche ?? ""}
         type={searchParams.type ?? ""}
+        branches={brancheOpties}
       />
 
       {schemaOntbreekt ? (
@@ -179,12 +189,17 @@ export default async function KlantenPagina({
             <input name="postcode" placeholder="Postcode" className={inputCls} />
             <input name="stad" placeholder="Stad" className={inputCls} />
             <LandRegio className={inputCls} />
-            <select name="branche" defaultValue="" className={inputCls}>
-              <option value="">Branche…</option>
-              {BRANCHES.map((b) => (
-                <option key={b} value={b}>{b}</option>
+            <input
+              name="branche"
+              list="nieuwe-klant-branches"
+              placeholder="Branche (kies of typ)"
+              className={inputCls}
+            />
+            <datalist id="nieuwe-klant-branches">
+              {brancheOpties.map((b) => (
+                <option key={b} value={b} />
               ))}
-            </select>
+            </datalist>
             <select name="type" defaultValue="prospect" className={inputCls}>
               {KLANT_TYPES.map((t) => (
                 <option key={t.key} value={t.key}>{t.label}</option>
@@ -209,14 +224,27 @@ export default async function KlantenPagina({
         velden={[
           { key: "bedrijf", label: "Bedrijf", synoniemen: ["bedrijfsnaam", "company"] },
           { key: "contact_naam", label: "Contactpersoon", synoniemen: ["contact"] },
+          { key: "voornaam", label: "Voornaam", synoniemen: ["first name", "firstname"] },
+          { key: "achternaam", label: "Achternaam", synoniemen: ["last name", "lastname"] },
+          { key: "functie", label: "Functie", synoniemen: ["title", "rol"] },
+          { key: "seniority", label: "Seniority", synoniemen: ["niveau"] },
+          { key: "afdeling", label: "Afdeling", synoniemen: ["department"] },
           { key: "email", label: "E-mail", synoniemen: ["e-mail", "mail"] },
           { key: "telefoon", label: "Telefoon", synoniemen: ["tel"] },
+          { key: "telefoon_contact", label: "Direct telefoonnr", synoniemen: ["direct", "mobiel"] },
           { key: "website", label: "Website", synoniemen: ["url"] },
           { key: "logo_url", label: "Logo-URL", synoniemen: ["logo", "logourl"] },
           { key: "stad", label: "Stad", synoniemen: ["plaats", "city"] },
           { key: "regio", label: "Regio", synoniemen: ["provincie"] },
           { key: "land", label: "Land" },
+          { key: "place_id", label: "Google place_id", synoniemen: ["placeid"] },
+          { key: "rating_google", label: "Google rating", synoniemen: ["rating", "sterren"] },
+          { key: "aantal_reviews", label: "Aantal reviews", synoniemen: ["reviews", "recensies"] },
+          { key: "it_aanbod", label: "IT-aanbod", synoniemen: ["aanbod", "dienst"] },
+          { key: "platform", label: "Platform", synoniemen: ["cms", "webshopplatform"] },
           { key: "branche", label: "Branche", synoniemen: ["niche", "sector"] },
+          { key: "bedrijfsgrootte", label: "Bedrijfsgrootte", synoniemen: ["grootte", "size"] },
+          { key: "aantal_medewerkers", label: "Aantal medewerkers", synoniemen: ["medewerkers", "employees", "fte"] },
           { key: "type", label: "Type" },
         ]}
       />

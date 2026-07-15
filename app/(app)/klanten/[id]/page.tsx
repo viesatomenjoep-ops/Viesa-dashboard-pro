@@ -5,12 +5,13 @@ import { Kaart } from "@/components/ui/Kaart";
 import { Badge } from "@/components/ui/Badge";
 import { euro, datumKort } from "@/lib/format";
 import {
-  BRANCHES,
+  KLANT_STATUSSEN,
   KLANT_TYPES,
   klantTypeToon,
   klantTypeLabel,
   type Klant,
 } from "@/lib/klanten";
+import { haalCategorieen } from "@/lib/categorieen";
 import { LandRegio } from "@/components/LandRegio";
 import { KlantLogoUpload } from "@/components/KlantLogoUpload";
 import { TerugKnop } from "@/components/ui/TerugKnop";
@@ -23,6 +24,7 @@ import {
 import {
   werkKlantBij,
   verwijderKlant,
+  registreerBenaderd,
   maakOfferteVoorKlant,
   maakFactuurVoorKlant,
   maakLeadVoorKlant,
@@ -54,6 +56,7 @@ export default async function KlantDetail({
     { data: projecten },
     { data: bestanden },
     { data: cats },
+    catLijsten,
   ] = await Promise.all([
     supabase.from("leads").select("id, bedrijf, status, created_at").eq("klant_id", klant.id),
     supabase
@@ -70,6 +73,7 @@ export default async function KlantDetail({
       .eq("context_id", klant.id)
       .order("created_at", { ascending: false }),
     supabase.from("bestand_categorieen").select("naam").order("naam"),
+    haalCategorieen(supabase),
   ]);
 
   // Klant-tijdlijn: alle gekoppelde gebeurtenissen chronologisch samengevoegd.
@@ -111,8 +115,18 @@ export default async function KlantDetail({
             {klant.bedrijf}
             <Badge toon={klantTypeToon(klant.type)}>{klantTypeLabel(klant.type)}</Badge>
           </h1>
+          <p className="mt-1 text-sm text-navy/50">
+            {klant.benaderd_count > 0
+              ? `${klant.benaderd_count}× benaderd${klant.laatst_benaderd_op ? ` · laatst ${datumKort(klant.laatst_benaderd_op)}` : ""}`
+              : "Nog niet benaderd"}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <form action={registreerBenaderd.bind(null, klant.id)}>
+            <button className="rounded-lg border border-oranje/40 px-3 py-1.5 text-sm font-medium text-oranje hover:bg-oranje/5">
+              Benaderd registreren
+            </button>
+          </form>
           {klant.email && (
             <Link
               href={`/mail?naar=${encodeURIComponent(klant.email)}`}
@@ -155,18 +169,55 @@ export default async function KlantDetail({
         {/* Gegevens */}
         <form action={werkKlantBij.bind(null, klant.id)} className="lg:col-span-2">
           <Kaart>
+            <Groep>Bedrijf &amp; adres</Groep>
             <div className="grid gap-3 sm:grid-cols-2">
               <Veld label="Bedrijf" naam="bedrijf" waarde={klant.bedrijf} verplicht />
-              <Veld label="Contactpersoon" naam="contact_naam" waarde={klant.contact_naam} />
-              <Veld label="E-mail" naam="email" waarde={klant.email} type="email" />
-              <Veld label="Telefoon" naam="telefoon" waarde={klant.telefoon} />
               <Veld label="Website" naam="website" waarde={klant.website} />
               <KlantLogoUpload initieel={klant.logo_url} />
               <Veld label="Straat + nr" naam="straat" waarde={klant.straat} />
               <Veld label="Postcode" naam="postcode" waarde={klant.postcode} />
               <Veld label="Stad" naam="stad" waarde={klant.stad} />
               <LandRegio land={klant.land} regio={klant.regio ?? ""} className={inputCls} toonLabels />
-              <Kies label="Branche" naam="branche" waarde={klant.branche} opties={[...BRANCHES]} leeg="Branche…" />
+            </div>
+
+            <Groep>Contactpersoon</Groep>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Veld label="Contactpersoon" naam="contact_naam" waarde={klant.contact_naam} />
+              <Veld label="Functie" naam="functie" waarde={klant.functie} />
+              <Veld label="Voornaam" naam="voornaam" waarde={klant.voornaam} />
+              <Veld label="Achternaam" naam="achternaam" waarde={klant.achternaam} />
+              <Veld label="Seniority" naam="seniority" waarde={klant.seniority} />
+              <Veld label="Afdeling" naam="afdeling" waarde={klant.afdeling} />
+              <Veld label="E-mail" naam="email" waarde={klant.email} type="email" />
+              <Veld label="Telefoon (algemeen)" naam="telefoon" waarde={klant.telefoon} />
+              <Veld label="Direct telefoonnr" naam="telefoon_contact" waarde={klant.telefoon_contact} />
+              <Veld label="LinkedIn" naam="linkedin" waarde={klant.linkedin} />
+              <Veld label="Twitter / X" naam="twitter" waarde={klant.twitter} />
+            </div>
+
+            <Groep>Vindplaats (Google)</Groep>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Veld label="Google rating" naam="rating_google" waarde={klant.rating_google !== null ? String(klant.rating_google) : ""} type="number" />
+              <Veld label="Aantal reviews" naam="aantal_reviews" waarde={klant.aantal_reviews !== null ? String(klant.aantal_reviews) : ""} type="number" />
+              <Veld label="Google place_id" naam="place_id" waarde={klant.place_id} />
+            </div>
+
+            <Groep>Kwalificatie</Groep>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <KiesVrij label="IT-aanbod" naam="it_aanbod" waarde={klant.it_aanbod} opties={catLijsten.it_aanbod} lijstId="klant-it_aanbod" />
+              <KiesVrij label="Platform" naam="platform" waarde={klant.platform} opties={catLijsten.platform} lijstId="klant-platform" />
+              <KiesVrij label="Branche" naam="branche" waarde={klant.branche} opties={catLijsten.branche} lijstId="klant-branche" />
+              <KiesVrij label="Bedrijfsgrootte" naam="bedrijfsgrootte" waarde={klant.bedrijfsgrootte} opties={catLijsten.bedrijfsgrootte} lijstId="klant-bedrijfsgrootte" />
+              <Veld label="Aantal medewerkers" naam="aantal_medewerkers" waarde={klant.aantal_medewerkers !== null ? String(klant.aantal_medewerkers) : ""} type="number" />
+              <Veld label="Score (0-100)" naam="score" waarde={String(klant.score ?? 50)} type="number" />
+              <div>
+                <label className="mb-1 block text-sm font-medium text-navy">Status</label>
+                <select name="status" defaultValue={klant.status ?? "actief"} className={inputCls}>
+                  {KLANT_STATUSSEN.map((s) => (
+                    <option key={s.key} value={s.key}>{s.label}</option>
+                  ))}
+                </select>
+              </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-navy">Type</label>
                 <select name="type" defaultValue={klant.type} className={inputCls}>
@@ -176,6 +227,7 @@ export default async function KlantDetail({
                 </select>
               </div>
             </div>
+
             <div className="mt-3">
               <label className="mb-1 block text-sm font-medium text-navy">Notities</label>
               <textarea name="notities" defaultValue={klant.notities ?? ""} rows={3} className={inputCls} />
@@ -340,28 +392,47 @@ function Veld({
   );
 }
 
-function Kies({
+/** Subkopje binnen het formulier. */
+function Groep({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="mb-3 mt-6 text-xs font-semibold uppercase tracking-wide text-navy/50 first:mt-0">
+      {children}
+    </p>
+  );
+}
+
+/**
+ * Combobox: kies een bestaande categorie of typ een nieuwe. De nieuwe waarde
+ * wordt bij opslaan als echte categorie bewaard (zie lib/categorieen.ts).
+ */
+function KiesVrij({
   label,
   naam,
   waarde,
   opties,
-  leeg,
+  lijstId,
 }: {
   label: string;
   naam: string;
   waarde: string | null;
   opties: string[];
-  leeg?: string;
+  lijstId: string;
 }) {
   return (
     <div>
       <label className="mb-1 block text-sm font-medium text-navy">{label}</label>
-      <select name={naam} defaultValue={waarde ?? ""} className={inputCls}>
-        {leeg && <option value="">{leeg}</option>}
+      <input
+        name={naam}
+        defaultValue={waarde ?? ""}
+        list={lijstId}
+        placeholder="Kies of typ nieuw…"
+        className={inputCls}
+      />
+      <datalist id={lijstId}>
         {opties.map((o) => (
-          <option key={o} value={o}>{o}</option>
+          <option key={o} value={o} />
         ))}
-      </select>
+      </datalist>
     </div>
   );
 }

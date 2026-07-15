@@ -3,8 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import type { LeadStatus } from "@/lib/leads";
+import type { LeadBron, LeadStatus } from "@/lib/leads";
 import type { ActiviteitType } from "@/lib/activiteiten";
+import { bewaarCategorieWaarden } from "@/lib/categorieen";
 
 /** Snel een lead toevoegen — alleen bedrijf is verplicht. */
 export async function maakLead(formData: FormData) {
@@ -66,6 +67,10 @@ export async function maakKlantVanLead(leadId: string) {
 
 export async function werkLeadBij(id: string, formData: FormData) {
   const supabase = createClient();
+  const it_aanbod = leeg(formData.get("it_aanbod"));
+  const platform = leeg(formData.get("platform"));
+  const branche = leeg(formData.get("branche"));
+  const bedrijfsgrootte = leeg(formData.get("bedrijfsgrootte"));
   const { error } = await supabase
     .from("leads")
     .update({
@@ -75,14 +80,45 @@ export async function werkLeadBij(id: string, formData: FormData) {
       contact_naam: leeg(formData.get("contact_naam")),
       email: leeg(formData.get("email")),
       telefoon: leeg(formData.get("telefoon")),
+      bron: (String(formData.get("bron") ?? "handmatig") || "handmatig") as LeadBron,
       status: (String(formData.get("status") ?? "nieuw") || "nieuw") as LeadStatus,
       score: Number(formData.get("score") ?? 0),
       verwachte_waarde: Number(formData.get("verwachte_waarde") ?? 0),
       openingszin: leeg(formData.get("openingszin")),
       notities: leeg(formData.get("notities")),
+      // geo
+      land: leeg(formData.get("land")) ?? "Nederland",
+      provincie: leeg(formData.get("provincie")),
+      // categorie
+      it_aanbod,
+      platform,
+      // Google-Places
+      adres: leeg(formData.get("adres")),
+      place_id: leeg(formData.get("place_id")),
+      rating_google: getal(formData.get("rating_google")),
+      aantal_reviews: geheelGetal(formData.get("aantal_reviews")),
+      // contactpersoon
+      voornaam: leeg(formData.get("voornaam")),
+      achternaam: leeg(formData.get("achternaam")),
+      functie: leeg(formData.get("functie")),
+      seniority: leeg(formData.get("seniority")),
+      afdeling: leeg(formData.get("afdeling")),
+      linkedin: leeg(formData.get("linkedin")),
+      twitter: leeg(formData.get("twitter")),
+      telefoon_contact: leeg(formData.get("telefoon_contact")),
+      // kwalificatie
+      branche,
+      bedrijfsgrootte,
+      aantal_medewerkers: geheelGetal(formData.get("aantal_medewerkers")),
     })
     .eq("id", id);
   if (error) redirect(`/leads/${id}?fout=` + encodeURIComponent(error.message));
+  await bewaarCategorieWaarden(supabase, [
+    { soort: "it_aanbod", waarde: it_aanbod },
+    { soort: "platform", waarde: platform },
+    { soort: "branche", waarde: branche },
+    { soort: "bedrijfsgrootte", waarde: bedrijfsgrootte },
+  ]);
   revalidatePath("/leads");
   revalidatePath(`/leads/${id}`);
   redirect(`/leads/${id}?opgeslagen=1`);
@@ -182,7 +218,31 @@ export async function importeerLeads(
         score: Number.isFinite(score) ? Math.min(100, Math.max(0, score)) : 0,
         verwachte_waarde: Number.isFinite(waarde) ? waarde : 0,
         status: "nieuw" as const,
-        bron: "handmatig" as const,
+        // Geïmporteerde leads herkenbaar maken (0023: bron-check kent 'import').
+        bron: "import" as const,
+        // geo + categorie (0024)
+        land: r.land || "Nederland",
+        provincie: r.provincie || null,
+        it_aanbod: r.it_aanbod || null,
+        platform: r.platform || null,
+        // Google-Places (0023)
+        adres: r.adres || null,
+        place_id: r.place_id || null,
+        rating_google: teksNaarGetal(r.rating_google),
+        aantal_reviews: teksNaarGeheel(r.aantal_reviews),
+        // contactpersoon (0023)
+        voornaam: r.voornaam || null,
+        achternaam: r.achternaam || null,
+        functie: r.functie || null,
+        seniority: r.seniority || null,
+        afdeling: r.afdeling || null,
+        linkedin: r.linkedin || null,
+        twitter: r.twitter || null,
+        telefoon_contact: r.telefoon_contact || null,
+        // kwalificatie (0026)
+        branche: r.branche || null,
+        bedrijfsgrootte: r.bedrijfsgrootte || null,
+        aantal_medewerkers: teksNaarGeheel(r.aantal_medewerkers),
       };
     })
     .filter((r) => r.bedrijf.length > 0);
@@ -191,6 +251,12 @@ export async function importeerLeads(
   const supabase = createClient();
   const { error } = await supabase.from("leads").insert(schoon);
   if (error) return { aantal: 0, fout: error.message };
+  await bewaarCategorieWaarden(supabase, [
+    ...schoon.map((r) => ({ soort: "it_aanbod" as const, waarde: r.it_aanbod })),
+    ...schoon.map((r) => ({ soort: "platform" as const, waarde: r.platform })),
+    ...schoon.map((r) => ({ soort: "branche" as const, waarde: r.branche })),
+    ...schoon.map((r) => ({ soort: "bedrijfsgrootte" as const, waarde: r.bedrijfsgrootte })),
+  ]);
   revalidatePath("/leads");
   return { aantal: schoon.length };
 }
@@ -198,4 +264,26 @@ export async function importeerLeads(
 function leeg(v: FormDataEntryValue | null): string | null {
   const s = String(v ?? "").trim();
   return s.length ? s : null;
+}
+
+/** Kommagetal (bv. Google-rating) uit een formulierveld; null bij leeg/ongeldig. */
+function getal(v: FormDataEntryValue | null): number | null {
+  return teksNaarGetal(String(v ?? ""));
+}
+
+/** Geheel getal uit een formulierveld; null bij leeg/ongeldig. */
+function geheelGetal(v: FormDataEntryValue | null): number | null {
+  return teksNaarGeheel(String(v ?? ""));
+}
+
+function teksNaarGetal(s: string | undefined | null): number | null {
+  const t = String(s ?? "").trim().replace(",", ".");
+  if (!t) return null;
+  const n = Number(t);
+  return Number.isFinite(n) ? n : null;
+}
+
+function teksNaarGeheel(s: string | undefined | null): number | null {
+  const n = teksNaarGetal(s);
+  return n === null ? null : Math.round(n);
 }

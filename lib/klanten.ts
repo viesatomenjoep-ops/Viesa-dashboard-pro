@@ -7,6 +7,9 @@ export type KlantType =
   | "hot_lead"
   | "cold_lead";
 
+/** Relatie-status uit migratie 0024 (los van het commerciële `type`). */
+export type KlantStatus = "actief" | "inactief" | "prospect";
+
 export type Klant = {
   id: string;
   bedrijf: string;
@@ -23,9 +26,37 @@ export type Klant = {
   type: KlantType;
   logo_url: string | null;
   notities: string | null;
+  // 0024: contactpersoon + Google-Places + categorie
+  place_id: string | null;
+  rating_google: number | null;
+  aantal_reviews: number | null;
+  voornaam: string | null;
+  achternaam: string | null;
+  functie: string | null;
+  seniority: string | null;
+  afdeling: string | null;
+  linkedin: string | null;
+  twitter: string | null;
+  telefoon_contact: string | null;
+  it_aanbod: string | null;
+  platform: string | null;
+  score: number;
+  status: KlantStatus;
+  // 0025: benaderd-registratie
+  benaderd_count: number;
+  laatst_benaderd_op: string | null;
+  // 0026: kwalificatie
+  bedrijfsgrootte: string | null;
+  aantal_medewerkers: number | null;
   created_at: string;
   updated_at: string;
 };
+
+export const KLANT_STATUSSEN: { key: KlantStatus; label: string }[] = [
+  { key: "actief", label: "Actief" },
+  { key: "inactief", label: "Inactief" },
+  { key: "prospect", label: "Prospect" },
+];
 
 export const KLANT_TYPES: { key: KlantType; label: string }[] = [
   { key: "hot_lead", label: "Hot lead" },

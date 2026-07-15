@@ -23,13 +23,18 @@ export function KlantFilters({
   regio = "",
   branche = "",
   type = "",
+  branches,
 }: {
   q?: string;
   land?: string;
   regio?: string;
   branche?: string;
   type?: string;
+  /** Branche-opties; standaard de vaste lijst, maar de klantenlijst geeft hier
+   *  de werkelijke (vrije) categorieën door zodat nieuwe branches verschijnen. */
+  branches?: string[];
 }) {
+  const brancheOpties = branches && branches.length ? branches : [...BRANCHES];
   const [gekozenLand, setGekozenLand] = useState(land);
   const regios = gekozenLand ? REGIOS_PER_LAND[gekozenLand] ?? [] : REGIOS;
 
@@ -61,7 +66,7 @@ export function KlantFilters({
       </select>
       <select name="branche" defaultValue={branche} className={`${inputCls} lg:w-48`}>
         <option value="">Alle branches</option>
-        {BRANCHES.map((b) => (
+        {brancheOpties.map((b) => (
           <option key={b} value={b}>{b}</option>
         ))}
       </select>

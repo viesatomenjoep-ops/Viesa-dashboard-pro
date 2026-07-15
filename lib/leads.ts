@@ -1,7 +1,7 @@
 /** Types en constanten voor de leads-/pipeline-module (canoniek datamodel). */
 
 export type LeadStatus = "nieuw" | "contact_gehad" | "audit_offerte" | "gewonnen";
-export type LeadBron = "prospector" | "handmatig";
+export type LeadBron = "prospector" | "handmatig" | "import";
 
 export type LeadSignaal = {
   type: string;
@@ -26,9 +26,39 @@ export type Lead = {
   status: LeadStatus;
   positie: number;
   notities: string | null;
+  // 0024: geo + categorie
+  land: string | null;
+  provincie: string | null;
+  it_aanbod: string | null;
+  platform: string | null;
+  // 0023: Google-Places
+  place_id: string | null;
+  adres: string | null;
+  rating_google: number | null;
+  aantal_reviews: number | null;
+  // 0023: contactpersoon
+  voornaam: string | null;
+  achternaam: string | null;
+  functie: string | null;
+  seniority: string | null;
+  afdeling: string | null;
+  linkedin: string | null;
+  twitter: string | null;
+  telefoon_contact: string | null;
+  // 0026: kwalificatie
+  branche: string | null;
+  bedrijfsgrootte: string | null;
+  aantal_medewerkers: number | null;
   created_at: string;
   updated_at: string;
 };
+
+/** Herkomst van een lead. */
+export const LEAD_BRONNEN: { key: LeadBron; label: string }[] = [
+  { key: "handmatig", label: "Handmatig" },
+  { key: "prospector", label: "Prospector" },
+  { key: "import", label: "Import" },
+];
 
 /** De kanban-kolommen, in volgorde. */
 export const LEAD_STATUSSEN: { key: LeadStatus; label: string }[] = [

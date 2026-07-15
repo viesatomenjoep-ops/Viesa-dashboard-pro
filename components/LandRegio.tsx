@@ -13,11 +13,16 @@ export function LandRegio({
   regio = "",
   className = "",
   toonLabels = false,
+  regioVeld = "regio",
+  regioLabel = "Regio",
 }: {
   land?: string;
   regio?: string;
   className?: string;
   toonLabels?: boolean;
+  /** Naam van het regio-veld: klanten posten `regio`, leads `provincie`. */
+  regioVeld?: string;
+  regioLabel?: string;
 }) {
   const [gekozenLand, setGekozenLand] = useState(land || "Nederland");
   const regios = REGIOS_PER_LAND[gekozenLand] ?? [];
@@ -38,10 +43,10 @@ export function LandRegio({
         </select>
       </div>
       <div>
-        {toonLabels && <label className="mb-1 block text-sm font-medium text-navy">Regio</label>}
+        {toonLabels && <label className="mb-1 block text-sm font-medium text-navy">{regioLabel}</label>}
         {/* key op het land: bij wisselen van land reset de regiokeuze netjes. */}
-        <select name="regio" defaultValue={regio} key={gekozenLand} className={className}>
-          <option value="">Regio…</option>
+        <select name={regioVeld} defaultValue={regio} key={gekozenLand} className={className}>
+          <option value="">{regioLabel}…</option>
           {regios.map((r) => (
             <option key={r} value={r}>{r}</option>
           ))}
