@@ -12,6 +12,7 @@ import {
   type Klant,
 } from "@/lib/klanten";
 import { LandRegio } from "@/components/LandRegio";
+import { KlantLogoUpload } from "@/components/KlantLogoUpload";
 import {
   DRIVE_LINK_TYPES,
   driveTypeLabel,
@@ -135,7 +136,7 @@ export default async function KlantDetail({
               <Veld label="E-mail" naam="email" waarde={klant.email} type="email" />
               <Veld label="Telefoon" naam="telefoon" waarde={klant.telefoon} />
               <Veld label="Website" naam="website" waarde={klant.website} />
-              <Veld label="Logo-URL (offerte)" naam="logo_url" waarde={klant.logo_url} type="url" />
+              <KlantLogoUpload initieel={klant.logo_url} />
               <Veld label="Straat + nr" naam="straat" waarde={klant.straat} />
               <Veld label="Postcode" naam="postcode" waarde={klant.postcode} />
               <Veld label="Stad" naam="stad" waarde={klant.stad} />
