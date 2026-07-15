@@ -10,6 +10,7 @@ export type OfferteStatus =
 export type Offerte = {
   id: string;
   lead_id: string | null;
+  klant_id: string | null;
   klant: string | null;
   nummer: string;
   titel: string;

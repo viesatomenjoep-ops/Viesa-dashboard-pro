@@ -10,12 +10,14 @@ export function Briefpapier({
   documenttitel,
   documentnummer,
   klant,
+  klantLogo,
   datumRegel,
   children,
 }: {
   documenttitel: string;
   documentnummer: string;
   klant?: string | null;
+  klantLogo?: string | null;
   datumRegel?: string;
   children: ReactNode;
 }) {
@@ -53,7 +55,17 @@ export function Briefpapier({
         {klant && (
           <div className="rounded-lg bg-achtergrond px-4 py-3 text-sm">
             <div className="text-navy/50">Aan</div>
-            <div className="font-medium text-navy">{klant}</div>
+            <div className="mt-1 flex items-center gap-2">
+              {klantLogo && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={klantLogo}
+                  alt={`Logo ${klant}`}
+                  className="h-8 max-w-[120px] object-contain"
+                />
+              )}
+              <span className="font-medium text-navy">{klant}</span>
+            </div>
           </div>
         )}
       </div>

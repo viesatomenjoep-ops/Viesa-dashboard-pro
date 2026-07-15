@@ -25,6 +25,7 @@ function klantVelden(formData: FormData) {
     land: leeg(formData.get("land")) ?? "Nederland",
     branche: leeg(formData.get("branche")),
     type: (String(formData.get("type") ?? "prospect") || "prospect") as KlantType,
+    logo_url: leeg(formData.get("logo_url")),
     notities: leeg(formData.get("notities")),
   };
 }
@@ -74,6 +75,7 @@ export async function importeerKlanten(
       land: r.land || "Nederland",
       branche: r.branche || null,
       type: (["prospect", "klant", "partner"].includes(r.type) ? r.type : "prospect") as KlantType,
+      logo_url: r.logo_url || null,
     }))
     .filter((r) => r.bedrijf.length > 0);
 

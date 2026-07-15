@@ -177,6 +177,7 @@ export default async function KlantenPagina({
             <input name="email" type="email" placeholder="E-mail" className={inputCls} />
             <input name="telefoon" placeholder="Telefoon" className={inputCls} />
             <input name="website" placeholder="Website" className={inputCls} />
+            <input name="logo_url" type="url" placeholder="Logo-URL (voor offertes)" className={inputCls} />
             <input name="straat" placeholder="Straat + nr" className={inputCls} />
             <input name="postcode" placeholder="Postcode" className={inputCls} />
             <input name="stad" placeholder="Stad" className={inputCls} />
@@ -224,6 +225,7 @@ export default async function KlantenPagina({
           { key: "email", label: "E-mail", synoniemen: ["e-mail", "mail"] },
           { key: "telefoon", label: "Telefoon", synoniemen: ["tel"] },
           { key: "website", label: "Website", synoniemen: ["url"] },
+          { key: "logo_url", label: "Logo-URL", synoniemen: ["logo", "logourl"] },
           { key: "stad", label: "Stad", synoniemen: ["plaats", "city"] },
           { key: "regio", label: "Regio", synoniemen: ["provincie"] },
           { key: "land", label: "Land" },

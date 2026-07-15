@@ -20,6 +20,17 @@ export default async function OffertePrint({
   if (error || !data) notFound();
   const offerte = data as Offerte;
 
+  // Klantlogo ophalen (indien aan een klant gekoppeld) voor op het briefpapier.
+  let klantLogo: string | null = null;
+  if (offerte.klant_id) {
+    const { data: klant } = await supabase
+      .from("klanten")
+      .select("logo_url")
+      .eq("id", offerte.klant_id)
+      .maybeSingle();
+    klantLogo = (klant?.logo_url as string | null) ?? null;
+  }
+
   return (
     <div className="min-h-screen bg-achtergrond py-6">
       <PrintKnop />
@@ -28,6 +39,7 @@ export default async function OffertePrint({
           documenttitel="Offerte"
           documentnummer={offerte.nummer}
           klant={offerte.klant}
+          klantLogo={klantLogo}
           datumRegel={`Datum: ${datumKort(offerte.created_at)}`}
         >
           <h2 className="text-lg font-semibold text-navy">{offerte.titel}</h2>

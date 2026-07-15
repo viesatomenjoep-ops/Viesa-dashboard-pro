@@ -50,7 +50,15 @@ export default async function KlantDetail({
           <Link href="/klanten" className="text-sm text-navy/60 hover:underline">
             ← Terug naar klanten
           </Link>
-          <h1 className="mt-1 flex items-center gap-2 text-2xl font-semibold text-navy">
+          <h1 className="mt-1 flex items-center gap-3 text-2xl font-semibold text-navy">
+            {klant.logo_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={klant.logo_url}
+                alt={`Logo ${klant.bedrijf}`}
+                className="h-8 w-8 rounded object-contain"
+              />
+            )}
             {klant.bedrijf}
             <Badge toon={klantTypeToon(klant.type)}>{klantTypeLabel(klant.type)}</Badge>
           </h1>
@@ -93,6 +101,7 @@ export default async function KlantDetail({
               <Veld label="E-mail" naam="email" waarde={klant.email} type="email" />
               <Veld label="Telefoon" naam="telefoon" waarde={klant.telefoon} />
               <Veld label="Website" naam="website" waarde={klant.website} />
+              <Veld label="Logo-URL (offerte)" naam="logo_url" waarde={klant.logo_url} type="url" />
               <Veld label="Straat + nr" naam="straat" waarde={klant.straat} />
               <Veld label="Postcode" naam="postcode" waarde={klant.postcode} />
               <Veld label="Stad" naam="stad" waarde={klant.stad} />

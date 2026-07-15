@@ -16,6 +16,7 @@ export type Klant = {
   land: string;
   branche: string | null;
   type: KlantType;
+  logo_url: string | null;
   notities: string | null;
   created_at: string;
   updated_at: string;
