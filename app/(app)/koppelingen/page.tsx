@@ -9,12 +9,21 @@ import {
   integratieStatusLabel,
   type Integratie,
 } from "@/lib/integraties";
-import { wijzigIntegratieStatus } from "./acties";
+import { outlookStatus } from "@/lib/microsoft";
+import { wijzigIntegratieStatus, ontkoppelOutlook } from "./acties";
 
 export default async function KoppelingenPagina() {
   const supabase = createClient();
   let integraties: Integratie[] = [];
   let schemaOntbreekt = false;
+
+  // Echte Outlook-status uit ms_tokens (best effort).
+  let outlook: { verbonden: boolean; email?: string } = { verbonden: false };
+  try {
+    outlook = await outlookStatus();
+  } catch {
+    /* ms_tokens nog niet aanwezig */
+  }
 
   try {
     const { data, error } = await supabase.from("integraties").select("*");
@@ -64,7 +73,12 @@ export default async function KoppelingenPagina() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {DIENSTEN.map((d) => {
-            const status = statusVan(d.key);
+            const isOutlook = d.key === "outlook";
+            const status = isOutlook
+              ? outlook.verbonden
+                ? "verbonden"
+                : "niet_verbonden"
+              : statusVan(d.key);
             const verbonden = status === "verbonden";
             const nieuweStatus = verbonden ? "niet_verbonden" : "verbonden";
             return (
@@ -77,8 +91,35 @@ export default async function KoppelingenPagina() {
                     </Badge>
                   </div>
                   <p className="mt-2 text-sm text-navy/60">{d.omschrijving}</p>
+                  {isOutlook && outlook.verbonden && outlook.email && (
+                    <p className="mt-1 text-xs text-navy/40">{outlook.email}</p>
+                  )}
                 </div>
-                {d.key === "gmail" && !verbonden ? (
+
+                {isOutlook ? (
+                  <div className="mt-4 space-y-2">
+                    <a
+                      href="/api/auth/microsoft"
+                      className={`block w-full rounded-lg border px-3 py-2 text-center text-sm font-medium transition-colors ${
+                        outlook.verbonden
+                          ? "border-navy/20 text-navy hover:bg-navy/5"
+                          : "border-oranje bg-oranje text-white hover:bg-oranje/90"
+                      }`}
+                    >
+                      {outlook.verbonden ? "Opnieuw koppelen" : "Outlook verbinden"}
+                    </a>
+                    {outlook.verbonden && (
+                      <form action={ontkoppelOutlook}>
+                        <button
+                          type="submit"
+                          className="w-full rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                        >
+                          Ontkoppelen
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                ) : d.key === "gmail" && !verbonden ? (
                   <a
                     href="/api/google/oauth/start"
                     className="mt-4 block w-full rounded-lg border border-oranje bg-oranje px-3 py-2 text-center text-sm font-medium text-white hover:bg-oranje/90"
