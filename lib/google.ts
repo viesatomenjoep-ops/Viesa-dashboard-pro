@@ -114,3 +114,66 @@ export async function gmailSend(
   );
   if (!res.ok) throw new Error(`Gmail send ${res.status}: ${await res.text()}`);
 }
+
+/** Eén afspraak uit Google Calendar, genormaliseerd voor de Agenda-pagina. */
+export type AgendaItem = {
+  id: string;
+  titel: string;
+  start: string; // ISO-datum(-tijd)
+  eind: string | null;
+  heleDag: boolean;
+  locatie: string | null;
+  link: string | null;
+};
+
+/**
+ * Haalt komende afspraken op uit de primaire Google-agenda.
+ * `dagen` bepaalt hoe ver vooruit gekeken wordt (standaard 30).
+ */
+export async function googleCalendarEvents(
+  accessToken: string,
+  opts?: { dagen?: number; max?: number },
+): Promise<AgendaItem[]> {
+  const dagen = opts?.dagen ?? 30;
+  const max = opts?.max ?? 50;
+  const nu = new Date();
+  const tot = new Date(nu.getTime() + dagen * 24 * 60 * 60 * 1000);
+
+  const p = new URLSearchParams({
+    timeMin: nu.toISOString(),
+    timeMax: tot.toISOString(),
+    singleEvents: "true",
+    orderBy: "startTime",
+    maxResults: String(max),
+  });
+
+  const res = await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/primary/events?${p.toString()}`,
+    { headers: { Authorization: `Bearer ${accessToken}` }, cache: "no-store" },
+  );
+  if (!res.ok) throw new Error(`Calendar ${res.status}: ${await res.text()}`);
+
+  const data = (await res.json()) as {
+    items?: Array<{
+      id: string;
+      summary?: string;
+      location?: string;
+      htmlLink?: string;
+      start?: { dateTime?: string; date?: string };
+      end?: { dateTime?: string; date?: string };
+    }>;
+  };
+
+  return (data.items ?? []).map((e) => {
+    const heleDag = Boolean(e.start?.date && !e.start?.dateTime);
+    return {
+      id: e.id,
+      titel: e.summary?.trim() || "(geen titel)",
+      start: e.start?.dateTime ?? e.start?.date ?? "",
+      eind: e.end?.dateTime ?? e.end?.date ?? null,
+      heleDag,
+      locatie: e.location ?? null,
+      link: e.htmlLink ?? null,
+    };
+  });
+}

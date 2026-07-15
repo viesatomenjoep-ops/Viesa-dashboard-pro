@@ -5,7 +5,10 @@ export type NavSectie = { titel: string; items: NavItem[] };
 export const navSecties: NavSectie[] = [
   {
     titel: "Overzicht",
-    items: [{ label: "Dashboard", href: "/" }],
+    items: [
+      { label: "Dashboard", href: "/" },
+      { label: "Agenda", href: "/agenda" },
+    ],
   },
   {
     titel: "Commercieel",
