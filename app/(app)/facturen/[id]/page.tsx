@@ -48,14 +48,24 @@ export default async function FactuurDetail({
           </h1>
           {f.klant && <p className="text-sm text-navy/50">{f.klant}</p>}
         </div>
-        <form action={verwijderFactuur.bind(null, f.id)}>
-          <button
-            type="submit"
-            className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+        <div className="flex items-center gap-2">
+          <a
+            href={`/print/factuur/${f.id}`}
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-lg border border-navy/20 px-3 py-1.5 text-sm font-medium text-navy hover:bg-navy/5"
           >
-            Verwijderen
-          </button>
-        </form>
+            Exporteer als PDF
+          </a>
+          <form action={verwijderFactuur.bind(null, f.id)}>
+            <button
+              type="submit"
+              className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+            >
+              Verwijderen
+            </button>
+          </form>
+        </div>
       </div>
 
       {searchParams.opgeslagen && (

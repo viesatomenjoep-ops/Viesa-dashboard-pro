@@ -48,14 +48,24 @@ export default async function OfferteDetail({
             </Badge>
           </h1>
         </div>
-        <form action={verwijderOfferte.bind(null, offerte.id)}>
-          <button
-            type="submit"
-            className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+        <div className="flex items-center gap-2">
+          <a
+            href={`/print/offerte/${offerte.id}`}
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-lg border border-navy/20 px-3 py-1.5 text-sm font-medium text-navy hover:bg-navy/5"
           >
-            Verwijderen
-          </button>
-        </form>
+            Exporteer als PDF
+          </a>
+          <form action={verwijderOfferte.bind(null, offerte.id)}>
+            <button
+              type="submit"
+              className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+            >
+              Verwijderen
+            </button>
+          </form>
+        </div>
       </div>
 
       {searchParams.opgeslagen && (
