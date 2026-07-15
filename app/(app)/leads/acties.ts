@@ -25,6 +25,45 @@ export async function maakLead(formData: FormData) {
   redirect("/leads");
 }
 
+/**
+ * Maakt van een lead een klant (type prospect) met de leadgegevens en koppelt
+ * de lead aan die klant (klant_id). Bestond er al een koppeling, dan gaan we
+ * naar die klant.
+ */
+export async function maakKlantVanLead(leadId: string) {
+  const supabase = createClient();
+  const { data: lead } = await supabase
+    .from("leads")
+    .select("*")
+    .eq("id", leadId)
+    .single();
+  if (!lead) redirect("/leads");
+
+  if (lead.klant_id) redirect(`/klanten/${lead.klant_id}`);
+
+  const { data: klant, error } = await supabase
+    .from("klanten")
+    .insert({
+      bedrijf: lead.bedrijf,
+      contact_naam: lead.contact_naam ?? null,
+      email: lead.email ?? null,
+      telefoon: lead.telefoon ?? null,
+      website: lead.website ?? null,
+      stad: lead.plaats ?? null,
+      type: "prospect",
+    })
+    .select("id")
+    .single();
+  if (error || !klant) {
+    redirect(`/leads/${leadId}?fout=` + encodeURIComponent(error?.message ?? "Mislukt."));
+  }
+
+  await supabase.from("leads").update({ klant_id: klant.id }).eq("id", leadId);
+  revalidatePath("/klanten");
+  revalidatePath(`/leads/${leadId}`);
+  redirect(`/klanten/${klant.id}`);
+}
+
 export async function werkLeadBij(id: string, formData: FormData) {
   const supabase = createClient();
   const { error } = await supabase

@@ -12,9 +12,11 @@ import { Badge } from "@/components/ui/Badge";
 import { datumKort } from "@/lib/format";
 import { Markdown } from "@/components/ui/Markdown";
 import type { Notitie } from "@/lib/projecten";
+import { BevestigKnop } from "@/components/ui/BevestigKnop";
 import {
   werkLeadBij,
   verwijderLead,
+  maakKlantVanLead,
   planFollowup,
   maakActiviteit,
   rondActiviteitAf,
@@ -66,14 +68,31 @@ export default async function LeadDetail({
           </h1>
           {lead.plaats && <p className="text-sm text-navy/50">{lead.plaats}</p>}
         </div>
-        <form action={verwijderLead.bind(null, lead.id)}>
-          <button
-            type="submit"
+        <div className="flex flex-wrap items-center gap-2">
+          {lead.klant_id ? (
+            <Link
+              href={`/klanten/${lead.klant_id}`}
+              className="rounded-lg border border-navy/20 px-3 py-1.5 text-sm font-medium text-navy hover:bg-navy/5"
+            >
+              Bekijk klant
+            </Link>
+          ) : (
+            <form action={maakKlantVanLead.bind(null, lead.id)}>
+              <button
+                type="submit"
+                className="rounded-lg bg-oranje px-3 py-1.5 text-sm font-medium text-white hover:bg-oranje/90"
+              >
+                Maak klant (prospect)
+              </button>
+            </form>
+          )}
+          <BevestigKnop
+            actie={verwijderLead.bind(null, lead.id)}
+            vraag={`Weet je zeker dat je lead ${lead.bedrijf} wilt verwijderen?`}
+            label="Verwijderen"
             className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
-          >
-            Verwijderen
-          </button>
-        </form>
+          />
+        </div>
       </div>
 
       {searchParams.opgeslagen && (

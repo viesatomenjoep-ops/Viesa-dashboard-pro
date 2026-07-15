@@ -22,6 +22,7 @@ export type Lead = {
   verwachte_waarde: number;
   signalen: LeadSignaal[];
   openingszin: string | null;
+  klant_id: string | null;
   status: LeadStatus;
   positie: number;
   notities: string | null;

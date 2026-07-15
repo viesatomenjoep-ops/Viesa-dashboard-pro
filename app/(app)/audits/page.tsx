@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { Kaart } from "@/components/ui/Kaart";
 import { Badge } from "@/components/ui/Badge";
@@ -5,10 +6,11 @@ import { LegeStaat } from "@/components/ui/LegeStaat";
 import { createClient } from "@/lib/supabase/server";
 import { auditStatusToon, AUDIT_STATUSSEN, type Audit } from "@/lib/audits";
 import { KlantZoeker } from "@/components/KlantZoeker";
+import { BevestigKnop } from "@/components/ui/BevestigKnop";
 import { datumKort } from "@/lib/format";
 import { RijLink } from "@/components/ui/RijLink";
 import { leesFout } from "@/lib/fout";
-import { maakAudit } from "./acties";
+import { maakAudit, verwijderAudit } from "./acties";
 
 export const dynamic = "force-dynamic";
 
@@ -91,6 +93,7 @@ export default async function AuditsPagina({
                 <th className="px-3 py-3 font-medium sm:px-5">Titel</th>
                 <th className="px-3 py-3 font-medium sm:px-5">Status</th>
                 <th className="hidden px-3 py-3 font-medium sm:table-cell sm:px-5">Aangemaakt</th>
+                <th className="px-3 py-3 text-right font-medium sm:px-5">Acties</th>
               </tr>
             </thead>
             <tbody>
@@ -101,7 +104,7 @@ export default async function AuditsPagina({
                   className="border-b border-navy/10 last:border-0 hover:bg-navy/[0.02]"
                 >
                   <td className="px-3 py-3 font-medium text-navy sm:px-5">{a.nummer}</td>
-                  <td className="max-w-[40vw] truncate px-3 py-3 text-navy sm:max-w-none sm:px-5">
+                  <td className="max-w-[36vw] truncate px-3 py-3 text-navy sm:max-w-none sm:px-5">
                     {a.titel}
                   </td>
                   <td className="px-3 py-3 sm:px-5">
@@ -111,6 +114,21 @@ export default async function AuditsPagina({
                   </td>
                   <td className="hidden px-3 py-3 text-navy/50 sm:table-cell sm:px-5">
                     {datumKort(a.created_at)}
+                  </td>
+                  <td className="px-3 py-3 sm:px-5">
+                    <div className="flex items-center justify-end gap-3">
+                      <Link
+                        href={`/audits/${a.id}`}
+                        className="text-sm font-medium text-navy/70 hover:text-navy"
+                      >
+                        Open
+                      </Link>
+                      <BevestigKnop
+                        actie={verwijderAudit.bind(null, a.id)}
+                        vraag={`Weet je zeker dat je audit ${a.nummer} wilt verwijderen?`}
+                        label="×"
+                      />
+                    </div>
                   </td>
                 </RijLink>
               ))}
