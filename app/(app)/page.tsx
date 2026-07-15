@@ -19,19 +19,24 @@ import { haalDashboardData } from "./kpi";
 
 export const dynamic = "force-dynamic";
 
+// Server draait in UTC; agenda-tijden tonen in de Nederlandse tijdzone.
+const TZ = "Europe/Amsterdam";
+
 function isVandaag(iso: string): boolean {
-  const d = new Date(iso);
-  const n = new Date();
+  const opt: Intl.DateTimeFormatOptions = { timeZone: TZ };
   return (
-    d.getDate() === n.getDate() &&
-    d.getMonth() === n.getMonth() &&
-    d.getFullYear() === n.getFullYear()
+    new Date(iso).toLocaleDateString("sv-SE", opt) ===
+    new Date().toLocaleDateString("sv-SE", opt)
   );
 }
 
 function agendaTijd(it: AgendaItem): string {
   if (it.heleDag) return "Hele dag";
-  return new Date(it.start).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" });
+  return new Date(it.start).toLocaleTimeString("nl-NL", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: TZ,
+  });
 }
 
 export default async function DashboardPagina() {
@@ -76,8 +81,8 @@ export default async function DashboardPagina() {
         actie={<Logo size={52} />}
       />
 
-      {/* Follow-ups + Agenda vandaag — bovenaan */}
-      <section className="grid gap-6 lg:grid-cols-2">
+      {/* Follow-ups + Agenda vandaag — bovenaan (2 per rij, ook op mobiel) */}
+      <section className="grid grid-cols-2 gap-3 sm:gap-6">
         <Kaart>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-medium text-navy">Follow-ups vandaag</h2>
@@ -95,8 +100,8 @@ export default async function DashboardPagina() {
                     href={f.lead_id ? `/leads/${f.lead_id}` : "/leads"}
                     className="block rounded-lg border border-navy/10 px-3 py-2 text-sm hover:bg-navy/[0.02]"
                   >
-                    <span className="font-medium text-navy">{f.bedrijf ?? "Lead"}</span>
-                    <span className="block text-xs text-navy/50">{f.titel ?? "Follow-up"}</span>
+                    <span className="block truncate font-medium text-navy">{f.bedrijf ?? "Lead"}</span>
+                    <span className="block truncate text-xs text-navy/50">{f.titel ?? "Follow-up"}</span>
                   </Link>
                 </li>
               ))}

@@ -18,17 +18,26 @@ type Toon = AgendaItem & { herinneringId?: string };
 const inputCls =
   "rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy";
 
+// Server draait in UTC; agenda-tijden altijd tonen in de Nederlandse tijdzone.
+const TZ = "Europe/Amsterdam";
+
+/** Stabiele dag-sleutel (YYYY-MM-DD) in NL-tijdzone, voor groeperen per dag. */
+function dagSleutel(iso: string): string {
+  return new Date(iso).toLocaleDateString("sv-SE", { timeZone: TZ });
+}
+
 function dagKop(iso: string): string {
   return new Date(iso).toLocaleDateString("nl-NL", {
     weekday: "long",
     day: "numeric",
     month: "long",
+    timeZone: TZ,
   });
 }
 
 function tijd(item: AgendaItem): string {
   if (item.heleDag) return "Hele dag";
-  const opt: Intl.DateTimeFormatOptions = { hour: "2-digit", minute: "2-digit" };
+  const opt: Intl.DateTimeFormatOptions = { hour: "2-digit", minute: "2-digit", timeZone: TZ };
   const s = new Date(item.start).toLocaleTimeString("nl-NL", opt);
   if (!item.eind) return s;
   const e = new Date(item.eind).toLocaleTimeString("nl-NL", opt);
@@ -36,13 +45,7 @@ function tijd(item: AgendaItem): string {
 }
 
 function isVandaag(iso: string): boolean {
-  const d = new Date(iso);
-  const n = new Date();
-  return (
-    d.getDate() === n.getDate() &&
-    d.getMonth() === n.getMonth() &&
-    d.getFullYear() === n.getFullYear()
-  );
+  return dagSleutel(iso) === dagSleutel(new Date().toISOString());
 }
 
 function binnenDagen(iso: string, dagen: number): boolean {
@@ -127,7 +130,7 @@ export default async function AgendaPagina({
 
   const perDag = new Map<string, Toon[]>();
   for (const it of items) {
-    const sleutel = new Date(it.start).toDateString();
+    const sleutel = dagSleutel(it.start);
     if (!perDag.has(sleutel)) perDag.set(sleutel, []);
     perDag.get(sleutel)!.push(it);
   }
