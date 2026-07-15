@@ -34,12 +34,15 @@ export function StaafGrafiek({ data }: { data: Staaf[] }) {
         </p>
       </div>
 
-      <div className="overflow-x-auto">
-        <div className="flex h-56 min-w-[560px] items-end gap-2">
+      <div className="-mx-1 overflow-x-auto px-1">
+        <div className="flex h-56 items-end gap-1.5">
           {data.map((d, i) => {
             const hoogte = Math.round((d.waarde / max) * 100);
             return (
-              <div key={i} className="group flex flex-1 flex-col items-center gap-1">
+              <div
+                key={i}
+                className="group flex min-w-[32px] flex-1 flex-col items-center gap-1"
+              >
                 <span
                   className={`text-[10px] font-medium ${
                     d.actief ? "text-oranje" : "text-navy/40"
