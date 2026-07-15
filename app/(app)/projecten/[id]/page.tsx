@@ -32,7 +32,7 @@ export default async function ProjectDetail({
   if (error || !data) notFound();
   const project = data as Project;
 
-  const [{ data: nData }, { data: lData }] = await Promise.all([
+  const [{ data: nData }, { data: lData }, { data: kData }] = await Promise.all([
     supabase
       .from("notities")
       .select("*")
@@ -44,9 +44,11 @@ export default async function ProjectDetail({
       .eq("context_type", "project")
       .eq("context_id", project.id)
       .order("created_at", { ascending: false }),
+    supabase.from("klanten").select("id, bedrijf").order("bedrijf"),
   ]);
   const notities = (nData ?? []) as Notitie[];
   const links = (lData ?? []) as DriveLink[];
+  const klanten = (kData ?? []) as { id: string; bedrijf: string }[];
 
   return (
     <>
@@ -99,13 +101,28 @@ export default async function ProjectDetail({
                   </select>
                 </div>
               </div>
-              <div className="mt-4">
-                <label className="mb-1 block text-sm font-medium text-navy">Klant</label>
-                <input
-                  name="klant"
-                  defaultValue={project.klant ?? ""}
-                  className="w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
-                />
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-navy">Klant (uit database)</label>
+                  <select
+                    name="klant_id"
+                    defaultValue={project.klant_id ?? ""}
+                    className="w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
+                  >
+                    <option value="">Geen klant</option>
+                    {klanten.map((k) => (
+                      <option key={k.id} value={k.id}>{k.bedrijf}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-navy">Klant (vrije tekst)</label>
+                  <input
+                    name="klant"
+                    defaultValue={project.klant ?? ""}
+                    className="w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
+                  />
+                </div>
               </div>
               <div className="mt-4">
                 <label className="mb-1 block text-sm font-medium text-navy">Omschrijving</label>

@@ -7,6 +7,7 @@ export type Project = {
   naam: string;
   omschrijving: string | null;
   klant: string | null;
+  klant_id: string | null;
   status: ProjectStatus;
   created_at: string;
   updated_at: string;

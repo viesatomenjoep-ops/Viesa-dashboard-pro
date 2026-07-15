@@ -48,12 +48,14 @@ export default async function KlantDetail({
     { data: leads },
     { data: offertes },
     { data: facturen },
+    { data: projecten },
     { data: bestanden },
     { data: cats },
   ] = await Promise.all([
     supabase.from("leads").select("id, bedrijf, status").eq("klant_id", klant.id),
     supabase.from("offertes").select("id, nummer, titel, status, bedrag").eq("klant_id", klant.id),
     supabase.from("facturen").select("id, nummer, status, bedrag").eq("klant_id", klant.id),
+    supabase.from("projecten").select("id, naam, status").eq("klant_id", klant.id),
     supabase
       .from("drive_links")
       .select("*")
@@ -180,6 +182,11 @@ export default async function KlantDetail({
           <Gekoppeld titel="Facturen" leeg="Geen facturen">
             {(facturen ?? []).map((f) => (
               <Rij key={f.id} href={`/facturen/${f.id}`} links={f.nummer} rechts={euro(f.bedrag)} />
+            ))}
+          </Gekoppeld>
+          <Gekoppeld titel="Projecten" leeg="Geen projecten">
+            {(projecten ?? []).map((p) => (
+              <Rij key={p.id} href={`/projecten/${p.id}`} links={p.naam} rechts={p.status} />
             ))}
           </Gekoppeld>
         </div>

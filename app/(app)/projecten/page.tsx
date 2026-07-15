@@ -19,6 +19,7 @@ export default async function ProjectenPagina({
 }) {
   const supabase = createClient();
   let projecten: Project[] = [];
+  let klanten: { id: string; bedrijf: string }[] = [];
   let schemaOntbreekt = false;
   try {
     const { data, error } = await supabase
@@ -29,6 +30,12 @@ export default async function ProjectenPagina({
     projecten = (data ?? []) as Project[];
   } catch {
     schemaOntbreekt = true;
+  }
+  try {
+    const { data } = await supabase.from("klanten").select("id, bedrijf").order("bedrijf");
+    klanten = data ?? [];
+  } catch {
+    /* klanten-tabel nog niet aanwezig */
   }
 
   const actief = projecten.filter((p) => p.status === "actief").length;
@@ -68,11 +75,16 @@ export default async function ProjectenPagina({
           placeholder="Korte omschrijving"
           className="rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
         />
-        <input
-          name="klant"
-          placeholder="Klant"
+        <select
+          name="klant_id"
+          defaultValue=""
           className="rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
-        />
+        >
+          <option value="">Klant koppelen…</option>
+          {klanten.map((k) => (
+            <option key={k.id} value={k.id}>{k.bedrijf}</option>
+          ))}
+        </select>
         <button
           type="submit"
           className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"

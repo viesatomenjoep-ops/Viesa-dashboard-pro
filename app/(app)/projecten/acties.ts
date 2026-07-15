@@ -16,6 +16,7 @@ export async function maakProject(formData: FormData) {
       naam,
       omschrijving: leeg(formData.get("omschrijving")),
       klant: leeg(formData.get("klant")),
+      klant_id: leeg(formData.get("klant_id")),
     })
     .select("id")
     .single();
@@ -34,6 +35,7 @@ export async function werkProjectBij(id: string, formData: FormData) {
       naam: String(formData.get("naam") ?? "").trim(),
       omschrijving: leeg(formData.get("omschrijving")),
       klant: leeg(formData.get("klant")),
+      klant_id: leeg(formData.get("klant_id")),
       status: (String(formData.get("status") ?? "actief") || "actief") as ProjectStatus,
     })
     .eq("id", id);
