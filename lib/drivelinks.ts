@@ -14,7 +14,8 @@ export type DriveContextType =
   | "lead"
   | "project"
   | "offerte"
-  | "factuur";
+  | "factuur"
+  | "klant";
 
 export type DriveLink = {
   id: string;

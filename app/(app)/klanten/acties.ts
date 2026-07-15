@@ -59,6 +59,43 @@ export async function verwijderKlant(id: string) {
   redirect("/klanten");
 }
 
+/** Voegt een bestand (link) toe aan een specifieke klant, met categorie. */
+export async function voegKlantBestandToe(klantId: string, formData: FormData) {
+  const url = String(formData.get("url") ?? "").trim();
+  if (!url) {
+    redirect(`/klanten/${klantId}?fout=` + encodeURIComponent("URL is verplicht."));
+  }
+  const categorie = String(formData.get("categorie") ?? "").trim() || null;
+  const supabase = createClient();
+
+  if (categorie) {
+    await supabase
+      .from("bestand_categorieen")
+      .upsert({ naam: categorie }, { onConflict: "naam" });
+  }
+
+  const { error } = await supabase.from("drive_links").insert({
+    titel: String(formData.get("titel") ?? "").trim() || url,
+    url,
+    type: String(formData.get("type") ?? "drive") || "drive",
+    categorie,
+    context_type: "klant",
+    context_id: klantId,
+  });
+  if (error) {
+    redirect(`/klanten/${klantId}?fout=` + encodeURIComponent(error.message));
+  }
+  revalidatePath(`/klanten/${klantId}`);
+  redirect(`/klanten/${klantId}`);
+}
+
+/** Verwijdert een bestand (link) van een klant. */
+export async function verwijderKlantBestand(klantId: string, id: string) {
+  const supabase = createClient();
+  await supabase.from("drive_links").delete().eq("id", id);
+  revalidatePath(`/klanten/${klantId}`);
+}
+
 /** Bulk-import van klanten (rijen uit Excel/CSV). Alleen rijen met een bedrijf. */
 export async function importeerKlanten(
   rijen: Record<string, string>[],
