@@ -125,6 +125,37 @@ export async function rondActiviteitAf(id: string, leadId: string) {
   revalidatePath("/");
 }
 
+/** Bulk-import van leads (rijen uit Excel/CSV). Alleen rijen met een bedrijf. */
+export async function importeerLeads(
+  rijen: Record<string, string>[],
+): Promise<{ aantal: number; fout?: string }> {
+  const schoon = rijen
+    .map((r) => {
+      const score = Number(r.score ?? 0);
+      const waarde = Number((r.verwachte_waarde ?? "").replace(",", "."));
+      return {
+        bedrijf: (r.bedrijf ?? "").trim(),
+        plaats: r.plaats || r.stad || null,
+        website: r.website || null,
+        contact_naam: r.contact_naam || null,
+        email: r.email || null,
+        telefoon: r.telefoon || null,
+        score: Number.isFinite(score) ? Math.min(100, Math.max(0, score)) : 0,
+        verwachte_waarde: Number.isFinite(waarde) ? waarde : 0,
+        status: "nieuw" as const,
+        bron: "handmatig" as const,
+      };
+    })
+    .filter((r) => r.bedrijf.length > 0);
+
+  if (schoon.length === 0) return { aantal: 0, fout: "Geen geldige rijen (bedrijf ontbreekt)." };
+  const supabase = createClient();
+  const { error } = await supabase.from("leads").insert(schoon);
+  if (error) return { aantal: 0, fout: error.message };
+  revalidatePath("/leads");
+  return { aantal: schoon.length };
+}
+
 function leeg(v: FormDataEntryValue | null): string | null {
   const s = String(v ?? "").trim();
   return s.length ? s : null;

@@ -3,8 +3,10 @@ import { KpiKaart } from "@/components/ui/KpiKaart";
 import { createClient } from "@/lib/supabase/server";
 import { type Lead } from "@/lib/leads";
 import { euro } from "@/lib/format";
+import { MassaImport } from "@/components/MassaImport";
 import { SnelToevoegen } from "./SnelToevoegen";
 import { KanbanBord } from "./KanbanBord";
+import { importeerLeads } from "./acties";
 
 async function haalLeads(): Promise<{ leads: Lead[]; schemaOntbreekt: boolean }> {
   const supabase = createClient();
@@ -60,6 +62,21 @@ export default async function LeadsPagina({
       )}
 
       <SnelToevoegen />
+
+      <MassaImport
+        titel="Lijst importeren uit Excel"
+        importActie={importeerLeads}
+        velden={[
+          { key: "bedrijf", label: "Bedrijf", synoniemen: ["bedrijfsnaam", "company", "naam"] },
+          { key: "plaats", label: "Plaats", synoniemen: ["stad", "city", "woonplaats"] },
+          { key: "website", label: "Website", synoniemen: ["url", "site"] },
+          { key: "contact_naam", label: "Contactpersoon", synoniemen: ["contact", "naam contact"] },
+          { key: "email", label: "E-mail", synoniemen: ["e-mail", "mail"] },
+          { key: "telefoon", label: "Telefoon", synoniemen: ["tel", "phone"] },
+          { key: "score", label: "Score" },
+          { key: "verwachte_waarde", label: "Verwachte waarde", synoniemen: ["waarde", "value"] },
+        ]}
+      />
 
       {schemaOntbreekt ? (
         <SchemaMelding />

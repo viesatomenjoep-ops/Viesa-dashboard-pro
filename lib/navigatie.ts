@@ -10,7 +10,9 @@ export const navSecties: NavSectie[] = [
   {
     titel: "Commercieel",
     items: [
+      { label: "Klanten", href: "/klanten" },
       { label: "Leads & pipeline", href: "/leads" },
+      { label: "Audits", href: "/audits" },
       { label: "Offertes", href: "/offertes" },
       { label: "Facturen", href: "/facturen" },
     ],
