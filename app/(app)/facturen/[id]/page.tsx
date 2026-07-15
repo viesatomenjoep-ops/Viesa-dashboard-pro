@@ -17,7 +17,6 @@ import {
   markeerOpen,
   markeerVervallen,
   heropenFactuur,
-  stuurFactuurHerinnering,
   verwijderFactuur,
 } from "../acties";
 
@@ -94,12 +93,6 @@ export default async function FactuurDetail({
                 </p>
               ) : null;
             })()}
-            {f.herinnering_verstuurd_op && f.status !== "betaald" && (
-              <p className="mb-3 text-xs text-navy/50">
-                Laatste herinnering verstuurd op{" "}
-                {new Date(f.herinnering_verstuurd_op).toLocaleDateString("nl-NL")}.
-              </p>
-            )}
             {f.status === "concept" ? (
               <div className="flex flex-wrap items-center gap-3">
                 <span className="text-sm text-navy/60">
@@ -143,14 +136,6 @@ export default async function FactuurDetail({
                     </button>
                   </form>
                 )}
-                <form action={stuurFactuurHerinnering.bind(null, f.id)}>
-                  <button
-                    type="submit"
-                    className="rounded-lg border border-navy/20 px-4 py-2 text-sm font-medium text-navy hover:bg-navy/5"
-                  >
-                    Herinnering sturen
-                  </button>
-                </form>
               </div>
             ) : (
               <div className="flex items-center gap-3">
