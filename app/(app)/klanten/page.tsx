@@ -57,6 +57,13 @@ export default async function KlantenPagina({
     return true;
   });
 
+  const klantLijst = klanten.filter((k) => k.type === "klant");
+  const prospectLijst = klanten.filter((k) => k.type === "prospect");
+  // Bij precies één resultaat klik je meteen door naar die klant; anders filtert
+  // de tegel de lijst.
+  const tegelHref = (lijst: Klant[], basis: string) =>
+    lijst.length === 1 ? `/klanten/${lijst[0].id}` : basis;
+
   return (
     <>
       <PaginaKop
@@ -64,10 +71,22 @@ export default async function KlantenPagina({
         omschrijving="Je centrale klantenbestand — leads, offertes en facturen hangen hieraan."
       />
 
-      <section className="mb-8 grid grid-cols-3 gap-4">
-        <KpiKaart label="Totaal" waarde={String(klanten.length)} />
-        <KpiKaart label="Klanten" waarde={String(klanten.filter((k) => k.type === "klant").length)} />
-        <KpiKaart label="Prospects" waarde={String(klanten.filter((k) => k.type === "prospect").length)} />
+      <section className="mb-6 grid grid-cols-3 gap-4">
+        <KpiKaart
+          label="Totaal"
+          waarde={String(klanten.length)}
+          href={tegelHref(klanten, "/klanten")}
+        />
+        <KpiKaart
+          label="Klanten"
+          waarde={String(klantLijst.length)}
+          href={tegelHref(klantLijst, "/klanten?type=klant")}
+        />
+        <KpiKaart
+          label="Prospects"
+          waarde={String(prospectLijst.length)}
+          href={tegelHref(prospectLijst, "/klanten?type=prospect")}
+        />
       </section>
 
       {searchParams.fout && (
@@ -76,72 +95,7 @@ export default async function KlantenPagina({
         </p>
       )}
 
-      {/* Nieuwe klant */}
-      <form action={maakKlant} className="mb-6">
-        <Kaart>
-          <p className="mb-3 text-sm font-medium text-navy">Nieuwe klant</p>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <input name="bedrijf" required placeholder="Bedrijf *" className={inputCls} />
-            <input name="contact_naam" placeholder="Contactpersoon" className={inputCls} />
-            <input name="email" type="email" placeholder="E-mail" className={inputCls} />
-            <input name="telefoon" placeholder="Telefoon" className={inputCls} />
-            <input name="website" placeholder="Website" className={inputCls} />
-            <input name="straat" placeholder="Straat + nr" className={inputCls} />
-            <input name="postcode" placeholder="Postcode" className={inputCls} />
-            <input name="stad" placeholder="Stad" className={inputCls} />
-            <select name="regio" defaultValue="" className={inputCls}>
-              <option value="">Regio…</option>
-              {REGIOS.map((r) => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
-            <select name="land" defaultValue="Nederland" className={inputCls}>
-              {LANDEN.map((l) => (
-                <option key={l} value={l}>{l}</option>
-              ))}
-            </select>
-            <select name="branche" defaultValue="" className={inputCls}>
-              <option value="">Branche…</option>
-              {BRANCHES.map((b) => (
-                <option key={b} value={b}>{b}</option>
-              ))}
-            </select>
-            <select name="type" defaultValue="prospect" className={inputCls}>
-              {KLANT_TYPES.map((t) => (
-                <option key={t.key} value={t.key}>{t.label}</option>
-              ))}
-            </select>
-          </div>
-          <div className="mt-4">
-            <button
-              type="submit"
-              className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"
-            >
-              + Klant toevoegen
-            </button>
-          </div>
-        </Kaart>
-      </form>
-
-      {/* Bulk-import */}
-      <MassaImport
-        titel="Klantenlijst importeren uit Excel"
-        importActie={importeerKlanten}
-        velden={[
-          { key: "bedrijf", label: "Bedrijf", synoniemen: ["bedrijfsnaam", "company"] },
-          { key: "contact_naam", label: "Contactpersoon", synoniemen: ["contact"] },
-          { key: "email", label: "E-mail", synoniemen: ["e-mail", "mail"] },
-          { key: "telefoon", label: "Telefoon", synoniemen: ["tel"] },
-          { key: "website", label: "Website", synoniemen: ["url"] },
-          { key: "stad", label: "Stad", synoniemen: ["plaats", "city"] },
-          { key: "regio", label: "Regio", synoniemen: ["provincie"] },
-          { key: "land", label: "Land" },
-          { key: "branche", label: "Branche", synoniemen: ["niche", "sector"] },
-          { key: "type", label: "Type" },
-        ]}
-      />
-
-      {/* Filters */}
+      {/* Filters — direct onder de tegels */}
       <form className="mb-4 flex flex-wrap items-center gap-2">
         <input name="q" defaultValue={searchParams.q ?? ""} placeholder="Zoek…" className={inputCls} />
         <select name="branche" defaultValue={searchParams.branche ?? ""} className={inputCls}>
@@ -212,6 +166,71 @@ export default async function KlantenPagina({
           </table>
         </Kaart>
       )}
+
+      {/* Nieuwe klant — onderaan de pagina */}
+      <form action={maakKlant} className="mb-6 mt-10">
+        <Kaart>
+          <p className="mb-3 text-sm font-medium text-navy">Nieuwe klant</p>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <input name="bedrijf" required placeholder="Bedrijf *" className={inputCls} />
+            <input name="contact_naam" placeholder="Contactpersoon" className={inputCls} />
+            <input name="email" type="email" placeholder="E-mail" className={inputCls} />
+            <input name="telefoon" placeholder="Telefoon" className={inputCls} />
+            <input name="website" placeholder="Website" className={inputCls} />
+            <input name="straat" placeholder="Straat + nr" className={inputCls} />
+            <input name="postcode" placeholder="Postcode" className={inputCls} />
+            <input name="stad" placeholder="Stad" className={inputCls} />
+            <select name="regio" defaultValue="" className={inputCls}>
+              <option value="">Regio…</option>
+              {REGIOS.map((r) => (
+                <option key={r} value={r}>{r}</option>
+              ))}
+            </select>
+            <select name="land" defaultValue="Nederland" className={inputCls}>
+              {LANDEN.map((l) => (
+                <option key={l} value={l}>{l}</option>
+              ))}
+            </select>
+            <select name="branche" defaultValue="" className={inputCls}>
+              <option value="">Branche…</option>
+              {BRANCHES.map((b) => (
+                <option key={b} value={b}>{b}</option>
+              ))}
+            </select>
+            <select name="type" defaultValue="prospect" className={inputCls}>
+              {KLANT_TYPES.map((t) => (
+                <option key={t.key} value={t.key}>{t.label}</option>
+              ))}
+            </select>
+          </div>
+          <div className="mt-4">
+            <button
+              type="submit"
+              className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"
+            >
+              + Klant toevoegen
+            </button>
+          </div>
+        </Kaart>
+      </form>
+
+      {/* Bulk-import — onderaan de pagina */}
+      <MassaImport
+        titel="Klantenlijst importeren uit Excel"
+        importActie={importeerKlanten}
+        velden={[
+          { key: "bedrijf", label: "Bedrijf", synoniemen: ["bedrijfsnaam", "company"] },
+          { key: "contact_naam", label: "Contactpersoon", synoniemen: ["contact"] },
+          { key: "email", label: "E-mail", synoniemen: ["e-mail", "mail"] },
+          { key: "telefoon", label: "Telefoon", synoniemen: ["tel"] },
+          { key: "website", label: "Website", synoniemen: ["url"] },
+          { key: "stad", label: "Stad", synoniemen: ["plaats", "city"] },
+          { key: "regio", label: "Regio", synoniemen: ["provincie"] },
+          { key: "land", label: "Land" },
+          { key: "branche", label: "Branche", synoniemen: ["niche", "sector"] },
+          { key: "type", label: "Type" },
+        ]}
+      />
     </>
   );
 }

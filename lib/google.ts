@@ -9,11 +9,12 @@ import "server-only";
 const AUTH = "https://accounts.google.com/o/oauth2/v2/auth";
 const TOKEN = "https://oauth2.googleapis.com/token";
 
-// Ruime Google-scope (Gmail versturen/lezen + Docs), zoals afgestemd.
+// Ruime Google-scope (Gmail versturen/lezen + Docs + Agenda lezen), zoals afgestemd.
 export const GOOGLE_SCOPES = [
   "https://www.googleapis.com/auth/gmail.send",
   "https://www.googleapis.com/auth/gmail.readonly",
   "https://www.googleapis.com/auth/documents.readonly",
+  "https://www.googleapis.com/auth/calendar.readonly",
 ];
 
 export type GoogleConfig = {
