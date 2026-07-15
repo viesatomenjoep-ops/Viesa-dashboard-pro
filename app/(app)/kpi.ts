@@ -154,7 +154,7 @@ export async function haalDashboardData(): Promise<DashboardData> {
     omzetRijen.map((r) => [maandKey(new Date(r.maand)), Number(r.omzet ?? 0)]),
   );
   const omzetGrafiek: Staaf[] = [];
-  for (let i = 5; i >= 0; i--) {
+  for (let i = 11; i >= 0; i--) {
     const d = new Date(nu.getFullYear(), nu.getMonth() - i, 1);
     const key = maandKey(d);
     omzetGrafiek.push({

@@ -97,7 +97,7 @@ export default async function DashboardPagina() {
         <Kaart className="lg:col-span-2">
           <h2 className="mb-4 text-sm font-medium text-navy">
             Omzet per maand{" "}
-            <span className="text-navy/40">(laatste 6 maanden)</span>
+            <span className="text-navy/40">(laatste 12 maanden)</span>
           </h2>
           <StaafGrafiek data={data.omzetGrafiek} />
         </Kaart>
