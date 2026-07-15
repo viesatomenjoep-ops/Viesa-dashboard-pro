@@ -8,6 +8,7 @@ export const navSecties: NavSectie[] = [
     items: [
       { label: "Dashboard", href: "/" },
       { label: "Agenda", href: "/agenda" },
+      { label: "E-mail", href: "/mail" },
     ],
   },
   {
