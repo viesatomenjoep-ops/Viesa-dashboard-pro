@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import { signOut } from "@/app/login/actions";
 import { Zijbalk } from "@/components/layout/Zijbalk";
 import { ZoekBalk } from "@/components/layout/ZoekBalk";
+import { AgendaMeldingen } from "@/components/AgendaMeldingen";
 
 /**
  * Responsieve app-shell. Desktop: vaste zijbalk (232px). Mobiel: zijbalk als
@@ -55,6 +56,7 @@ export function AppShell({
             </svg>
           </button>
           <ZoekBalk />
+          <AgendaMeldingen />
           {userEmail && (
             <span className="hidden text-sm text-navy/60 sm:inline">{userEmail}</span>
           )}

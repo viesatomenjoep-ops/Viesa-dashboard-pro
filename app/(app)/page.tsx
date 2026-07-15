@@ -102,70 +102,59 @@ export default async function DashboardPagina() {
         />
       </section>
 
-      {/* Grafiek + follow-ups — onder de to-do lijst */}
-      <section className="mt-8 grid gap-6 lg:grid-cols-3">
-        <Kaart className="lg:col-span-2">
-          <h2 className="mb-4 text-sm font-medium text-navy">
-            Omzet per maand{" "}
-            <span className="text-navy/40">(laatste 12 maanden)</span>
-          </h2>
-          <StaafGrafiek data={data.omzetGrafiek} />
+      {/* Follow-ups + Agenda vandaag — onder de to-do lijst */}
+      <section className="mt-8 grid gap-6 lg:grid-cols-2">
+        <Kaart>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-medium text-navy">Follow-ups vandaag</h2>
+            <Badge toon={data.followups.length > 0 ? "oranje" : "grijs"}>
+              {data.followups.length}
+            </Badge>
+          </div>
+          {data.followups.length === 0 ? (
+            <p className="text-sm text-navy/50">Geen follow-ups voor vandaag.</p>
+          ) : (
+            <ul className="space-y-2">
+              {data.followups.map((f) => (
+                <li key={f.id}>
+                  <Link
+                    href={f.lead_id ? `/leads/${f.lead_id}` : "/leads"}
+                    className="block rounded-lg border border-navy/10 px-3 py-2 text-sm hover:bg-navy/[0.02]"
+                  >
+                    <span className="font-medium text-navy">{f.bedrijf ?? "Lead"}</span>
+                    <span className="block text-xs text-navy/50">{f.titel ?? "Follow-up"}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </Kaart>
 
-        <div className="space-y-6">
-          <Kaart>
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-medium text-navy">Follow-ups vandaag</h2>
-              <Badge toon={data.followups.length > 0 ? "oranje" : "grijs"}>
-                {data.followups.length}
-              </Badge>
-            </div>
-            {data.followups.length === 0 ? (
-              <p className="text-sm text-navy/50">Geen follow-ups voor vandaag.</p>
-            ) : (
-              <ul className="space-y-2">
-                {data.followups.map((f) => (
-                  <li key={f.id}>
-                    <Link
-                      href={f.lead_id ? `/leads/${f.lead_id}` : "/leads"}
-                      className="block rounded-lg border border-navy/10 px-3 py-2 text-sm hover:bg-navy/[0.02]"
-                    >
-                      <span className="font-medium text-navy">{f.bedrijf ?? "Lead"}</span>
-                      <span className="block text-xs text-navy/50">{f.titel ?? "Follow-up"}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Kaart>
-
-          {/* Agendapunten van vandaag */}
-          <Kaart>
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-medium text-navy">Agenda vandaag</h2>
-              <Link href="/agenda" className="text-xs text-oranje hover:underline">
-                Hele agenda →
-              </Link>
-            </div>
-            {vandaagItems.length === 0 ? (
-              <p className="text-sm text-navy/50">Geen afspraken voor vandaag.</p>
-            ) : (
-              <ul className="space-y-2">
-                {vandaagItems.map((it) => (
-                  <li
-                    key={it.id}
-                    className="flex items-center gap-3 rounded-lg border border-navy/10 px-3 py-2"
-                  >
-                    <span className="w-16 shrink-0 text-xs font-medium text-navy/60">
-                      {agendaTijd(it)}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-sm text-navy">{it.titel}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Kaart>
-        </div>
+        <Kaart>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-medium text-navy">Agenda vandaag</h2>
+            <Link href="/agenda" className="text-xs text-oranje hover:underline">
+              Hele agenda →
+            </Link>
+          </div>
+          {vandaagItems.length === 0 ? (
+            <p className="text-sm text-navy/50">Geen afspraken voor vandaag.</p>
+          ) : (
+            <ul className="space-y-2">
+              {vandaagItems.map((it) => (
+                <li
+                  key={it.id}
+                  className="flex items-center gap-3 rounded-lg border border-navy/10 px-3 py-2"
+                >
+                  <span className="w-16 shrink-0 text-xs font-medium text-navy/60">
+                    {agendaTijd(it)}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-sm text-navy">{it.titel}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Kaart>
       </section>
 
 
@@ -233,6 +222,16 @@ export default async function DashboardPagina() {
             </Kaart>
           )}
         </div>
+      </section>
+
+      {/* Omzet per maand — onderaan het dashboard */}
+      <section className="mt-8">
+        <Kaart>
+          <h2 className="mb-4 text-sm font-medium text-navy">
+            Omzet per maand <span className="text-navy/40">(laatste 12 maanden)</span>
+          </h2>
+          <StaafGrafiek data={data.omzetGrafiek} />
+        </Kaart>
       </section>
     </>
   );
