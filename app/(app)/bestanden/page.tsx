@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { Kaart } from "@/components/ui/Kaart";
 import { LegeStaat } from "@/components/ui/LegeStaat";
@@ -10,7 +9,15 @@ import {
   type DriveLink,
 } from "@/lib/drivelinks";
 import { leesFout } from "@/lib/fout";
-import { voegBestandToe, verwijderBestand, bewerkBestand, maakCategorie } from "./acties";
+import { CategorieChips } from "@/components/CategorieChips";
+import {
+  voegBestandToe,
+  verwijderBestand,
+  bewerkBestand,
+  maakCategorie,
+  bewaarCategorieVolgorde,
+  verwijderCategorie,
+} from "./acties";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +41,11 @@ export default async function BestandenPagina({
         .select("*")
         .eq("context_type", "algemeen")
         .order("created_at", { ascending: false }),
-      supabase.from("bestand_categorieen").select("naam").order("naam"),
+      supabase
+        .from("bestand_categorieen")
+        .select("naam")
+        .order("sortering")
+        .order("naam"),
     ]);
     if (l.error) throw l.error;
     links = (l.data ?? []) as DriveLink[];
@@ -44,14 +55,23 @@ export default async function BestandenPagina({
     foutmelding = leesFout(e);
   }
 
-  // Alle categorieën: standaard + opgeslagen + al gebruikte (uniek).
-  const categorieen = Array.from(
-    new Set([
-      ...STANDAARD_CATEGORIEEN,
-      ...bewaard,
-      ...links.map((l) => l.categorie).filter(Boolean) as string[],
-    ]),
-  );
+  // Standaard- en gebruikte categorieën die nog niet zijn opgeslagen: nu als rij
+  // toevoegen zodat ze óók sleep-/verwijderbaar zijn (verschijnen achteraan).
+  const gebruikt = links.map((l) => l.categorie).filter(Boolean) as string[];
+  const ontbrekend = Array.from(
+    new Set([...STANDAARD_CATEGORIEEN, ...gebruikt]),
+  ).filter((naam) => !bewaard.includes(naam));
+  if (!schemaOntbreekt && ontbrekend.length > 0) {
+    await supabase
+      .from("bestand_categorieen")
+      .upsert(ontbrekend.map((naam) => ({ naam })), {
+        onConflict: "naam",
+        ignoreDuplicates: true,
+      });
+  }
+
+  // Opgeslagen volgorde eerst, daarna de zojuist toegevoegde (achteraan).
+  const categorieen = [...bewaard, ...ontbrekend];
 
   const filter = searchParams.categorie;
   const zichtbaar = filter
@@ -113,18 +133,13 @@ export default async function BestandenPagina({
         </button>
       </form>
 
-      {/* Categorie-filter */}
-      <div className="mb-6 flex flex-wrap gap-2">
-        <FilterLink actief={!filter} label="Alle" href="/bestanden" />
-        {categorieen.map((c) => (
-          <FilterLink
-            key={c}
-            actief={filter === c}
-            label={c}
-            href={`/bestanden?categorie=${encodeURIComponent(c)}`}
-          />
-        ))}
-      </div>
+      {/* Categorie-filter — sleepbaar (herorderen) + × om te verwijderen */}
+      <CategorieChips
+        categorieen={categorieen}
+        actief={filter}
+        bewaarVolgordeActie={bewaarCategorieVolgorde}
+        verwijderActie={verwijderCategorie}
+      />
 
       {schemaOntbreekt ? (
         <div className="rounded-xl border border-oranje/40 bg-oranje/5 p-4 text-sm text-navy">
@@ -153,20 +168,5 @@ export default async function BestandenPagina({
         </Kaart>
       )}
     </>
-  );
-}
-
-function FilterLink({ actief, label, href }: { actief: boolean; label: string; href: string }) {
-  return (
-    <Link
-      href={href}
-      className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
-        actief
-          ? "border-navy bg-navy/5 font-medium text-navy"
-          : "border-navy/20 text-navy/70 hover:bg-navy/5"
-      }`}
-    >
-      {label}
-    </Link>
   );
 }

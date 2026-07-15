@@ -74,6 +74,27 @@ export async function maakCategorie(formData: FormData) {
   revalidatePath("/bestanden");
 }
 
+/** Bewaart de handmatige volgorde van de categorieën (na slepen). */
+export async function bewaarCategorieVolgorde(namen: string[]) {
+  const supabase = createClient();
+  // Upsert elke categorie met zijn nieuwe index als sortering.
+  await Promise.all(
+    namen.map((naam, i) =>
+      supabase
+        .from("bestand_categorieen")
+        .upsert({ naam, sortering: i }, { onConflict: "naam" }),
+    ),
+  );
+  revalidatePath("/bestanden");
+}
+
+/** Verwijdert een opgeslagen categorie (de links zelf blijven bestaan). */
+export async function verwijderCategorie(naam: string) {
+  const supabase = createClient();
+  await supabase.from("bestand_categorieen").delete().eq("naam", naam);
+  revalidatePath("/bestanden");
+}
+
 export async function verwijderBestand(formData: FormData) {
   const id = String(formData.get("id") ?? "").trim();
   if (!id) return;
