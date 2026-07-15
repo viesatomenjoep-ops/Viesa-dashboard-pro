@@ -121,3 +121,15 @@ export function klantTypeToon(
 export function klantTypeLabel(t: KlantType): string {
   return KLANT_TYPES.find((x) => x.key === t)?.label ?? t;
 }
+
+/** Korte afkorting van het type (voor smalle schermen). */
+export function klantTypeKort(t: KlantType): string {
+  const kort: Record<KlantType, string> = {
+    hot_lead: "Hot",
+    cold_lead: "Cold",
+    prospect: "Prosp.",
+    klant: "Klant",
+    partner: "Part.",
+  };
+  return kort[t] ?? t;
+}

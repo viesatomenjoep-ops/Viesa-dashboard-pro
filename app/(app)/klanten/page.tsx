@@ -11,6 +11,7 @@ import {
   KLANT_TYPES,
   klantTypeToon,
   klantTypeLabel,
+  klantTypeKort,
   type Klant,
 } from "@/lib/klanten";
 import { LandRegio } from "@/components/LandRegio";
@@ -148,7 +149,10 @@ export default async function KlantenPagina({
                   <td className="hidden px-3 py-3 text-navy/70 sm:table-cell sm:px-5">{k.regio ?? "—"}</td>
                   <td className="hidden px-3 py-3 text-navy/70 sm:table-cell sm:px-5">{k.branche ?? "—"}</td>
                   <td className="px-3 py-3 sm:px-5">
-                    <Badge toon={klantTypeToon(k.type)}>{klantTypeLabel(k.type)}</Badge>
+                    <Badge toon={klantTypeToon(k.type)}>
+                      <span className="sm:hidden">{klantTypeKort(k.type)}</span>
+                      <span className="hidden sm:inline">{klantTypeLabel(k.type)}</span>
+                    </Badge>
                   </td>
                 </RijLink>
               ))}

@@ -22,20 +22,24 @@ export function AppShell({
   return (
     <div className="flex min-h-screen">
       {/* Desktop-zijbalk */}
-      <aside className="hidden w-[232px] shrink-0 md:block">
-        <div className="fixed h-screen w-[232px]">
+      <aside className="hidden w-[256px] shrink-0 md:block">
+        <div className="fixed h-screen w-[256px]">
           <Zijbalk />
         </div>
       </aside>
 
-      {/* Mobiel menu (drawer) */}
+      {/* Mobiel menu (volledige breedte, met sluitknop) */}
       {open && (
         <div className="fixed inset-0 z-40 md:hidden">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setOpen(false)}
-          />
-          <div className="absolute left-0 top-0 h-full w-[232px] shadow-xl">
+          <div className="relative h-full w-full shadow-xl">
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              aria-label="Menu sluiten"
+              className="absolute right-4 top-6 z-10 rounded-lg border border-white/20 px-3 py-2 text-sm font-medium text-white hover:bg-white/10"
+            >
+              ✕ Terug
+            </button>
             <Zijbalk onNavigate={() => setOpen(false)} />
           </div>
         </div>

@@ -82,14 +82,17 @@ export function BestandRij({
           </button>
         </form>
       ) : (
-        <div className="flex items-center justify-between gap-3 px-5 py-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <Badge toon="grijs">{driveTypeLabel(link.type)}</Badge>
+        <div className="flex items-center justify-between gap-2 px-4 py-3.5 sm:gap-3 sm:px-5">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            {/* Type-badge alleen op grotere schermen — op mobiel meer ruimte voor de titel */}
+            <span className="hidden sm:inline-flex">
+              <Badge toon="grijs">{driveTypeLabel(link.type)}</Badge>
+            </span>
             <a
               href={link.url}
               target="_blank"
               rel="noreferrer"
-              className="truncate text-sm font-medium text-navy hover:underline"
+              className="truncate text-[15px] font-medium text-navy hover:underline"
             >
               {link.titel}
             </a>
@@ -103,14 +106,14 @@ export function BestandRij({
               </span>
             )}
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex shrink-0 items-center gap-3 sm:gap-4">
             <span className="hidden text-xs text-navy/40 sm:inline">
               {datumKort(link.created_at)}
             </span>
             <button
               type="button"
               onClick={() => setBewerken(true)}
-              className="text-xs font-medium text-navy/50 hover:text-navy"
+              className="text-sm font-medium text-navy/50 hover:text-navy"
             >
               Bewerk
             </button>

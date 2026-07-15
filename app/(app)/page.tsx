@@ -77,7 +77,7 @@ export default async function DashboardPagina() {
       />
 
       {/* KPI's bovenaan */}
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <Link href="/facturen">
           <KpiKaart label="Omzet deze maand" waarde={euro(data.omzetMaand)} />
         </Link>
