@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { verstuurMail } from "@/lib/resend";
+import { verstuurMail, mailHandtekening } from "@/lib/resend";
 import { BEDRIJF } from "@/lib/bedrijf";
 
 /**
@@ -59,7 +59,8 @@ export async function POST(request: Request) {
         ${description.replace(/\n/g, "<br/>")}
       </div>
       <hr style="margin:24px 0; border:none; border-top:1px solid #e2e8f0;" />
-      <p style="color:#64748b; font-size:12px;">Automatisch bericht vanaf de ${BEDRIJF.naam}-website.</p>
+      <p style="color:#94a3b8; font-size:12px; margin:0 0 8px;">Automatisch bericht vanaf de ${BEDRIJF.naam}-website.</p>
+      ${mailHandtekening()}
     </div>`;
 
   try {
