@@ -124,14 +124,14 @@ export default async function KlantenPagina({
         <LegeStaat titel="Geen klanten" omschrijving="Voeg een klant toe of importeer een lijst." />
       ) : (
         <Kaart className="overflow-x-auto p-0">
-          <table className="w-full min-w-[680px] text-sm">
+          <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-navy/10 text-left text-navy/50">
-                <th className="px-5 py-3 font-medium">Bedrijf</th>
-                <th className="px-5 py-3 font-medium">Stad</th>
-                <th className="px-5 py-3 font-medium">Regio</th>
-                <th className="px-5 py-3 font-medium">Branche</th>
-                <th className="px-5 py-3 font-medium">Type</th>
+                <th className="px-3 py-3 font-medium sm:px-5">Bedrijf</th>
+                <th className="px-3 py-3 font-medium sm:px-5">Stad</th>
+                <th className="hidden px-3 py-3 font-medium sm:table-cell sm:px-5">Regio</th>
+                <th className="hidden px-3 py-3 font-medium sm:table-cell sm:px-5">Branche</th>
+                <th className="px-3 py-3 font-medium sm:px-5">Type</th>
               </tr>
             </thead>
             <tbody>
@@ -141,11 +141,13 @@ export default async function KlantenPagina({
                   href={`/klanten/${k.id}`}
                   className="border-b border-navy/10 last:border-0 hover:bg-navy/[0.02]"
                 >
-                  <td className="px-5 py-3 font-medium text-navy">{k.bedrijf}</td>
-                  <td className="px-5 py-3 text-navy/70">{k.stad ?? "—"}</td>
-                  <td className="px-5 py-3 text-navy/70">{k.regio ?? "—"}</td>
-                  <td className="px-5 py-3 text-navy/70">{k.branche ?? "—"}</td>
-                  <td className="px-5 py-3">
+                  <td className="max-w-[40vw] truncate px-3 py-3 font-medium text-navy sm:max-w-none sm:px-5">
+                    {k.bedrijf}
+                  </td>
+                  <td className="px-3 py-3 text-navy/70 sm:px-5">{k.stad ?? "—"}</td>
+                  <td className="hidden px-3 py-3 text-navy/70 sm:table-cell sm:px-5">{k.regio ?? "—"}</td>
+                  <td className="hidden px-3 py-3 text-navy/70 sm:table-cell sm:px-5">{k.branche ?? "—"}</td>
+                  <td className="px-3 py-3 sm:px-5">
                     <Badge toon={klantTypeToon(k.type)}>{klantTypeLabel(k.type)}</Badge>
                   </td>
                 </RijLink>

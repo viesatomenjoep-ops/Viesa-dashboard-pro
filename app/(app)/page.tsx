@@ -92,7 +92,17 @@ export default async function DashboardPagina() {
         </Link>
       </section>
 
-      {/* Grafiek + follow-ups */}
+      {/* To-do lijst — direct onder de KPI's */}
+      <section className="mt-8">
+        <TakenLijst
+          taken={taken}
+          maakActie={maakTaak}
+          wisselActie={wisselTaakKlaar}
+          verwijderActie={verwijderTaak}
+        />
+      </section>
+
+      {/* Grafiek + follow-ups — onder de to-do lijst */}
       <section className="mt-8 grid gap-6 lg:grid-cols-3">
         <Kaart className="lg:col-span-2">
           <h2 className="mb-4 text-sm font-medium text-navy">
@@ -158,15 +168,6 @@ export default async function DashboardPagina() {
         </div>
       </section>
 
-      {/* To-do lijst (Tom / Joep / Algemeen) */}
-      <section className="mt-8">
-        <TakenLijst
-          taken={taken}
-          maakActie={maakTaak}
-          wisselActie={wisselTaakKlaar}
-          verwijderActie={verwijderTaak}
-        />
-      </section>
 
       {/* Recente leads + activiteitenlog */}
       <section className="mt-8 grid gap-6 lg:grid-cols-2">

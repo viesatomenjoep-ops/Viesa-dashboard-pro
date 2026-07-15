@@ -23,8 +23,8 @@ export default async function LoginPage({
         <div className="mb-4 flex items-center gap-3">
           <Logo size={44} />
           <div className="leading-tight">
-            <div className="text-lg font-semibold text-navy">Viesa</div>
-            <div className="text-sm text-navy/60">Command Center</div>
+            <div className="text-lg font-semibold text-navy">Viesa Automations</div>
+            <div className="text-sm text-navy/60">Dashboard</div>
           </div>
         </div>
         <p className="mt-1 text-sm text-navy/60">Log in om verder te gaan.</p>

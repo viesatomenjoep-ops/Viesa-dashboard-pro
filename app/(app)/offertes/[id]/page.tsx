@@ -16,7 +16,6 @@ import {
   verwijderOfferte,
   maakFactuurVanOfferte,
 } from "../acties";
-import { GenereerKnop } from "../GenereerKnop";
 
 export default async function OfferteDetail({
   params,
@@ -98,7 +97,6 @@ export default async function OfferteDetail({
           ))}
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-navy/10 pt-4">
-          <GenereerKnop offerteId={offerte.id} />
           {offerte.status === "geaccepteerd" && (
             <form action={maakFactuurVanOfferte.bind(null, offerte.id)}>
               <button

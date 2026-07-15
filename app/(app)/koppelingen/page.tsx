@@ -86,7 +86,7 @@ export default async function KoppelingenPagina({
       <div className="mb-8 flex items-center gap-4 rounded-xl bg-navy px-6 py-5 text-white">
         <Logo size={52} variant="wit" />
         <div>
-          <p className="text-lg font-semibold">Viesa Command Center</p>
+          <p className="text-lg font-semibold">Viesa Automations</p>
           <p className="text-sm text-white/70">
             Eén werkruimte voor je administratie, sales en koppelingen.
           </p>

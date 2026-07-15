@@ -33,6 +33,7 @@ export async function maakFactuur(formData: FormData) {
     .insert({
       nummer,
       klant: leeg(formData.get("klant")),
+      klant_id: leeg(formData.get("klant_id")),
       bedrag: Number(formData.get("bedrag") ?? 0) || 0,
       btw_percentage: Number(formData.get("btw_percentage") ?? 21),
       factuurdatum,

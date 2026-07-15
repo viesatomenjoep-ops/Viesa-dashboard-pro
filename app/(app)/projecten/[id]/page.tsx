@@ -5,6 +5,7 @@ import { Kaart } from "@/components/ui/Kaart";
 import { Markdown } from "@/components/ui/Markdown";
 import { MarkdownEditor } from "@/components/MarkdownEditor";
 import { PROJECT_STATUSSEN, type Project, type Notitie } from "@/lib/projecten";
+import { KlantZoeker } from "@/components/KlantZoeker";
 import { DRIVE_LINK_TYPES, driveTypeLabel, type DriveLink } from "@/lib/drivelinks";
 import { datumKort } from "@/lib/format";
 import {
@@ -103,23 +104,17 @@ export default async function ProjectDetail({
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-navy">Klant (uit database)</label>
-                  <select
-                    name="klant_id"
-                    defaultValue={project.klant_id ?? ""}
-                    className="w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
-                  >
-                    <option value="">Geen klant</option>
-                    {klanten.map((k) => (
-                      <option key={k.id} value={k.id}>{k.bedrijf}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-navy">Klant (vrije tekst)</label>
-                  <input
-                    name="klant"
-                    defaultValue={project.klant ?? ""}
+                  <label className="mb-1 block text-sm font-medium text-navy">Klant</label>
+                  <KlantZoeker
+                    klanten={klanten}
+                    tekstNaam="klant"
+                    initieelId={project.klant_id ?? ""}
+                    initieelNaam={
+                      klanten.find((k) => k.id === project.klant_id)?.bedrijf ??
+                      project.klant ??
+                      ""
+                    }
+                    placeholder="Klant zoeken…"
                     className="w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
                   />
                 </div>

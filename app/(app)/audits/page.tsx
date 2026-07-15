@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/Badge";
 import { LegeStaat } from "@/components/ui/LegeStaat";
 import { createClient } from "@/lib/supabase/server";
 import { auditStatusToon, AUDIT_STATUSSEN, type Audit } from "@/lib/audits";
+import { KlantZoeker } from "@/components/KlantZoeker";
 import { datumKort } from "@/lib/format";
 import { RijLink } from "@/components/ui/RijLink";
 import { leesFout } from "@/lib/fout";
@@ -57,15 +58,12 @@ export default async function AuditsPagina({
           defaultValue="Auditverslag"
           className="rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
         />
-        <select
-          name="klant_id"
+        <KlantZoeker
+          klanten={klanten}
+          tekstNaam="klant_naam"
+          placeholder="Klant zoeken (optioneel)…"
           className="rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
-        >
-          <option value="">Geen klant</option>
-          {klanten.map((k) => (
-            <option key={k.id} value={k.id}>{k.bedrijf}</option>
-          ))}
-        </select>
+        />
         <button
           type="submit"
           className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"
@@ -86,13 +84,13 @@ export default async function AuditsPagina({
         <LegeStaat titel="Nog geen audits" omschrijving="Maak je eerste auditverslag hierboven aan." />
       ) : (
         <Kaart className="overflow-x-auto p-0">
-          <table className="w-full min-w-[560px] text-sm">
+          <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-navy/10 text-left text-navy/50">
-                <th className="px-5 py-3 font-medium">Nummer</th>
-                <th className="px-5 py-3 font-medium">Titel</th>
-                <th className="px-5 py-3 font-medium">Status</th>
-                <th className="px-5 py-3 font-medium">Aangemaakt</th>
+                <th className="px-3 py-3 font-medium sm:px-5">Nummer</th>
+                <th className="px-3 py-3 font-medium sm:px-5">Titel</th>
+                <th className="px-3 py-3 font-medium sm:px-5">Status</th>
+                <th className="hidden px-3 py-3 font-medium sm:table-cell sm:px-5">Aangemaakt</th>
               </tr>
             </thead>
             <tbody>
@@ -102,14 +100,18 @@ export default async function AuditsPagina({
                   href={`/audits/${a.id}`}
                   className="border-b border-navy/10 last:border-0 hover:bg-navy/[0.02]"
                 >
-                  <td className="px-5 py-3 font-medium text-navy">{a.nummer}</td>
-                  <td className="px-5 py-3 text-navy">{a.titel}</td>
-                  <td className="px-5 py-3">
+                  <td className="px-3 py-3 font-medium text-navy sm:px-5">{a.nummer}</td>
+                  <td className="max-w-[40vw] truncate px-3 py-3 text-navy sm:max-w-none sm:px-5">
+                    {a.titel}
+                  </td>
+                  <td className="px-3 py-3 sm:px-5">
                     <Badge toon={auditStatusToon(a.status)}>
                       {AUDIT_STATUSSEN.find((s) => s.key === a.status)?.label}
                     </Badge>
                   </td>
-                  <td className="px-5 py-3 text-navy/50">{datumKort(a.created_at)}</td>
+                  <td className="hidden px-3 py-3 text-navy/50 sm:table-cell sm:px-5">
+                    {datumKort(a.created_at)}
+                  </td>
                 </RijLink>
               ))}
             </tbody>

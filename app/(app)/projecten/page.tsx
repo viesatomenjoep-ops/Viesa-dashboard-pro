@@ -10,6 +10,7 @@ import {
   PROJECT_STATUSSEN,
   type Project,
 } from "@/lib/projecten";
+import { KlantZoeker } from "@/components/KlantZoeker";
 import { maakProject } from "./acties";
 
 export default async function ProjectenPagina({
@@ -75,16 +76,12 @@ export default async function ProjectenPagina({
           placeholder="Korte omschrijving"
           className="rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
         />
-        <select
-          name="klant_id"
-          defaultValue=""
+        <KlantZoeker
+          klanten={klanten}
+          tekstNaam="klant"
+          placeholder="Klant zoeken…"
           className="rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
-        >
-          <option value="">Klant koppelen…</option>
-          {klanten.map((k) => (
-            <option key={k.id} value={k.id}>{k.bedrijf}</option>
-          ))}
-        </select>
+        />
         <button
           type="submit"
           className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"

@@ -12,6 +12,7 @@ import {
   type Factuur,
 } from "@/lib/facturen";
 import { Logo } from "@/components/ui/Logo";
+import { KlantZoeker } from "@/components/KlantZoeker";
 import { euro, datumKort } from "@/lib/format";
 import { maakFactuur } from "./acties";
 
@@ -22,6 +23,7 @@ export default async function FacturenPagina({
 }) {
   const supabase = createClient();
   let facturen: Factuur[] = [];
+  let klanten: { id: string; bedrijf: string }[] = [];
   let schemaOntbreekt = false;
   try {
     const { data, error } = await supabase
@@ -32,6 +34,12 @@ export default async function FacturenPagina({
     facturen = (data ?? []) as Factuur[];
   } catch {
     schemaOntbreekt = true;
+  }
+  try {
+    const { data } = await supabase.from("klanten").select("id, bedrijf").order("bedrijf");
+    klanten = data ?? [];
+  } catch {
+    /* klanten-tabel nog niet aanwezig */
   }
 
   const open = facturen.filter((f) => f.status === "open");
@@ -94,23 +102,24 @@ export default async function FacturenPagina({
         action={maakFactuur}
         className="mb-8 grid gap-2 rounded-xl border border-navy/10 bg-white p-3 shadow-sm sm:grid-cols-[2fr_1fr_1fr_1fr_auto]"
       >
-        <input
-          name="klant"
-          placeholder="Klant"
+        <KlantZoeker
+          klanten={klanten}
+          placeholder="Klant zoeken…"
           className="rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
         />
         <input
           name="bedrag"
           type="number"
           step="0.01"
-          placeholder="Bedrag excl."
+          placeholder="Bedrag excl. btw"
           className="rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
         />
         <input
           name="btw_percentage"
           type="number"
           defaultValue={21}
-          title="Btw %"
+          title="Btw-percentage"
+          placeholder="Btw %"
           className="rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
         />
         <input
@@ -136,14 +145,14 @@ export default async function FacturenPagina({
         <LegeStaat titel="Nog geen facturen" omschrijving="Schiet je eerste factuur hierboven in." />
       ) : (
         <Kaart className="overflow-x-auto p-0">
-          <table className="w-full min-w-[560px] text-sm">
+          <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-navy/10 text-left text-navy/50">
-                <th className="px-5 py-3 font-medium">Nummer</th>
-                <th className="px-5 py-3 font-medium">Klant</th>
-                <th className="px-5 py-3 font-medium">Bedrag</th>
-                <th className="px-5 py-3 font-medium">Vervaldatum</th>
-                <th className="px-5 py-3 font-medium">Status</th>
+                <th className="px-3 py-3 font-medium sm:px-5">Nummer</th>
+                <th className="px-3 py-3 font-medium sm:px-5">Klant</th>
+                <th className="px-3 py-3 font-medium sm:px-5">Bedrag</th>
+                <th className="hidden px-3 py-3 font-medium sm:table-cell sm:px-5">Vervaldatum</th>
+                <th className="px-3 py-3 font-medium sm:px-5">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -153,13 +162,15 @@ export default async function FacturenPagina({
                   href={`/facturen/${f.id}`}
                   className="border-b border-navy/10 last:border-0 hover:bg-navy/[0.02]"
                 >
-                  <td className="px-5 py-3 font-medium text-navy">{f.nummer}</td>
-                  <td className="px-5 py-3 text-navy">{f.klant ?? "—"}</td>
-                  <td className="px-5 py-3 text-navy">{euro(f.bedrag)}</td>
-                  <td className="px-5 py-3 text-navy/50">
+                  <td className="px-3 py-3 font-medium text-navy sm:px-5">{f.nummer}</td>
+                  <td className="max-w-[30vw] truncate px-3 py-3 text-navy sm:max-w-none sm:px-5">
+                    {f.klant ?? "—"}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3 text-navy sm:px-5">{euro(f.bedrag)}</td>
+                  <td className="hidden px-3 py-3 text-navy/50 sm:table-cell sm:px-5">
                     {f.vervaldatum ? datumKort(f.vervaldatum) : "—"}
                   </td>
-                  <td className="px-5 py-3">
+                  <td className="px-3 py-3 sm:px-5">
                     <Badge toon={factuurStatusToon(f.status)}>
                       {factuurStatusLabel(f.status)}
                     </Badge>

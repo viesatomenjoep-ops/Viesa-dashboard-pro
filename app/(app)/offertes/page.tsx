@@ -4,6 +4,7 @@ import { Kaart } from "@/components/ui/Kaart";
 import { Badge } from "@/components/ui/Badge";
 import { LegeStaat } from "@/components/ui/LegeStaat";
 import { RijLink } from "@/components/ui/RijLink";
+import { KlantZoeker } from "@/components/KlantZoeker";
 import { createClient } from "@/lib/supabase/server";
 import {
   offerteStatusToon,
@@ -22,15 +23,18 @@ export default async function OffertesPagina({
   const supabase = createClient();
   let offertes: Offerte[] = [];
   let leads: { id: string; bedrijf: string }[] = [];
+  let klanten: { id: string; bedrijf: string }[] = [];
   let schemaOntbreekt = false;
   try {
-    const [o, l] = await Promise.all([
+    const [o, l, k] = await Promise.all([
       supabase.from("offertes").select("*").order("created_at", { ascending: false }),
       supabase.from("leads").select("id, bedrijf").order("bedrijf"),
+      supabase.from("klanten").select("id, bedrijf").order("bedrijf"),
     ]);
     if (o.error) throw o.error;
     offertes = (o.data ?? []) as Offerte[];
     leads = l.data ?? [];
+    klanten = k.data ?? [];
   } catch {
     schemaOntbreekt = true;
   }
@@ -80,9 +84,9 @@ export default async function OffertesPagina({
             </option>
           ))}
         </select>
-        <input
-          name="klant"
-          placeholder="Klant"
+        <KlantZoeker
+          klanten={klanten}
+          placeholder="Klant zoeken…"
           className="rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
         />
         <input
@@ -106,15 +110,15 @@ export default async function OffertesPagina({
         <LegeStaat titel="Nog geen offertes" omschrijving="Maak je eerste offerte hierboven aan." />
       ) : (
         <Kaart className="overflow-x-auto p-0">
-          <table className="w-full min-w-[640px] text-sm">
+          <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-navy/10 text-left text-navy/50">
-                <th className="px-5 py-3 font-medium">Nummer</th>
-                <th className="px-5 py-3 font-medium">Titel</th>
-                <th className="px-5 py-3 font-medium">Klant</th>
-                <th className="px-5 py-3 font-medium">Status</th>
-                <th className="px-5 py-3 font-medium">Bedrag</th>
-                <th className="px-5 py-3 font-medium">Aangemaakt</th>
+                <th className="px-3 py-3 font-medium sm:px-5">Nummer</th>
+                <th className="px-3 py-3 font-medium sm:px-5">Titel</th>
+                <th className="hidden px-3 py-3 font-medium sm:table-cell sm:px-5">Klant</th>
+                <th className="px-3 py-3 font-medium sm:px-5">Status</th>
+                <th className="px-3 py-3 font-medium sm:px-5">Bedrag</th>
+                <th className="hidden px-3 py-3 font-medium sm:table-cell sm:px-5">Aangemaakt</th>
               </tr>
             </thead>
             <tbody>
@@ -124,16 +128,18 @@ export default async function OffertesPagina({
                   href={`/offertes/${o.id}`}
                   className="border-b border-navy/10 last:border-0 hover:bg-navy/[0.02]"
                 >
-                  <td className="px-5 py-3 font-medium text-navy">{o.nummer}</td>
-                  <td className="px-5 py-3 text-navy">{o.titel}</td>
-                  <td className="px-5 py-3 text-navy/70">{o.klant ?? "—"}</td>
-                  <td className="px-5 py-3">
+                  <td className="px-3 py-3 font-medium text-navy sm:px-5">{o.nummer}</td>
+                  <td className="max-w-[36vw] truncate px-3 py-3 text-navy sm:max-w-none sm:px-5">
+                    {o.titel}
+                  </td>
+                  <td className="hidden px-3 py-3 text-navy/70 sm:table-cell sm:px-5">{o.klant ?? "—"}</td>
+                  <td className="px-3 py-3 sm:px-5">
                     <Badge toon={offerteStatusToon(o.status)}>
                       {offerteStatusLabel(o.status)}
                     </Badge>
                   </td>
-                  <td className="px-5 py-3 text-navy">{euro(o.bedrag)}</td>
-                  <td className="px-5 py-3 text-navy/50">{datumKort(o.created_at)}</td>
+                  <td className="whitespace-nowrap px-3 py-3 text-navy sm:px-5">{euro(o.bedrag)}</td>
+                  <td className="hidden px-3 py-3 text-navy/50 sm:table-cell sm:px-5">{datumKort(o.created_at)}</td>
                 </RijLink>
               ))}
             </tbody>

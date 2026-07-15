@@ -1,6 +1,11 @@
 /** Types en keuzelijsten voor het klantenbestand. */
 
-export type KlantType = "prospect" | "klant" | "partner";
+export type KlantType =
+  | "prospect"
+  | "klant"
+  | "partner"
+  | "hot_lead"
+  | "cold_lead";
 
 export type Klant = {
   id: string;
@@ -23,6 +28,8 @@ export type Klant = {
 };
 
 export const KLANT_TYPES: { key: KlantType; label: string }[] = [
+  { key: "hot_lead", label: "Hot lead" },
+  { key: "cold_lead", label: "Cold lead" },
   { key: "prospect", label: "Prospect" },
   { key: "klant", label: "Klant" },
   { key: "partner", label: "Partner" },
@@ -102,9 +109,12 @@ export const REGIOS: string[] = Array.from(
   new Set(Object.values(REGIOS_PER_LAND).flat()),
 );
 
-export function klantTypeToon(t: KlantType): "groen" | "navy" | "oranje" {
+export function klantTypeToon(
+  t: KlantType,
+): "groen" | "navy" | "oranje" | "grijs" {
   if (t === "klant") return "groen";
-  if (t === "partner") return "oranje";
+  if (t === "partner" || t === "hot_lead") return "oranje";
+  if (t === "cold_lead") return "grijs";
   return "navy";
 }
 

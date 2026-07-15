@@ -19,8 +19,8 @@ export function Zijbalk({ onNavigate }: { onNavigate?: () => void }) {
       <div className="flex items-center gap-3 px-5 py-6">
         <Logo size={40} variant="wit" />
         <div className="leading-tight">
-          <div className="text-lg font-semibold text-white">Viesa</div>
-          <div className="text-sm font-medium text-white/80">Command Center</div>
+          <div className="text-lg font-semibold text-white">Viesa Automations</div>
+          <div className="text-sm font-medium text-white/80">Dashboard</div>
         </div>
       </div>
 

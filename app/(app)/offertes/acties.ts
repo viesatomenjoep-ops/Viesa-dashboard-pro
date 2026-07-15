@@ -28,6 +28,7 @@ export async function maakOfferte(formData: FormData) {
       nummer,
       titel,
       klant: leeg(formData.get("klant")),
+      klant_id: leeg(formData.get("klant_id")),
       lead_id: leeg(formData.get("lead_id")),
       bedrag: Number(formData.get("bedrag") ?? 0) || 0,
     })
