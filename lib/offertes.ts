@@ -17,6 +17,7 @@ export type Offerte = {
   inhoud_markdown: string;
   bedrag: number;
   status: OfferteStatus;
+  logo_url: string | null;
   drive_pdf_url: string | null;
   verzonden_op: string | null;
   created_at: string;

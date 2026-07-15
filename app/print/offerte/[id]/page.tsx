@@ -21,9 +21,9 @@ export default async function OffertePrint({
   if (error || !data) notFound();
   const offerte = data as Offerte;
 
-  // Klantlogo ophalen (indien aan een klant gekoppeld) voor op het briefpapier.
-  let klantLogo: string | null = null;
-  if (offerte.klant_id) {
+  // Logo: eerst het op de offerte opgeslagen logo, anders dat van de klant.
+  let klantLogo: string | null = offerte.logo_url ?? null;
+  if (!klantLogo && offerte.klant_id) {
     const { data: klant } = await supabase
       .from("klanten")
       .select("logo_url")
@@ -40,7 +40,10 @@ export default async function OffertePrint({
           documenttitel="Offerte"
           documentnummer={offerte.nummer}
           klant={offerte.klant}
-          klantLogoNode={<UploadbaarLogo initieel={klantLogo} />}
+          // Opgeslagen logo direct tonen; alleen als er nog géén logo is, een
+          // eenmalige upload aanbieden (geen dubbele prompt na Export).
+          klantLogo={klantLogo ?? undefined}
+          klantLogoNode={klantLogo ? undefined : <UploadbaarLogo initieel={null} />}
           datumRegel={`Datum: ${datumKort(offerte.created_at)}`}
         >
           <h2 className="text-lg font-semibold text-navy">{offerte.titel}</h2>

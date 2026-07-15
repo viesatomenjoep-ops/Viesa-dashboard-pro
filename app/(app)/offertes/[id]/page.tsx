@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Kaart } from "@/components/ui/Kaart";
 import { Badge } from "@/components/ui/Badge";
 import { MarkdownEditor } from "@/components/MarkdownEditor";
+import { KlantLogoUpload } from "@/components/KlantLogoUpload";
 import {
   offerteStatusToon,
   offerteStatusLabel,
@@ -155,6 +156,11 @@ export default async function OfferteDetail({
                 className="w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
               />
             </div>
+          </div>
+
+          {/* Logo voor op de PDF — opslaan en bij Export direct getoond */}
+          <div className="mt-4">
+            <KlantLogoUpload initieel={offerte.logo_url} />
           </div>
 
           <div className="mt-4">
