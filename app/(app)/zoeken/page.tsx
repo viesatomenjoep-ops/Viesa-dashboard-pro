@@ -20,7 +20,12 @@ export default async function ZoekPagina({
     const veiligeTerm = q.replace(/[,()%*\\]/g, " ").trim();
     const like = `%${veiligeTerm}%`;
 
-    const [leads, projecten, notities, offertes] = await Promise.all([
+    const [klanten, leads, projecten, notities, offertes, facturen] = await Promise.all([
+      supabase
+        .from("klanten")
+        .select("id, bedrijf, stad, branche")
+        .or(`bedrijf.ilike.${like},stad.ilike.${like},branche.ilike.${like},email.ilike.${like}`)
+        .limit(10),
       supabase
         .from("leads")
         .select("id, bedrijf, plaats")
@@ -41,8 +46,21 @@ export default async function ZoekPagina({
         .select("id, nummer, titel, klant")
         .or(`titel.ilike.${like},nummer.ilike.${like},klant.ilike.${like}`)
         .limit(10),
+      supabase
+        .from("facturen")
+        .select("id, nummer, klant")
+        .or(`nummer.ilike.${like},klant.ilike.${like}`)
+        .limit(10),
     ]);
 
+    groepen.push({
+      label: "Klanten",
+      treffers: (klanten.data ?? []).map((k) => ({
+        href: `/klanten/${k.id}`,
+        titel: k.bedrijf,
+        sub: [k.stad, k.branche].filter(Boolean).join(" · "),
+      })),
+    });
     groepen.push({
       label: "Leads",
       treffers: (leads.data ?? []).map((l) => ({
@@ -73,6 +91,14 @@ export default async function ZoekPagina({
         href: `/offertes/${o.id}`,
         titel: `${o.nummer} — ${o.titel}`,
         sub: o.klant ?? "",
+      })),
+    });
+    groepen.push({
+      label: "Facturen",
+      treffers: (facturen.data ?? []).map((f) => ({
+        href: `/facturen/${f.id}`,
+        titel: f.nummer,
+        sub: f.klant ?? "",
       })),
     });
   }

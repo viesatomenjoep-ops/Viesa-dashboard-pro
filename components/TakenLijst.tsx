@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Kaart } from "@/components/ui/Kaart";
 import {
   TAAK_PERSONEN,
@@ -19,11 +20,13 @@ const inputCls =
  */
 export function TakenLijst({
   taken,
+  klanten = [],
   maakActie,
   wisselActie,
   verwijderActie,
 }: {
   taken: Taak[];
+  klanten?: { id: string; bedrijf: string }[];
   maakActie: (formData: FormData) => void;
   wisselActie: (id: string, klaar: boolean) => void;
   verwijderActie: (id: string) => void;
@@ -83,8 +86,18 @@ export function TakenLijst({
           name="titel"
           required
           placeholder="Nieuwe taak…"
-          className={`${inputCls} flex-1`}
+          className={`${inputCls} min-w-[8rem] flex-1`}
         />
+        {klanten.length > 0 && (
+          <select name="klant_id" defaultValue="" className={inputCls} aria-label="Koppel aan klant">
+            <option value="">Geen klant</option>
+            {klanten.map((k) => (
+              <option key={k.id} value={k.id}>
+                {k.bedrijf}
+              </option>
+            ))}
+          </select>
+        )}
         <button
           type="submit"
           className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"
@@ -122,6 +135,14 @@ export function TakenLijst({
               >
                 {t.titel}
               </span>
+              {t.klant_id && t.klant_naam && (
+                <Link
+                  href={`/klanten/${t.klant_id}`}
+                  className="max-w-[8rem] truncate rounded-full bg-navy/5 px-2 py-0.5 text-xs text-navy/60 hover:text-navy"
+                >
+                  {t.klant_naam}
+                </Link>
+              )}
               {t.deadline && (
                 <span className="text-xs text-navy/40">{t.deadline}</span>
               )}

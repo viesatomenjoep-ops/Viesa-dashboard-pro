@@ -11,9 +11,10 @@ export async function maakTaak(formData: FormData) {
   const wie = (String(formData.get("wie") ?? "algemeen") || "algemeen") as TaakWie;
   const periode = (String(formData.get("periode") ?? "week") || "week") as TaakPeriode;
   const deadline = String(formData.get("deadline") ?? "").trim() || null;
+  const klant_id = String(formData.get("klant_id") ?? "").trim() || null;
 
   const supabase = createClient();
-  await supabase.from("taken").insert({ titel, wie, periode, deadline });
+  await supabase.from("taken").insert({ titel, wie, periode, deadline, klant_id });
   revalidatePath("/");
   revalidatePath("/taken");
 }

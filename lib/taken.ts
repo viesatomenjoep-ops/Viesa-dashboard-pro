@@ -10,6 +10,9 @@ export type Taak = {
   klaar: boolean;
   periode: TaakPeriode;
   deadline: string | null;
+  klant_id: string | null;
+  lead_id: string | null;
+  klant_naam?: string | null;
   created_at: string;
 };
 

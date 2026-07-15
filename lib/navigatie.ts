@@ -19,6 +19,7 @@ export const navSecties: NavSectie[] = [
       { label: "Audits", href: "/audits" },
       { label: "Offertes", href: "/offertes" },
       { label: "Facturen", href: "/facturen" },
+      { label: "Rapportage", href: "/rapportage" },
     ],
   },
   {

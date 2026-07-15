@@ -48,11 +48,26 @@ export default async function DashboardPagina() {
   try {
     const { data: t } = await supabase
       .from("taken")
-      .select("*")
+      .select("*, klanten(bedrijf)")
       .order("created_at", { ascending: true });
-    taken = (t ?? []) as Taak[];
+    taken = ((t ?? []) as (Taak & { klanten?: { bedrijf?: string } | null })[]).map((r) => ({
+      ...r,
+      klant_naam: r.klanten?.bedrijf ?? null,
+    }));
   } catch {
     /* taken-tabel nog niet aanwezig */
+  }
+
+  // Klanten voor de taak-koppeling (best effort).
+  let klantOpties: { id: string; bedrijf: string }[] = [];
+  try {
+    const { data: k } = await supabase
+      .from("klanten")
+      .select("id, bedrijf")
+      .order("bedrijf");
+    klantOpties = (k ?? []) as { id: string; bedrijf: string }[];
+  } catch {
+    /* klanten-tabel nog niet aanwezig */
   }
 
   // Agendapunten van vandaag (uit gekoppelde iCal-agenda's, best effort).
@@ -140,6 +155,7 @@ export default async function DashboardPagina() {
       <section className="mt-8">
         <TakenLijst
           taken={taken}
+          klanten={klantOpties}
           maakActie={maakTaak}
           wisselActie={wisselTaakKlaar}
           verwijderActie={verwijderTaak}
