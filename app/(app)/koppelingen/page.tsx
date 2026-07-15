@@ -84,7 +84,7 @@ export default async function KoppelingenPagina({
 
       {/* Navy banner met het beeldmerk */}
       <div className="mb-8 flex items-center gap-4 rounded-xl bg-navy px-6 py-5 text-white">
-        <Logo size={52} variant="wit" />
+        <Logo size={56} />
         <div>
           <p className="text-lg font-semibold">Viesa Automations</p>
           <p className="text-sm text-white/70">

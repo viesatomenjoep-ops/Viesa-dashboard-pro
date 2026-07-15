@@ -17,7 +17,7 @@ export function Zijbalk({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col bg-navy text-white">
       <div className="flex items-center gap-3 px-5 py-6">
-        <Logo size={40} variant="wit" />
+        <Logo size={52} />
         <div className="leading-tight">
           <div className="whitespace-nowrap font-merk text-base font-semibold tracking-tight text-white">
             Viesa Automations

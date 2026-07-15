@@ -21,6 +21,12 @@ body {
   min-height: 297mm;
   padding: 18mm;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+/* Middenblok groeit zodat de voettekst onderaan de A4 blijft (vol gevuld). */
+.brief-inhoud {
+  flex: 1 1 auto;
 }
 @page {
   size: A4;
@@ -38,7 +44,22 @@ body {
     box-shadow: none;
     margin: 0;
     width: auto;
-    min-height: auto;
+    /* min-height 297mm blijft staan zodat één pagina de A4 vult; lange inhoud
+       loopt automatisch door naar volgende A4-pagina's. */
+  }
+  /* Nette pagina-overgangen bij lange documenten. */
+  .brief h1,
+  .brief h2,
+  .brief h3 {
+    break-after: avoid;
+  }
+  .brief table,
+  .brief tr,
+  .brief img {
+    break-inside: avoid;
+  }
+  .brief-voet {
+    break-inside: avoid;
   }
 }
 

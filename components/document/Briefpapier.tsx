@@ -25,6 +25,9 @@ export function Briefpapier({
 }) {
   return (
     <div className="brief mx-auto bg-white text-navy">
+      {/* Accentbalk bovenaan */}
+      <div className="-mx-[18mm] -mt-[18mm] mb-8 h-2 bg-navy" />
+
       {/* Briefhoofd */}
       <header className="flex items-start justify-between gap-6 border-b border-navy/15 pb-6">
         <div className="flex items-center gap-4">
@@ -45,6 +48,8 @@ export function Briefpapier({
         </div>
       </header>
 
+      {/* Middenblok — groeit zodat de voettekst onderaan de A4 komt */}
+      <div className="brief-inhoud">
       {/* Documentkop */}
       <div className="mt-8 flex items-start justify-between gap-6">
         <div>
@@ -78,9 +83,10 @@ export function Briefpapier({
 
       {/* Inhoud */}
       <div className="mt-8">{children}</div>
+      </div>
 
       {/* Voettekst */}
-      <footer className="mt-12 border-t border-navy/15 pt-4 text-xs text-navy/50">
+      <footer className="brief-voet mt-12 border-t border-navy/15 pt-4 text-xs text-navy/50">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span>
             {BEDRIJF.naam} · {BEDRIJF.straat}, {BEDRIJF.postcode} {BEDRIJF.plaats}

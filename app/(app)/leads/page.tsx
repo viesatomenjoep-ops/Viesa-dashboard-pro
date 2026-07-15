@@ -26,9 +26,18 @@ async function haalLeads(): Promise<{ leads: Lead[]; schemaOntbreekt: boolean }>
 export default async function LeadsPagina({
   searchParams,
 }: {
-  searchParams: { fout?: string };
+  searchParams: { fout?: string; q?: string };
 }) {
-  const { leads, schemaOntbreekt } = await haalLeads();
+  const { leads: alle, schemaOntbreekt } = await haalLeads();
+
+  const q = (searchParams.q ?? "").toLowerCase().trim();
+  const leads = q
+    ? alle.filter((l) =>
+        `${l.bedrijf ?? ""} ${l.plaats ?? ""} ${l.website ?? ""} ${l.contact_naam ?? ""} ${l.email ?? ""}`
+          .toLowerCase()
+          .includes(q),
+      )
+    : alle;
 
   const actief = leads.filter((l) => l.status !== "gewonnen");
   const pipelineWaarde = actief.reduce(
@@ -60,6 +69,30 @@ export default async function LeadsPagina({
           {searchParams.fout}
         </p>
       )}
+
+      {/* Zoeken op klant, plaats of website */}
+      <form className="mb-6 flex flex-wrap items-center gap-2">
+        <input
+          name="q"
+          defaultValue={searchParams.q ?? ""}
+          placeholder="Zoek op klant, plaats of website…"
+          className="w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy sm:w-80"
+        />
+        <button
+          type="submit"
+          className="rounded-lg border border-navy/20 px-4 py-2 text-sm font-medium text-navy hover:bg-navy/5"
+        >
+          Zoeken
+        </button>
+        {q && (
+          <a href="/leads" className="text-sm text-navy/50 hover:underline">
+            Wissen
+          </a>
+        )}
+        {q && (
+          <span className="text-xs text-navy/50">{leads.length} resultaat(en)</span>
+        )}
+      </form>
 
       <SnelToevoegen />
 
