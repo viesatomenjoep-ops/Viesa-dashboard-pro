@@ -1,27 +1,27 @@
 {
-  "name": "Viesa Command Center",
-  "short_name": "Viesa",
+  "name": "Viesa Dashboard",
+  "short_name": "Viesa DB",
   "description": "Intern administratie- en salesdashboard voor Viesa Automations",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#F4F6F9",
+  "background_color": "#19445B",
   "theme_color": "#19445B",
   "icons": [
     {
-      "src": "/viesa-logo.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/viesa-logo.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/viesa-logo.png",
+      "src": "/icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
