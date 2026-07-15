@@ -18,15 +18,18 @@ export function MailOpstellen({
   geconfigureerd,
   klanten = [],
   initieelNaar = "",
+  initieelOnderwerp = "",
 }: {
   verstuurActie: (formData: FormData) => void;
   geconfigureerd: boolean;
   klanten?: KlantOptie[];
   initieelNaar?: string;
+  initieelOnderwerp?: string;
 }) {
-  const [onderwerp, setOnderwerp] = useState("");
+  const [onderwerp, setOnderwerp] = useState(initieelOnderwerp);
   const [tekst, setTekst] = useState("");
   const [naar, setNaar] = useState(initieelNaar);
+  const [toonCcBcc, setToonCcBcc] = useState(false);
   const listId = useId();
 
   function kiesTemplate(key: string) {
@@ -83,17 +86,43 @@ export function MailOpstellen({
       )}
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <input
-          name="naar"
-          type="email"
-          required
-          placeholder="Aan (ontvanger) *"
-          value={naar}
-          onChange={(e) => setNaar(e.target.value)}
-          className={inputCls}
-        />
+        <div className="flex items-center gap-2">
+          <input
+            name="naar"
+            type="email"
+            required
+            placeholder="Aan (ontvanger) *"
+            value={naar}
+            onChange={(e) => setNaar(e.target.value)}
+            className={inputCls}
+          />
+          {!toonCcBcc && (
+            <button
+              type="button"
+              onClick={() => setToonCcBcc(true)}
+              className="shrink-0 rounded-lg border border-navy/20 px-3 py-2 text-xs font-medium text-navy/70 hover:bg-navy/5"
+            >
+              Cc/Bcc
+            </button>
+          )}
+        </div>
         <input name="antwoord_naar" type="email" placeholder="Antwoord naar (optioneel)" className={inputCls} />
       </div>
+
+      {toonCcBcc && (
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <input
+            name="cc"
+            placeholder="Cc (komma's tussen adressen)"
+            className={inputCls}
+          />
+          <input
+            name="bcc"
+            placeholder="Bcc (komma's tussen adressen)"
+            className={inputCls}
+          />
+        </div>
+      )}
       <input
         name="onderwerp"
         required

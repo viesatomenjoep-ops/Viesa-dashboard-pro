@@ -4,18 +4,15 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { verstuurMail, mailHtml } from "@/lib/resend";
+import { BEDRIJF } from "@/lib/bedrijf";
 
-/** Verwijdert een e-mail uit het dashboard (log). */
-export async function verwijderMail(id: string) {
-  const supabase = createClient();
-  await supabase.from("emails").delete().eq("id", id);
-  revalidatePath("/mail");
-  redirect("/mail");
-}
+type MailMap = "inbox" | "verzonden" | "concepten" | "prullenbak" | "archief";
 
-/** Verstuurt een e-mail via Resend en logt 'm in de emails-tabel. */
+/** Verstuurt een e-mail via Resend (met optionele CC/BCC) en logt 'm. */
 export async function verstuurBericht(formData: FormData) {
   const naar = String(formData.get("naar") ?? "").trim();
+  const cc = String(formData.get("cc") ?? "").trim() || null;
+  const bcc = String(formData.get("bcc") ?? "").trim() || null;
   const onderwerp = String(formData.get("onderwerp") ?? "").trim();
   const tekst = String(formData.get("tekst") ?? "").trim();
   const antwoordNaar = String(formData.get("antwoord_naar") ?? "").trim() || undefined;
@@ -29,13 +26,28 @@ export async function verstuurBericht(formData: FormData) {
   const supabase = createClient();
 
   try {
-    const { id } = await verstuurMail({ naar, onderwerp, html, tekst, antwoordNaar });
-    await supabase.from("emails").insert({
-      richting: "uitgaand",
+    const { id } = await verstuurMail({
       naar,
+      cc: cc ?? undefined,
+      bcc: bcc ?? undefined,
       onderwerp,
       html,
       tekst,
+      antwoordNaar,
+    });
+    await supabase.from("emails").insert({
+      richting: "uitgaand",
+      map: "verzonden",
+      van: BEDRIJF.email,
+      van_naam: BEDRIJF.naam,
+      naar,
+      cc,
+      bcc,
+      onderwerp,
+      html,
+      tekst,
+      snippet: tekst.replace(/\s+/g, " ").slice(0, 140),
+      gelezen: true,
       status: "verzonden",
       provider_id: id,
       klant_id: klantId,
@@ -49,4 +61,50 @@ export async function verstuurBericht(formData: FormData) {
 
   revalidatePath("/mail");
   redirect("/mail?verzonden=1");
+}
+
+/**
+ * Markeert een bericht als gelezen of ongelezen. Bij 'ongelezen' gaan we terug
+ * naar de inbox — anders zou het heropenen van het bericht het meteen weer op
+ * 'gelezen' zetten (de detailpagina markeert bij openen automatisch gelezen).
+ */
+export async function markeerGelezen(id: string, gelezen: boolean) {
+  const supabase = createClient();
+  await supabase.from("emails").update({ gelezen }).eq("id", id);
+  revalidatePath("/mail");
+  revalidatePath(`/mail/${id}`);
+  if (!gelezen) redirect("/mail");
+}
+
+/** Zet/haalt een ster (markering) op een bericht. */
+export async function wisselSter(id: string, ster: boolean) {
+  const supabase = createClient();
+  await supabase.from("emails").update({ ster }).eq("id", id);
+  revalidatePath("/mail");
+  revalidatePath(`/mail/${id}`);
+}
+
+/** Verplaatst een bericht naar een andere map (inbox/archief/prullenbak/…). */
+export async function verplaatsMail(id: string, map: MailMap) {
+  const supabase = createClient();
+  await supabase.from("emails").update({ map }).eq("id", id);
+  revalidatePath("/mail");
+  redirect(map === "inbox" ? "/mail" : `/mail?box=${map}`);
+}
+
+/**
+ * Verwijderen = soft-delete: naar de prullenbak. Zit het al in de prullenbak,
+ * dan wordt het definitief verwijderd.
+ */
+export async function verwijderMail(id: string) {
+  const supabase = createClient();
+  const { data } = await supabase.from("emails").select("map").eq("id", id).single();
+  if (data?.map === "prullenbak") {
+    await supabase.from("emails").delete().eq("id", id);
+    revalidatePath("/mail");
+    redirect("/mail?box=prullenbak");
+  }
+  await supabase.from("emails").update({ map: "prullenbak" }).eq("id", id);
+  revalidatePath("/mail");
+  redirect("/mail");
 }

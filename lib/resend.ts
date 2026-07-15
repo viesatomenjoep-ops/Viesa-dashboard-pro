@@ -19,7 +19,18 @@ export type MailInvoer = {
   tekst?: string;
   antwoordNaar?: string;
   van?: string;
+  cc?: string | string[];
+  bcc?: string | string[];
 };
+
+/** Splitst een komma-/puntkomma-gescheiden adressenreeks in een lijst. */
+function adressen(v: string | string[] | undefined): string[] | undefined {
+  if (!v) return undefined;
+  const lijst = Array.isArray(v)
+    ? v
+    : v.split(/[,;]/).map((s) => s.trim()).filter(Boolean);
+  return lijst.length ? lijst : undefined;
+}
 
 export async function verstuurMail(m: MailInvoer): Promise<{ id: string }> {
   const key = process.env.RESEND_API_KEY;
@@ -34,6 +45,8 @@ export async function verstuurMail(m: MailInvoer): Promise<{ id: string }> {
     body: JSON.stringify({
       from: m.van ?? AFZENDER,
       to: m.naar,
+      cc: adressen(m.cc),
+      bcc: adressen(m.bcc),
       subject: m.onderwerp,
       html: m.html,
       text: m.tekst,
