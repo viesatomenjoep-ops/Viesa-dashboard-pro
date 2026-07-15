@@ -124,10 +124,16 @@ export default async function AgendaPagina({
         </div>
       ) : (
         <>
-          {/* Agenda koppelen */}
-          <Kaart className="mb-6">
-            <p className="text-sm font-medium text-navy">Agenda koppelen (iCal-link)</p>
-            <ol className="mt-2 list-decimal space-y-1 pl-5 text-xs text-navy/60">
+          {/* Agenda-instellingen — standaard ingeklapt; open als er nog geen bron is */}
+          <details
+            open={bronnen.length === 0}
+            className="mb-6 rounded-xl border border-navy/10 bg-white p-4 shadow-sm"
+          >
+            <summary className="cursor-pointer text-sm font-medium text-navy">
+              Agenda-instellingen (koppelen &amp; beheren)
+            </summary>
+
+            <ol className="mt-3 list-decimal space-y-1 pl-5 text-xs text-navy/60">
               <li>Open Google Calendar → hover over je agenda → ⋮ → <strong>Instellingen en delen</strong>.</li>
               <li>Scrol naar <strong>“Geheim adres in iCal-indeling”</strong> en kopieer die link.</li>
               <li>Plak de link hieronder en klik Toevoegen.</li>
@@ -164,7 +170,7 @@ export default async function AgendaPagina({
                 ))}
               </ul>
             )}
-          </Kaart>
+          </details>
 
           {bronFouten.length > 0 && (
             <div className="mb-6 rounded-xl border border-oranje/40 bg-oranje/5 p-3 text-xs text-navy/70">
