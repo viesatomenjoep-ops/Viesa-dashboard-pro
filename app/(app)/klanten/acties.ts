@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { KlantType } from "@/lib/klanten";
+import { auditVerslagTemplate, offerteTemplate } from "@/lib/documenttemplates";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 function leeg(v: FormDataEntryValue | null): string | null {
@@ -145,7 +146,13 @@ export async function maakOfferteVoorKlant(klantId: string) {
   const nummer = await volgend(supabase, "offertes", "VA-");
   const { data } = await supabase
     .from("offertes")
-    .insert({ nummer, titel: "Nieuwe offerte", klant: klant?.bedrijf ?? null, klant_id: klantId })
+    .insert({
+      nummer,
+      titel: `Offerte ${klant?.bedrijf ?? ""}`.trim(),
+      klant: klant?.bedrijf ?? null,
+      klant_id: klantId,
+      inhoud_markdown: offerteTemplate(klant?.bedrijf ?? "[bedrijf]"),
+    })
     .select("id")
     .single();
   revalidatePath("/offertes");
@@ -180,8 +187,7 @@ export async function maakAuditVoorKlant(klantId: string) {
       nummer,
       titel: `Auditverslag ${klant?.bedrijf ?? ""}`.trim(),
       klant_id: klantId,
-      inhoud_markdown:
-        "## Samenvatting\n\n- ...\n\n## Bevindingen\n\n- ...\n\n## Aanbevelingen\n\n1. ...",
+      inhoud_markdown: auditVerslagTemplate(klant?.bedrijf ?? "[bedrijf]"),
     })
     .select("id")
     .single();
