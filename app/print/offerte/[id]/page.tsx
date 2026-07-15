@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Briefpapier } from "@/components/document/Briefpapier";
 import { PrintKnop } from "@/components/document/PrintKnop";
+import { UploadbaarLogo } from "@/components/document/UploadbaarLogo";
 import { Markdown } from "@/components/ui/Markdown";
 import { euro, datumKort } from "@/lib/format";
 import type { Offerte } from "@/lib/offertes";
@@ -39,7 +40,7 @@ export default async function OffertePrint({
           documenttitel="Offerte"
           documentnummer={offerte.nummer}
           klant={offerte.klant}
-          klantLogo={klantLogo}
+          klantLogoNode={<UploadbaarLogo initieel={klantLogo} />}
           datumRegel={`Datum: ${datumKort(offerte.created_at)}`}
         >
           <h2 className="text-lg font-semibold text-navy">{offerte.titel}</h2>
