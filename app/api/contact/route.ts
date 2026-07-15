@@ -63,18 +63,12 @@ export async function POST(request: Request) {
       ${mailHandtekening()}
     </div>`;
 
+  // 1) Altijd loggen zodat de aanvraag in het dashboard (E-mail → Ontvangen)
+  //    verschijnt — ongeacht of de Resend-notificatie lukt.
+  let providerId: string | null = null;
   try {
-    const { id } = await verstuurMail({
-      naar: BEDRIJF.email,
-      onderwerp,
-      html,
-      tekst: description,
-      antwoordNaar: email,
-    });
-
-    // Log als 'inkomend' zodat de aanvraag in het dashboard (E-mail) verschijnt.
     const supabase = createServiceClient();
-    await supabase.from("emails").insert({
+    const { error } = await supabase.from("emails").insert({
       richting: "inkomend",
       van: `${naam} <${email}>`,
       naar: BEDRIJF.email,
@@ -82,14 +76,30 @@ export async function POST(request: Request) {
       html,
       tekst: description,
       status: "ontvangen",
-      provider_id: id,
     });
-
-    return NextResponse.json({ ok: true }, { headers: CORS });
+    if (error) {
+      return NextResponse.json({ fout: error.message }, { status: 500, headers: CORS });
+    }
   } catch (e) {
     return NextResponse.json(
-      { fout: e instanceof Error ? e.message : "versturen mislukt" },
+      { fout: e instanceof Error ? e.message : "opslaan mislukt" },
       { status: 500, headers: CORS },
     );
   }
+
+  // 2) Notificatie-mail (best effort) — een fout hier mag de aanvraag niet blokkeren.
+  try {
+    const res = await verstuurMail({
+      naar: BEDRIJF.email,
+      onderwerp,
+      html,
+      tekst: description,
+      antwoordNaar: email,
+    });
+    providerId = res.id;
+  } catch {
+    /* Resend nog niet (volledig) geconfigureerd — aanvraag staat al in dashboard */
+  }
+
+  return NextResponse.json({ ok: true, mailVerzonden: Boolean(providerId) }, { headers: CORS });
 }

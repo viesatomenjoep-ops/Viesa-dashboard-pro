@@ -76,34 +76,8 @@ export default async function DashboardPagina() {
         actie={<Logo size={52} />}
       />
 
-      {/* KPI's bovenaan */}
-      <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <Link href="/facturen">
-          <KpiKaart label="Omzet deze maand" waarde={euro(data.omzetMaand)} />
-        </Link>
-        <Link href="/facturen">
-          <KpiKaart label="Openstaand gefactureerd" waarde={euro(data.openstaandBedrag)} />
-        </Link>
-        <Link href="/leads">
-          <KpiKaart label="Pipeline-waarde" waarde={euro(data.pipelineWaarde)} />
-        </Link>
-        <Link href="/offertes">
-          <KpiKaart label="Lopende offertes" waarde={String(data.lopendeOffertes)} />
-        </Link>
-      </section>
-
-      {/* To-do lijst — direct onder de KPI's */}
-      <section className="mt-8">
-        <TakenLijst
-          taken={taken}
-          maakActie={maakTaak}
-          wisselActie={wisselTaakKlaar}
-          verwijderActie={verwijderTaak}
-        />
-      </section>
-
-      {/* Follow-ups + Agenda vandaag — onder de to-do lijst */}
-      <section className="mt-8 grid gap-6 lg:grid-cols-2">
+      {/* Follow-ups + Agenda vandaag — bovenaan */}
+      <section className="grid gap-6 lg:grid-cols-2">
         <Kaart>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-medium text-navy">Follow-ups vandaag</h2>
@@ -157,6 +131,31 @@ export default async function DashboardPagina() {
         </Kaart>
       </section>
 
+      {/* To-do lijst — onder Follow-ups/Agenda */}
+      <section className="mt-8">
+        <TakenLijst
+          taken={taken}
+          maakActie={maakTaak}
+          wisselActie={wisselTaakKlaar}
+          verwijderActie={verwijderTaak}
+        />
+      </section>
+
+      {/* KPI's — onder de to-do lijst */}
+      <section className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <Link href="/facturen">
+          <KpiKaart label="Omzet deze maand" waarde={euro(data.omzetMaand)} />
+        </Link>
+        <Link href="/facturen">
+          <KpiKaart label="Openstaand gefactureerd" waarde={euro(data.openstaandBedrag)} />
+        </Link>
+        <Link href="/leads">
+          <KpiKaart label="Pipeline-waarde" waarde={euro(data.pipelineWaarde)} />
+        </Link>
+        <Link href="/offertes">
+          <KpiKaart label="Lopende offertes" waarde={String(data.lopendeOffertes)} />
+        </Link>
+      </section>
 
       {/* Recente leads + activiteitenlog */}
       <section className="mt-8 grid gap-6 lg:grid-cols-2">
