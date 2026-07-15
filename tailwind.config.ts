@@ -17,6 +17,10 @@ const config: Config = {
         oranje: "#1E9E93",
         achtergrond: "#F4F6F9", // paginabachtergrond
       },
+      fontFamily: {
+        // Merk-wordmark 'Viesa Automations'. Wijzig de bron in app/layout.tsx.
+        merk: ["var(--font-merk)", "system-ui", "sans-serif"],
+      },
     },
   },
   plugins: [],

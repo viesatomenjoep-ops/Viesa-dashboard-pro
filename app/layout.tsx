@@ -1,8 +1,15 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
+// Merk-font voor de 'Viesa Automations'-wordmark. Vervang later door je eigen
+// lettertype via next/font/local (zie public/fonts).
+const merk = Poppins({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  variable: "--font-merk",
+});
 
 export const metadata: Metadata = {
   title: "Viesa Dashboard",
@@ -32,7 +39,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="nl">
+    <html lang="nl" className={merk.variable}>
       <body className={inter.className}>{children}</body>
     </html>
   );
