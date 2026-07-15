@@ -32,3 +32,28 @@ export async function verwijderAgendaBron(id: string) {
   revalidatePath("/agenda");
   revalidatePath("/koppelingen");
 }
+
+/** Voegt een eigen herinnering toe (los van Google). */
+export async function maakHerinnering(formData: FormData) {
+  const titel = String(formData.get("titel") ?? "").trim();
+  const wanneer = String(formData.get("wanneer") ?? "").trim();
+  if (!titel || !wanneer) {
+    redirect("/agenda?fout=" + encodeURIComponent("Titel en datum/tijd zijn verplicht."));
+  }
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("herinneringen")
+    .insert({ titel, wanneer: new Date(wanneer).toISOString() });
+  if (error) redirect("/agenda?fout=" + encodeURIComponent(error.message));
+  revalidatePath("/agenda");
+  revalidatePath("/");
+  redirect("/agenda");
+}
+
+/** Verwijdert een eigen herinnering. */
+export async function verwijderHerinnering(id: string) {
+  const supabase = createClient();
+  await supabase.from("herinneringen").delete().eq("id", id);
+  revalidatePath("/agenda");
+  revalidatePath("/");
+}
