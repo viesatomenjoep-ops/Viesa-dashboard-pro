@@ -6,14 +6,10 @@ import { createClient } from "@/lib/supabase/server";
 import { icalEvents } from "@/lib/ical";
 import type { AgendaItem } from "@/lib/google";
 import { leesFout } from "@/lib/fout";
-import { voegAgendaBronToe, verwijderAgendaBron } from "./acties";
 
 export const dynamic = "force-dynamic";
 
 type Bron = { id: string; naam: string; ical_url: string };
-
-const inputCls =
-  "rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy";
 
 function dagKop(iso: string): string {
   return new Date(iso).toLocaleDateString("nl-NL", {
@@ -97,10 +93,7 @@ export default async function AgendaPagina({
 
   return (
     <>
-      <PaginaKop
-        titel="Agenda"
-        omschrijving="Afspraken uit je Google-agenda via een geheime iCal-link — komende 30 dagen."
-      />
+      <PaginaKop titel="Agenda" />
 
       <section className="mb-8 grid grid-cols-3 gap-4">
         <KpiKaart label="Vandaag" waarde={String(vandaag)} accent={vandaag > 0} />
@@ -124,54 +117,6 @@ export default async function AgendaPagina({
         </div>
       ) : (
         <>
-          {/* Agenda-instellingen — standaard ingeklapt; open als er nog geen bron is */}
-          <details
-            open={bronnen.length === 0}
-            className="mb-6 rounded-xl border border-navy/10 bg-white p-4 shadow-sm"
-          >
-            <summary className="cursor-pointer text-sm font-medium text-navy">
-              Agenda-instellingen (koppelen &amp; beheren)
-            </summary>
-
-            <ol className="mt-3 list-decimal space-y-1 pl-5 text-xs text-navy/60">
-              <li>Open Google Calendar → hover over je agenda → ⋮ → <strong>Instellingen en delen</strong>.</li>
-              <li>Scrol naar <strong>“Geheim adres in iCal-indeling”</strong> en kopieer die link.</li>
-              <li>Plak de link hieronder en klik Toevoegen.</li>
-            </ol>
-            <form action={voegAgendaBronToe} className="mt-3 grid gap-2 sm:grid-cols-[1fr_2fr_auto]">
-              <input name="naam" placeholder="Naam (bv. Tom)" className={inputCls} />
-              <input
-                name="ical_url"
-                type="url"
-                required
-                placeholder="https://calendar.google.com/…/basic.ics *"
-                className={inputCls}
-              />
-              <button
-                type="submit"
-                className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"
-              >
-                Toevoegen
-              </button>
-            </form>
-
-            {bronnen.length > 0 && (
-              <ul className="mt-4 divide-y divide-navy/10">
-                {bronnen.map((b) => (
-                  <li key={b.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-                    <span className="truncate text-navy">
-                      {b.naam}
-                      <span className="ml-2 text-xs text-navy/40">{b.ical_url}</span>
-                    </span>
-                    <form action={verwijderAgendaBron.bind(null, b.id)}>
-                      <button type="submit" className="text-navy/30 hover:text-red-500">×</button>
-                    </form>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </details>
-
           {bronFouten.length > 0 && (
             <div className="mb-6 rounded-xl border border-oranje/40 bg-oranje/5 p-3 text-xs text-navy/70">
               {bronFouten.map((f, i) => (
@@ -183,7 +128,7 @@ export default async function AgendaPagina({
           {bronnen.length === 0 ? (
             <LegeStaat
               titel="Nog geen agenda gekoppeld"
-              omschrijving="Plak hierboven de geheime iCal-link van je Google-agenda."
+              omschrijving="Koppel je Google-agenda via Koppelingen (iCal-link)."
             />
           ) : items.length === 0 ? (
             <LegeStaat

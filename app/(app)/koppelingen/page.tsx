@@ -11,11 +11,33 @@ import {
 } from "@/lib/integraties";
 import { outlookStatus } from "@/lib/microsoft";
 import { wijzigIntegratieStatus, ontkoppelOutlook } from "./acties";
+import { voegAgendaBronToe, verwijderAgendaBron } from "../agenda/acties";
 
-export default async function KoppelingenPagina() {
+const inputCls =
+  "rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy";
+
+type AgendaBron = { id: string; naam: string; ical_url: string };
+
+export default async function KoppelingenPagina({
+  searchParams,
+}: {
+  searchParams: { fout?: string };
+}) {
   const supabase = createClient();
   let integraties: Integratie[] = [];
   let schemaOntbreekt = false;
+
+  // Gekoppelde iCal-agenda's (best effort — tabel kan nog ontbreken).
+  let agendaBronnen: AgendaBron[] = [];
+  try {
+    const { data } = await supabase
+      .from("agenda_bronnen")
+      .select("id, naam, ical_url")
+      .order("created_at");
+    agendaBronnen = (data ?? []) as AgendaBron[];
+  } catch {
+    /* agenda_bronnen nog niet aanwezig */
+  }
 
   // Echte Outlook-status uit ms_tokens (best effort).
   let outlook: { verbonden: boolean; email?: string } = { verbonden: false };
@@ -53,6 +75,12 @@ export default async function KoppelingenPagina() {
         titel="Koppelingen"
         omschrijving="Beheer de verbindingen met je diensten. Geheimen staan in de omgeving/Vault, nooit in de database."
       />
+
+      {searchParams.fout && (
+        <p className="mb-4 rounded-lg bg-oranje/10 px-3 py-2 text-sm text-oranje">
+          {searchParams.fout}
+        </p>
+      )}
 
       {/* Navy banner met het beeldmerk */}
       <div className="mb-8 flex items-center gap-4 rounded-xl bg-navy px-6 py-5 text-white">
@@ -148,6 +176,48 @@ export default async function KoppelingenPagina() {
           })}
         </div>
       )}
+
+      {/* Agenda (iCal-links) */}
+      <Kaart className="mt-8">
+        <h3 className="text-sm font-medium text-navy">Agenda (Google via iCal-link)</h3>
+        <ol className="mt-2 list-decimal space-y-1 pl-5 text-xs text-navy/60">
+          <li>Open Google Calendar → hover over je agenda → ⋮ → <strong>Instellingen en delen</strong>.</li>
+          <li>Scrol naar <strong>“Geheim adres in iCal-indeling”</strong> en kopieer die link.</li>
+          <li>Plak de link hieronder en klik Toevoegen. De afspraken verschijnen dan op de Agenda-pagina.</li>
+        </ol>
+        <form action={voegAgendaBronToe} className="mt-3 grid gap-2 sm:grid-cols-[1fr_2fr_auto]">
+          <input name="naam" placeholder="Naam (bv. Tom)" className={inputCls} />
+          <input
+            name="ical_url"
+            type="url"
+            required
+            placeholder="https://calendar.google.com/…/basic.ics *"
+            className={inputCls}
+          />
+          <button
+            type="submit"
+            className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"
+          >
+            Toevoegen
+          </button>
+        </form>
+
+        {agendaBronnen.length > 0 && (
+          <ul className="mt-4 divide-y divide-navy/10">
+            {agendaBronnen.map((b) => (
+              <li key={b.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                <span className="min-w-0 truncate text-navy">
+                  {b.naam}
+                  <span className="ml-2 text-xs text-navy/40">{b.ical_url}</span>
+                </span>
+                <form action={verwijderAgendaBron.bind(null, b.id)}>
+                  <button type="submit" className="text-navy/30 hover:text-red-500">×</button>
+                </form>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Kaart>
 
       <p className="mt-6 text-xs text-navy/50">
         OAuth-tokens en API-sleutels worden in de omgeving of Supabase Vault bewaard.

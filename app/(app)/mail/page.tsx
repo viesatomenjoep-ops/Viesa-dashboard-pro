@@ -8,6 +8,7 @@ import { resendGeconfigureerd } from "@/lib/resend";
 import { BEDRIJF } from "@/lib/bedrijf";
 import { datumKort } from "@/lib/format";
 import { leesFout } from "@/lib/fout";
+import { MailOpstellen } from "@/components/MailOpstellen";
 import { verstuurBericht } from "./acties";
 
 export const dynamic = "force-dynamic";
@@ -22,9 +23,6 @@ type Email = {
   status: string;
   created_at: string;
 };
-
-const inputCls =
-  "w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy";
 
 export default async function MailPagina({
   searchParams,
@@ -88,26 +86,12 @@ export default async function MailPagina({
       )}
 
       {/* Nieuw bericht */}
-      <form action={verstuurBericht} className="mb-8">
+      <div className="mb-8">
         <Kaart>
           <p className="mb-3 text-sm font-medium text-navy">Nieuw bericht</p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <input name="naar" type="email" required placeholder="Aan (ontvanger) *" className={inputCls} />
-            <input name="antwoord_naar" type="email" placeholder="Antwoord naar (optioneel)" className={inputCls} />
-          </div>
-          <input name="onderwerp" required placeholder="Onderwerp *" className={`${inputCls} mt-3`} />
-          <textarea name="tekst" required rows={8} placeholder="Bericht *" className={`${inputCls} mt-3`} />
-          <div className="mt-4">
-            <button
-              type="submit"
-              disabled={!geconfigureerd}
-              className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90 disabled:opacity-50"
-            >
-              Versturen
-            </button>
-          </div>
+          <MailOpstellen verstuurActie={verstuurBericht} geconfigureerd={geconfigureerd} />
         </Kaart>
-      </form>
+      </div>
 
       {/* Log */}
       {schemaOntbreekt ? (
