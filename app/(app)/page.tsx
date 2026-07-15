@@ -149,7 +149,7 @@ export default async function DashboardPagina() {
                     <span className="w-16 shrink-0 text-xs font-medium text-navy/60">
                       {agendaTijd(it)}
                     </span>
-                    <span className="truncate text-sm text-navy">{it.titel}</span>
+                    <span className="min-w-0 flex-1 truncate text-sm text-navy">{it.titel}</span>
                   </li>
                 ))}
               </ul>

@@ -237,44 +237,49 @@ export default async function AgendaPagina({
                   </p>
                   <Kaart className="p-0">
                     <ul>
-                      {dagItems.map((it, i) => (
-                        <li
-                          key={it.id}
-                          className={`flex items-center justify-between gap-4 px-5 py-3 ${
-                            i > 0 ? "border-t border-navy/10" : ""
-                          }`}
-                        >
-                          <div className="flex min-w-0 items-center gap-4">
-                            <span className="w-28 shrink-0 text-xs font-medium text-navy/50">
+                      {dagItems.map((it, i) => {
+                        const Inner = (
+                          <>
+                            <span className="w-24 shrink-0 text-xs font-medium text-navy/50 sm:w-28">
                               {tijd(it)}
                             </span>
-                            <div className="min-w-0">
-                              {it.link ? (
-                                <a
-                                  href={it.link}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="truncate text-sm font-medium text-navy hover:underline"
-                                >
-                                  {it.titel}
-                                </a>
-                              ) : (
-                                <span className="truncate text-sm font-medium text-navy">
-                                  {it.titel}
-                                </span>
-                              )}
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium text-navy">{it.titel}</p>
                               {it.locatie && (
                                 <p className="truncate text-xs text-navy/50">{it.locatie}</p>
                               )}
                             </div>
-                          </div>
-                          {it.herinneringId && (
-                            <form action={verwijderHerinnering.bind(null, it.herinneringId)}>
-                              <button type="submit" className="text-navy/30 hover:text-red-500">×</button>
-                            </form>
-                          )}
-                        </li>
-                      ))}
+                          </>
+                        );
+                        return (
+                          <li
+                            key={it.id}
+                            className={`flex items-center gap-3 px-5 py-3 ${
+                              i > 0 ? "border-t border-navy/10" : ""
+                            }`}
+                          >
+                            {it.link ? (
+                              <a
+                                href={it.link}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="flex min-w-0 flex-1 items-center gap-4 hover:opacity-80"
+                              >
+                                {Inner}
+                              </a>
+                            ) : (
+                              <div className="flex min-w-0 flex-1 items-center gap-4">{Inner}</div>
+                            )}
+                            {it.herinneringId ? (
+                              <form action={verwijderHerinnering.bind(null, it.herinneringId)}>
+                                <button type="submit" className="shrink-0 text-navy/30 hover:text-red-500">×</button>
+                              </form>
+                            ) : (
+                              it.link && <span className="shrink-0 text-navy/30">›</span>
+                            )}
+                          </li>
+                        );
+                      })}
                     </ul>
                   </Kaart>
                 </div>
