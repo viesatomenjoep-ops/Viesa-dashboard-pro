@@ -13,6 +13,7 @@ import {
 } from "@/lib/klanten";
 import { LandRegio } from "@/components/LandRegio";
 import { KlantLogoUpload } from "@/components/KlantLogoUpload";
+import { TerugKnop } from "@/components/ui/TerugKnop";
 import {
   DRIVE_LINK_TYPES,
   driveTypeLabel,
@@ -79,9 +80,7 @@ export default async function KlantDetail({
     <>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <Link href="/klanten" className="text-sm text-navy/60 hover:underline">
-            ← Terug naar klanten
-          </Link>
+          <TerugKnop naar="/klanten" label="← Terug naar klanten" />
           <h1 className="mt-1 flex items-center gap-3 text-2xl font-semibold text-navy">
             {klant.logo_url && (
               // eslint-disable-next-line @next/next/no-img-element

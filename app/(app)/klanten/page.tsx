@@ -56,9 +56,12 @@ export default async function KlantenPagina({
   }
 
   const q = (searchParams.q ?? "").toLowerCase();
+  // Standaard op Nederland bij het openen; kiest de gebruiker 'Alle landen'
+  // dan komt er ?land= (lege string) in de URL en tonen we alles.
+  const landFilter = searchParams.land === undefined ? "Nederland" : searchParams.land;
   const zichtbaar = klanten.filter((k) => {
     if (searchParams.branche && k.branche !== searchParams.branche) return false;
-    if (searchParams.land && k.land !== searchParams.land) return false;
+    if (landFilter && k.land !== landFilter) return false;
     if (searchParams.regio && k.regio !== searchParams.regio) return false;
     if (searchParams.type && k.type !== searchParams.type) return false;
     if (q && !`${k.bedrijf} ${k.stad ?? ""} ${k.email ?? ""}`.toLowerCase().includes(q))
@@ -107,7 +110,7 @@ export default async function KlantenPagina({
       {/* Filters — direct onder de tegels (land eerst, dan regio's) */}
       <KlantFilters
         q={searchParams.q ?? ""}
-        land={searchParams.land ?? ""}
+        land={landFilter}
         regio={searchParams.regio ?? ""}
         branche={searchParams.branche ?? ""}
         type={searchParams.type ?? ""}
