@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { KpiKaart } from "@/components/ui/KpiKaart";
 import { Kaart } from "@/components/ui/Kaart";
 import { Badge } from "@/components/ui/Badge";
 import { LegeStaat } from "@/components/ui/LegeStaat";
+import { RijLink } from "@/components/ui/RijLink";
 import { createClient } from "@/lib/supabase/server";
 import {
   offerteStatusToon,
@@ -119,15 +119,12 @@ export default async function OffertesPagina({
             </thead>
             <tbody>
               {offertes.map((o) => (
-                <tr
+                <RijLink
                   key={o.id}
+                  href={`/offertes/${o.id}`}
                   className="border-b border-navy/10 last:border-0 hover:bg-navy/[0.02]"
                 >
-                  <td className="px-5 py-3">
-                    <Link href={`/offertes/${o.id}`} className="text-navy hover:underline">
-                      {o.nummer}
-                    </Link>
-                  </td>
+                  <td className="px-5 py-3 font-medium text-navy">{o.nummer}</td>
                   <td className="px-5 py-3 text-navy">{o.titel}</td>
                   <td className="px-5 py-3 text-navy/70">{o.klant ?? "—"}</td>
                   <td className="px-5 py-3">
@@ -137,7 +134,7 @@ export default async function OffertesPagina({
                   </td>
                   <td className="px-5 py-3 text-navy">{euro(o.bedrag)}</td>
                   <td className="px-5 py-3 text-navy/50">{datumKort(o.created_at)}</td>
-                </tr>
+                </RijLink>
               ))}
             </tbody>
           </table>

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { Kaart } from "@/components/ui/Kaart";
 import { Badge } from "@/components/ui/Badge";
@@ -6,6 +5,7 @@ import { LegeStaat } from "@/components/ui/LegeStaat";
 import { createClient } from "@/lib/supabase/server";
 import { auditStatusToon, AUDIT_STATUSSEN, type Audit } from "@/lib/audits";
 import { datumKort } from "@/lib/format";
+import { RijLink } from "@/components/ui/RijLink";
 import { leesFout } from "@/lib/fout";
 import { maakAudit } from "./acties";
 
@@ -97,10 +97,12 @@ export default async function AuditsPagina({
             </thead>
             <tbody>
               {audits.map((a) => (
-                <tr key={a.id} className="border-b border-navy/10 last:border-0 hover:bg-navy/[0.02]">
-                  <td className="px-5 py-3">
-                    <Link href={`/audits/${a.id}`} className="text-navy hover:underline">{a.nummer}</Link>
-                  </td>
+                <RijLink
+                  key={a.id}
+                  href={`/audits/${a.id}`}
+                  className="border-b border-navy/10 last:border-0 hover:bg-navy/[0.02]"
+                >
+                  <td className="px-5 py-3 font-medium text-navy">{a.nummer}</td>
                   <td className="px-5 py-3 text-navy">{a.titel}</td>
                   <td className="px-5 py-3">
                     <Badge toon={auditStatusToon(a.status)}>
@@ -108,7 +110,7 @@ export default async function AuditsPagina({
                     </Badge>
                   </td>
                   <td className="px-5 py-3 text-navy/50">{datumKort(a.created_at)}</td>
-                </tr>
+                </RijLink>
               ))}
             </tbody>
           </table>

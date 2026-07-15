@@ -15,6 +15,7 @@ import {
   klantTypeLabel,
   type Klant,
 } from "@/lib/klanten";
+import { RijLink } from "@/components/ui/RijLink";
 import { leesFout } from "@/lib/fout";
 import { maakKlant, importeerKlanten } from "./acties";
 
@@ -193,19 +194,19 @@ export default async function KlantenPagina({
             </thead>
             <tbody>
               {zichtbaar.map((k) => (
-                <tr key={k.id} className="border-b border-navy/10 last:border-0 hover:bg-navy/[0.02]">
-                  <td className="px-5 py-3">
-                    <Link href={`/klanten/${k.id}`} className="font-medium text-navy hover:underline">
-                      {k.bedrijf}
-                    </Link>
-                  </td>
+                <RijLink
+                  key={k.id}
+                  href={`/klanten/${k.id}`}
+                  className="border-b border-navy/10 last:border-0 hover:bg-navy/[0.02]"
+                >
+                  <td className="px-5 py-3 font-medium text-navy">{k.bedrijf}</td>
                   <td className="px-5 py-3 text-navy/70">{k.stad ?? "—"}</td>
                   <td className="px-5 py-3 text-navy/70">{k.regio ?? "—"}</td>
                   <td className="px-5 py-3 text-navy/70">{k.branche ?? "—"}</td>
                   <td className="px-5 py-3">
                     <Badge toon={klantTypeToon(k.type)}>{klantTypeLabel(k.type)}</Badge>
                   </td>
-                </tr>
+                </RijLink>
               ))}
             </tbody>
           </table>

@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { KpiKaart } from "@/components/ui/KpiKaart";
 import { Kaart } from "@/components/ui/Kaart";
 import { Badge } from "@/components/ui/Badge";
 import { LegeStaat } from "@/components/ui/LegeStaat";
+import { RijLink } from "@/components/ui/RijLink";
 import { createClient } from "@/lib/supabase/server";
 import {
   factuurStatusToon,
@@ -148,15 +148,12 @@ export default async function FacturenPagina({
             </thead>
             <tbody>
               {facturen.map((f) => (
-                <tr
+                <RijLink
                   key={f.id}
+                  href={`/facturen/${f.id}`}
                   className="border-b border-navy/10 last:border-0 hover:bg-navy/[0.02]"
                 >
-                  <td className="px-5 py-3">
-                    <Link href={`/facturen/${f.id}`} className="text-navy hover:underline">
-                      {f.nummer}
-                    </Link>
-                  </td>
+                  <td className="px-5 py-3 font-medium text-navy">{f.nummer}</td>
                   <td className="px-5 py-3 text-navy">{f.klant ?? "—"}</td>
                   <td className="px-5 py-3 text-navy">{euro(f.bedrag)}</td>
                   <td className="px-5 py-3 text-navy/50">
@@ -167,7 +164,7 @@ export default async function FacturenPagina({
                       {factuurStatusLabel(f.status)}
                     </Badge>
                   </td>
-                </tr>
+                </RijLink>
               ))}
             </tbody>
           </table>
