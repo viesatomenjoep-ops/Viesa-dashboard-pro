@@ -5,8 +5,22 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Viesa Dashboard",
+  title: "Viesa Command Center",
   description: "Intern administratie- en salesdashboard voor Viesa Automations",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Viesa",
+  },
+  icons: {
+    icon: "/viesa-logo.png",
+    apple: "/viesa-logo.png",
+  },
+};
+
+export const viewport = {
+  themeColor: "#19445B",
 };
 
 export default function RootLayout({
