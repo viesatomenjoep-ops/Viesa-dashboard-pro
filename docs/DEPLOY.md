@@ -18,8 +18,11 @@ Draai deze bestanden uit `supabase/migrations/` één voor één:
 | 0008 | `0008_klanten.sql` | klantenbestand + klant_id op leads/offertes/facturen |
 | 0009 | `0009_audits.sql` | auditverslagen |
 | 0010 | `0010_bestand_categorieen.sql` | categorieën voor Bestanden |
+| 0011 | `0011_klant_logo.sql` | klantlogo (op offerte-PDF) |
+| 0012 | `0012_klant_bestanden.sql` | bestanden per klant (context 'klant') |
+| 0013 | `0013_emails.sql` | e-maillog (Resend) |
 
-> Nieuw project? Begin bij **0004** en draai t/m 0010. `supabase/seed.sql`
+> Nieuw project? Begin bij **0004** en draai t/m 0013. `supabase/seed.sql`
 > (alleen design-templates, geen voorbeelddata) is optioneel.
 
 ## 2. Supabase — Auth
@@ -51,6 +54,9 @@ GOOGLE_CLIENT_ID=<...>   GOOGLE_CLIENT_SECRET=<...>   GOOGLE_REDIRECT_URI=https:
 MS_CLIENT_ID=<...>   MS_TENANT_ID=<... of common>   MS_CLIENT_SECRET=<...>
 MS_REDIRECT_URI=https://viesa-dashboard-pro.vercel.app/api/auth/microsoft/callback
 MS_TOKEN_ENC_KEY=<32-byte base64/hex>
+# Resend (e-mail) — verifieer domein viesa-automations.nl in Resend
+RESEND_API_KEY=<resend-api-key>
+RESEND_INBOUND_SECRET=<lang geheim, voor /api/resend/inbound>
 ```
 
 Na wijzigingen: **Redeploy**.

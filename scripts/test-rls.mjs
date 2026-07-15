@@ -29,7 +29,8 @@ const supabase = createClient(url, anon, {
 const TABELLEN = [
   "leads", "activiteiten", "offertes", "facturen", "projecten", "notities",
   "design_docs", "whiteboards", "stickies", "drive_links", "prospector_runs",
-  "integraties",
+  "integraties", "ms_tokens", "klanten", "audits", "bestand_categorieen",
+  "emails",
 ];
 
 let geslaagd = true;

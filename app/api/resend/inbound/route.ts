@@ -12,9 +12,13 @@ import { createServiceClient } from "@/lib/supabase/service";
 export async function POST(request: Request) {
   const url = new URL(request.url);
   const geheim = process.env.RESEND_INBOUND_SECRET;
+  // Fail closed: zonder geconfigureerd geheim accepteren we niets.
+  if (!geheim) {
+    return NextResponse.json({ fout: "not_configured" }, { status: 503 });
+  }
   const meegestuurd =
     url.searchParams.get("secret") ?? request.headers.get("x-webhook-secret");
-  if (geheim && meegestuurd !== geheim) {
+  if (meegestuurd !== geheim) {
     return NextResponse.json({ fout: "unauthorized" }, { status: 401 });
   }
 
