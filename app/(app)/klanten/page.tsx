@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { KpiKaart } from "@/components/ui/KpiKaart";
 import { Kaart } from "@/components/ui/Kaart";
@@ -8,13 +7,14 @@ import { MassaImport } from "@/components/MassaImport";
 import { createClient } from "@/lib/supabase/server";
 import {
   BRANCHES,
-  REGIOS,
+  LANDEN,
   KLANT_TYPES,
   klantTypeToon,
   klantTypeLabel,
   type Klant,
 } from "@/lib/klanten";
 import { LandRegio } from "@/components/LandRegio";
+import { KlantFilters } from "@/components/KlantFilters";
 import { RijLink } from "@/components/ui/RijLink";
 import { leesFout } from "@/lib/fout";
 import { maakKlant, importeerKlanten } from "./acties";
@@ -29,7 +29,14 @@ const inputCls =
 export default async function KlantenPagina({
   searchParams,
 }: {
-  searchParams: { branche?: string; regio?: string; type?: string; q?: string; fout?: string };
+  searchParams: {
+    branche?: string;
+    regio?: string;
+    land?: string;
+    type?: string;
+    q?: string;
+    fout?: string;
+  };
 }) {
   const supabase = createClient();
   let klanten: Klant[] = [];
@@ -50,6 +57,7 @@ export default async function KlantenPagina({
   const q = (searchParams.q ?? "").toLowerCase();
   const zichtbaar = klanten.filter((k) => {
     if (searchParams.branche && k.branche !== searchParams.branche) return false;
+    if (searchParams.land && k.land !== searchParams.land) return false;
     if (searchParams.regio && k.regio !== searchParams.regio) return false;
     if (searchParams.type && k.type !== searchParams.type) return false;
     if (q && !`${k.bedrijf} ${k.stad ?? ""} ${k.email ?? ""}`.toLowerCase().includes(q))
@@ -95,34 +103,14 @@ export default async function KlantenPagina({
         </p>
       )}
 
-      {/* Filters — direct onder de tegels */}
-      <form className="mb-4 flex flex-wrap items-center gap-2">
-        <input name="q" defaultValue={searchParams.q ?? ""} placeholder="Zoek…" className={inputCls} />
-        <select name="branche" defaultValue={searchParams.branche ?? ""} className={inputCls}>
-          <option value="">Alle branches</option>
-          {BRANCHES.map((b) => (
-            <option key={b} value={b}>{b}</option>
-          ))}
-        </select>
-        <select name="regio" defaultValue={searchParams.regio ?? ""} className={inputCls}>
-          <option value="">Alle regio&apos;s</option>
-          {REGIOS.map((r) => (
-            <option key={r} value={r}>{r}</option>
-          ))}
-        </select>
-        <select name="type" defaultValue={searchParams.type ?? ""} className={inputCls}>
-          <option value="">Alle types</option>
-          {KLANT_TYPES.map((t) => (
-            <option key={t.key} value={t.key}>{t.label}</option>
-          ))}
-        </select>
-        <button type="submit" className="rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy hover:bg-navy/5">
-          Filter
-        </button>
-        <Link href="/klanten" className="text-sm text-navy/50 hover:underline">
-          Wissen
-        </Link>
-      </form>
+      {/* Filters — direct onder de tegels (land eerst, dan regio's) */}
+      <KlantFilters
+        q={searchParams.q ?? ""}
+        land={searchParams.land ?? ""}
+        regio={searchParams.regio ?? ""}
+        branche={searchParams.branche ?? ""}
+        type={searchParams.type ?? ""}
+      />
 
       {schemaOntbreekt ? (
         <div className="rounded-xl border border-oranje/40 bg-oranje/5 p-4 text-sm text-navy">
