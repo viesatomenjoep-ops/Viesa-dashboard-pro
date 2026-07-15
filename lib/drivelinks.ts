@@ -23,9 +23,20 @@ export type DriveLink = {
   type: DriveLinkType;
   context_type: DriveContextType;
   context_id: string | null;
+  categorie: string | null;
   created_at: string;
   updated_at: string;
 };
+
+/** Standaard-categorieën voor de Bestanden-pagina (altijd beschikbaar). */
+export const STANDAARD_CATEGORIEEN = [
+  "Websites Viesa Automations",
+  "Offertes",
+  "Facturen",
+  "Leadlijsten",
+  "Excel-bestanden",
+  "Overige bestanden",
+] as const;
 
 export const DRIVE_LINK_TYPES: { key: DriveLinkType; label: string }[] = [
   { key: "drive", label: "Drive" },
