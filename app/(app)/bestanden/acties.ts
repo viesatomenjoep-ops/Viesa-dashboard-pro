@@ -33,6 +33,38 @@ export async function voegBestandToe(formData: FormData) {
   redirect("/bestanden");
 }
 
+/** Werkt een bestaand bestand bij: titel, url, type én categorie. */
+export async function bewerkBestand(formData: FormData) {
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) return;
+  const url = String(formData.get("url") ?? "").trim();
+  if (!url) {
+    redirect("/bestanden?fout=" + encodeURIComponent("URL is verplicht."));
+  }
+  const categorie = String(formData.get("categorie") ?? "").trim() || null;
+  const supabase = createClient();
+
+  // Nieuwe categorie meteen bewaren zodat 'ie in de lijst blijft staan.
+  if (categorie) {
+    await supabase
+      .from("bestand_categorieen")
+      .upsert({ naam: categorie }, { onConflict: "naam" });
+  }
+
+  const { error } = await supabase
+    .from("drive_links")
+    .update({
+      titel: String(formData.get("titel") ?? "").trim() || url,
+      url,
+      type: (String(formData.get("type") ?? "drive") || "drive") as DriveLinkType,
+      categorie,
+    })
+    .eq("id", id);
+  if (error) redirect("/bestanden?fout=" + encodeURIComponent(error.message));
+  revalidatePath("/bestanden");
+  redirect("/bestanden");
+}
+
 /** Slaat een eigen categorie op (zonder direct een bestand toe te voegen). */
 export async function maakCategorie(formData: FormData) {
   const naam = String(formData.get("naam") ?? "").trim();
@@ -42,7 +74,9 @@ export async function maakCategorie(formData: FormData) {
   revalidatePath("/bestanden");
 }
 
-export async function verwijderBestand(id: string) {
+export async function verwijderBestand(formData: FormData) {
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) return;
   const supabase = createClient();
   await supabase.from("drive_links").delete().eq("id", id);
   revalidatePath("/bestanden");

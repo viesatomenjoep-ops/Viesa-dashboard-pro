@@ -1,18 +1,16 @@
 import Link from "next/link";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { Kaart } from "@/components/ui/Kaart";
-import { Badge } from "@/components/ui/Badge";
 import { LegeStaat } from "@/components/ui/LegeStaat";
+import { BestandRij } from "@/components/BestandRij";
 import { createClient } from "@/lib/supabase/server";
 import {
   DRIVE_LINK_TYPES,
-  driveTypeLabel,
   STANDAARD_CATEGORIEEN,
   type DriveLink,
 } from "@/lib/drivelinks";
-import { datumKort } from "@/lib/format";
 import { leesFout } from "@/lib/fout";
-import { voegBestandToe, verwijderBestand, maakCategorie } from "./acties";
+import { voegBestandToe, verwijderBestand, bewerkBestand, maakCategorie } from "./acties";
 
 export const dynamic = "force-dynamic";
 
@@ -142,37 +140,14 @@ export default async function BestandenPagina({
         <Kaart className="p-0">
           <ul>
             {zichtbaar.map((l, i) => (
-              <li
+              <BestandRij
                 key={l.id}
-                className={`flex items-center justify-between gap-3 px-5 py-3 ${
-                  i > 0 ? "border-t border-navy/10" : ""
-                }`}
-              >
-                <div className="flex min-w-0 items-center gap-3">
-                  <Badge toon="grijs">{driveTypeLabel(l.type)}</Badge>
-                  <a
-                    href={l.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="truncate text-sm font-medium text-navy hover:underline"
-                  >
-                    {l.titel}
-                  </a>
-                  {l.categorie && (
-                    <span className="hidden text-xs text-navy/40 sm:inline">
-                      · {l.categorie}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="hidden text-xs text-navy/40 sm:inline">
-                    {datumKort(l.created_at)}
-                  </span>
-                  <form action={verwijderBestand.bind(null, l.id)}>
-                    <button type="submit" className="text-navy/30 hover:text-red-500">×</button>
-                  </form>
-                </div>
-              </li>
+                link={l}
+                categorieenLijstId="categorieen-lijst"
+                bewerkActie={bewerkBestand}
+                verwijderActie={verwijderBestand}
+                bovenrand={i > 0}
+              />
             ))}
           </ul>
         </Kaart>
