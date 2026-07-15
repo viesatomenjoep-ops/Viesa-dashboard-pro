@@ -9,12 +9,12 @@ import { createClient } from "@/lib/supabase/server";
 import {
   BRANCHES,
   REGIOS,
-  LANDEN,
   KLANT_TYPES,
   klantTypeToon,
   klantTypeLabel,
   type Klant,
 } from "@/lib/klanten";
+import { LandRegio } from "@/components/LandRegio";
 import { RijLink } from "@/components/ui/RijLink";
 import { leesFout } from "@/lib/fout";
 import { maakKlant, importeerKlanten } from "./acties";
@@ -181,17 +181,7 @@ export default async function KlantenPagina({
             <input name="straat" placeholder="Straat + nr" className={inputCls} />
             <input name="postcode" placeholder="Postcode" className={inputCls} />
             <input name="stad" placeholder="Stad" className={inputCls} />
-            <select name="regio" defaultValue="" className={inputCls}>
-              <option value="">Regio…</option>
-              {REGIOS.map((r) => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
-            <select name="land" defaultValue="Nederland" className={inputCls}>
-              {LANDEN.map((l) => (
-                <option key={l} value={l}>{l}</option>
-              ))}
-            </select>
+            <LandRegio className={inputCls} />
             <select name="branche" defaultValue="" className={inputCls}>
               <option value="">Branche…</option>
               {BRANCHES.map((b) => (

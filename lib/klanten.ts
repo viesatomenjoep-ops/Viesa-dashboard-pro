@@ -45,24 +45,62 @@ export const BRANCHES = [
   "Overig",
 ] as const;
 
-/** Nederlandse provincies + internationaal. */
-export const REGIOS = [
-  "Groningen",
-  "Friesland",
-  "Drenthe",
-  "Overijssel",
-  "Flevoland",
-  "Gelderland",
-  "Utrecht",
-  "Noord-Holland",
-  "Zuid-Holland",
-  "Zeeland",
-  "Noord-Brabant",
-  "Limburg",
-  "Internationaal",
-] as const;
-
 export const LANDEN = ["Nederland", "België", "Duitsland", "Overig"] as const;
+
+/** Regio's (provincies/deelstaten) per land. */
+export const REGIOS_PER_LAND: Record<string, string[]> = {
+  Nederland: [
+    "Groningen",
+    "Friesland",
+    "Drenthe",
+    "Overijssel",
+    "Flevoland",
+    "Gelderland",
+    "Utrecht",
+    "Noord-Holland",
+    "Zuid-Holland",
+    "Zeeland",
+    "Noord-Brabant",
+    "Limburg",
+  ],
+  België: [
+    "Antwerpen",
+    "Oost-Vlaanderen",
+    "West-Vlaanderen",
+    "Vlaams-Brabant",
+    "Limburg (BE)",
+    "Henegouwen",
+    "Luik",
+    "Luxemburg (BE)",
+    "Namen",
+    "Waals-Brabant",
+    "Brussel",
+  ],
+  Duitsland: [
+    "Baden-Württemberg",
+    "Beieren",
+    "Berlijn",
+    "Brandenburg",
+    "Bremen",
+    "Hamburg",
+    "Hessen",
+    "Mecklenburg-Voor-Pommeren",
+    "Nedersaksen",
+    "Noordrijn-Westfalen",
+    "Rijnland-Palts",
+    "Saarland",
+    "Saksen",
+    "Saksen-Anhalt",
+    "Sleeswijk-Holstein",
+    "Thüringen",
+  ],
+  Overig: ["Internationaal"],
+};
+
+/** Platte lijst met alle regio's (voor filters e.d.). */
+export const REGIOS: string[] = Array.from(
+  new Set(Object.values(REGIOS_PER_LAND).flat()),
+);
 
 export function klantTypeToon(t: KlantType): "groen" | "navy" | "oranje" {
   if (t === "klant") return "groen";

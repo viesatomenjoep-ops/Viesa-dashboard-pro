@@ -6,13 +6,12 @@ import { Badge } from "@/components/ui/Badge";
 import { euro, datumKort } from "@/lib/format";
 import {
   BRANCHES,
-  REGIOS,
-  LANDEN,
   KLANT_TYPES,
   klantTypeToon,
   klantTypeLabel,
   type Klant,
 } from "@/lib/klanten";
+import { LandRegio } from "@/components/LandRegio";
 import {
   DRIVE_LINK_TYPES,
   driveTypeLabel,
@@ -138,8 +137,7 @@ export default async function KlantDetail({
               <Veld label="Straat + nr" naam="straat" waarde={klant.straat} />
               <Veld label="Postcode" naam="postcode" waarde={klant.postcode} />
               <Veld label="Stad" naam="stad" waarde={klant.stad} />
-              <Kies label="Regio" naam="regio" waarde={klant.regio} opties={[...REGIOS]} leeg="Regio…" />
-              <Kies label="Land" naam="land" waarde={klant.land} opties={[...LANDEN]} />
+              <LandRegio land={klant.land} regio={klant.regio ?? ""} className={inputCls} toonLabels />
               <Kies label="Branche" naam="branche" waarde={klant.branche} opties={[...BRANCHES]} leeg="Branche…" />
               <div>
                 <label className="mb-1 block text-sm font-medium text-navy">Type</label>
