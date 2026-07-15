@@ -155,7 +155,11 @@ export default async function DashboardPagina() {
           <KpiKaart label="Openstaand gefactureerd" waarde={euro(data.openstaandBedrag)} />
         </Link>
         <Link href="/leads">
-          <KpiKaart label="Pipeline-waarde" waarde={euro(data.pipelineWaarde)} />
+          <KpiKaart
+            label="Pipeline-prognose"
+            waarde={euro(data.prognoseOmzet)}
+            subtekst={`pipeline ${euro(data.pipelineWaarde)}`}
+          />
         </Link>
         <Link href="/offertes">
           <KpiKaart label="Lopende offertes" waarde={String(data.lopendeOffertes)} />

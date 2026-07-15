@@ -14,6 +14,7 @@ export type DashboardData = {
   omzetMaand: number;
   openstaandBedrag: number;
   pipelineWaarde: number;
+  prognoseOmzet: number;
   lopendeOffertes: number;
   omzetGrafiek: Staaf[];
   followups: FollowupVandaag[];
@@ -76,7 +77,7 @@ export async function haalDashboardData(): Promise<DashboardData> {
       0,
       mark,
     ),
-    veilig<{ pipelineWaarde: number; recenteLeads: Lead[] }>(
+    veilig<{ pipelineWaarde: number; prognoseOmzet: number; recenteLeads: Lead[] }>(
       async () => {
         const { data, error } = await supabase
           .from("leads")
@@ -84,14 +85,18 @@ export async function haalDashboardData(): Promise<DashboardData> {
           .order("created_at", { ascending: false });
         if (error) throw error;
         const leads = (data ?? []) as Lead[];
+        const actief = leads.filter((l) => l.status !== "gewonnen");
         return {
-          pipelineWaarde: leads
-            .filter((l) => l.status !== "gewonnen")
-            .reduce((s, l) => s + Number(l.verwachte_waarde ?? 0), 0),
+          pipelineWaarde: actief.reduce((s, l) => s + Number(l.verwachte_waarde ?? 0), 0),
+          // Gewogen prognose: verwachte waarde × kans (score 0–100).
+          prognoseOmzet: actief.reduce(
+            (s, l) => s + (Number(l.verwachte_waarde ?? 0) * Number(l.score ?? 0)) / 100,
+            0,
+          ),
           recenteLeads: leads.slice(0, 5),
         };
       },
-      { pipelineWaarde: 0, recenteLeads: [] },
+      { pipelineWaarde: 0, prognoseOmzet: 0, recenteLeads: [] },
       mark,
     ),
     veilig<number>(
@@ -168,6 +173,7 @@ export async function haalDashboardData(): Promise<DashboardData> {
     omzetMaand: omzetPerKey.get(huidigeKey) ?? 0,
     openstaandBedrag,
     pipelineWaarde: leadInfo.pipelineWaarde,
+    prognoseOmzet: leadInfo.prognoseOmzet,
     lopendeOffertes,
     omzetGrafiek,
     followups,
