@@ -40,7 +40,7 @@ export default async function BestandenPagina({
     <>
       <PaginaKop
         titel="Bestanden"
-        omschrijving="Uitsluitend Google Drive-links — er worden nooit bestanden opgeslagen."
+        omschrijving="Alleen links (Google Drive, iCloud, Sheets, Docs…) — er worden nooit bestanden opgeslagen."
       />
 
       {searchParams.fout && (

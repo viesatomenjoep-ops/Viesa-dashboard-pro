@@ -1,6 +1,13 @@
 /** Types en constanten voor Drive-links (bestanden-module). */
 
-export type DriveLinkType = "drive" | "sheet" | "doc" | "map" | "pdf" | "overig";
+export type DriveLinkType =
+  | "drive"
+  | "sheet"
+  | "doc"
+  | "map"
+  | "pdf"
+  | "icloud"
+  | "overig";
 
 export type DriveContextType =
   | "algemeen"
@@ -26,6 +33,7 @@ export const DRIVE_LINK_TYPES: { key: DriveLinkType; label: string }[] = [
   { key: "doc", label: "Doc" },
   { key: "map", label: "Map" },
   { key: "pdf", label: "PDF" },
+  { key: "icloud", label: "iCloud" },
   { key: "overig", label: "Overig" },
 ];
 
