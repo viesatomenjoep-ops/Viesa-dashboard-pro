@@ -15,6 +15,7 @@ import {
   klantTypeLabel,
   type Klant,
 } from "@/lib/klanten";
+import { leesFout } from "@/lib/fout";
 import { maakKlant, importeerKlanten } from "./acties";
 
 // Altijd per-request renderen met de sessie van de ingelogde gebruiker
@@ -42,7 +43,7 @@ export default async function KlantenPagina({
     klanten = (data ?? []) as Klant[];
   } catch (e) {
     schemaOntbreekt = true;
-    foutmelding = e instanceof Error ? e.message : String(e);
+    foutmelding = leesFout(e);
   }
 
   const q = (searchParams.q ?? "").toLowerCase();

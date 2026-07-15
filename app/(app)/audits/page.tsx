@@ -6,6 +6,7 @@ import { LegeStaat } from "@/components/ui/LegeStaat";
 import { createClient } from "@/lib/supabase/server";
 import { auditStatusToon, AUDIT_STATUSSEN, type Audit } from "@/lib/audits";
 import { datumKort } from "@/lib/format";
+import { leesFout } from "@/lib/fout";
 import { maakAudit } from "./acties";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +31,7 @@ export default async function AuditsPagina({
     klanten = k.data ?? [];
   } catch (e) {
     schemaOntbreekt = true;
-    foutmelding = e instanceof Error ? e.message : String(e);
+    foutmelding = leesFout(e);
   }
 
   return (

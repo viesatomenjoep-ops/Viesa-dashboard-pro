@@ -11,6 +11,7 @@ import {
   type DriveLink,
 } from "@/lib/drivelinks";
 import { datumKort } from "@/lib/format";
+import { leesFout } from "@/lib/fout";
 import { voegBestandToe, verwijderBestand, maakCategorie } from "./acties";
 
 export const dynamic = "force-dynamic";
@@ -42,7 +43,7 @@ export default async function BestandenPagina({
     bewaard = (c.data ?? []).map((x) => x.naam as string);
   } catch (e) {
     schemaOntbreekt = true;
-    foutmelding = e instanceof Error ? e.message : String(e);
+    foutmelding = leesFout(e);
   }
 
   // Alle categorieën: standaard + opgeslagen + al gebruikte (uniek).
