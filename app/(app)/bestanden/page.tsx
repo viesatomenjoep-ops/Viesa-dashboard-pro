@@ -13,6 +13,8 @@ import {
 import { datumKort } from "@/lib/format";
 import { voegBestandToe, verwijderBestand, maakCategorie } from "./acties";
 
+export const dynamic = "force-dynamic";
+
 const inputCls =
   "rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy";
 
@@ -25,6 +27,7 @@ export default async function BestandenPagina({
   let links: DriveLink[] = [];
   let bewaard: string[] = [];
   let schemaOntbreekt = false;
+  let foutmelding = "";
   try {
     const [l, c] = await Promise.all([
       supabase
@@ -37,8 +40,9 @@ export default async function BestandenPagina({
     if (l.error) throw l.error;
     links = (l.data ?? []) as DriveLink[];
     bewaard = (c.data ?? []).map((x) => x.naam as string);
-  } catch {
+  } catch (e) {
     schemaOntbreekt = true;
+    foutmelding = e instanceof Error ? e.message : String(e);
   }
 
   // Alle categorieën: standaard + opgeslagen + al gebruikte (uniek).
@@ -127,6 +131,9 @@ export default async function BestandenPagina({
         <div className="rounded-xl border border-oranje/40 bg-oranje/5 p-4 text-sm text-navy">
           <p className="font-medium text-oranje">Datamodel nog niet actief</p>
           <p className="mt-1 text-navy/70">Voer 0010_bestand_categorieen.sql uit in de Supabase SQL Editor.</p>
+          {foutmelding && (
+            <p className="mt-2 font-mono text-xs text-navy/50">Details: {foutmelding}</p>
+          )}
         </div>
       ) : zichtbaar.length === 0 ? (
         <LegeStaat titel="Nog geen links" omschrijving="Voeg een link toe en kies een categorie." />

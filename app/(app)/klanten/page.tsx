@@ -17,6 +17,10 @@ import {
 } from "@/lib/klanten";
 import { maakKlant, importeerKlanten } from "./acties";
 
+// Altijd per-request renderen met de sessie van de ingelogde gebruiker
+// (voorkomt een 'vastgebakken' banner uit een oude statische build).
+export const dynamic = "force-dynamic";
+
 const inputCls =
   "rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy";
 
@@ -28,6 +32,7 @@ export default async function KlantenPagina({
   const supabase = createClient();
   let klanten: Klant[] = [];
   let schemaOntbreekt = false;
+  let foutmelding = "";
   try {
     const { data, error } = await supabase
       .from("klanten")
@@ -35,8 +40,9 @@ export default async function KlantenPagina({
       .order("bedrijf", { ascending: true });
     if (error) throw error;
     klanten = (data ?? []) as Klant[];
-  } catch {
+  } catch (e) {
     schemaOntbreekt = true;
+    foutmelding = e instanceof Error ? e.message : String(e);
   }
 
   const q = (searchParams.q ?? "").toLowerCase();
@@ -166,6 +172,9 @@ export default async function KlantenPagina({
         <div className="rounded-xl border border-oranje/40 bg-oranje/5 p-4 text-sm text-navy">
           <p className="font-medium text-oranje">Datamodel nog niet actief</p>
           <p className="mt-1 text-navy/70">Voer 0008_klanten.sql uit in de Supabase SQL Editor.</p>
+          {foutmelding && (
+            <p className="mt-2 font-mono text-xs text-navy/50">Details: {foutmelding}</p>
+          )}
         </div>
       ) : zichtbaar.length === 0 ? (
         <LegeStaat titel="Geen klanten" omschrijving="Voeg een klant toe of importeer een lijst." />

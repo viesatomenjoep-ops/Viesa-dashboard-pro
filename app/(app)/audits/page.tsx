@@ -8,6 +8,8 @@ import { auditStatusToon, AUDIT_STATUSSEN, type Audit } from "@/lib/audits";
 import { datumKort } from "@/lib/format";
 import { maakAudit } from "./acties";
 
+export const dynamic = "force-dynamic";
+
 export default async function AuditsPagina({
   searchParams,
 }: {
@@ -17,6 +19,7 @@ export default async function AuditsPagina({
   let audits: Audit[] = [];
   let klanten: { id: string; bedrijf: string }[] = [];
   let schemaOntbreekt = false;
+  let foutmelding = "";
   try {
     const [a, k] = await Promise.all([
       supabase.from("audits").select("*").order("created_at", { ascending: false }),
@@ -25,8 +28,9 @@ export default async function AuditsPagina({
     if (a.error) throw a.error;
     audits = (a.data ?? []) as Audit[];
     klanten = k.data ?? [];
-  } catch {
+  } catch (e) {
     schemaOntbreekt = true;
+    foutmelding = e instanceof Error ? e.message : String(e);
   }
 
   return (
@@ -73,6 +77,9 @@ export default async function AuditsPagina({
         <div className="rounded-xl border border-oranje/40 bg-oranje/5 p-4 text-sm text-navy">
           <p className="font-medium text-oranje">Datamodel nog niet actief</p>
           <p className="mt-1 text-navy/70">Voer 0009_audits.sql uit in de Supabase SQL Editor.</p>
+          {foutmelding && (
+            <p className="mt-2 font-mono text-xs text-navy/50">Details: {foutmelding}</p>
+          )}
         </div>
       ) : audits.length === 0 ? (
         <LegeStaat titel="Nog geen audits" omschrijving="Maak je eerste auditverslag hierboven aan." />
