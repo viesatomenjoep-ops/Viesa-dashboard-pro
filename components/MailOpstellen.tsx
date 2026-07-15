@@ -1,30 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { MAIL_TEMPLATES } from "@/lib/mailtemplates";
 
 const inputCls =
   "w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy";
 
+type KlantOptie = { id: string; bedrijf: string; email: string | null };
+
 /**
- * Opstelvenster voor een e-mail met sjabloon-keuze. Bij het kiezen van een
- * sjabloon worden onderwerp en bericht ingevuld (nog aanpasbaar vóór verzenden).
+ * Opstelvenster voor een e-mail. Kies een sjabloon (vult onderwerp + bericht),
+ * of kies een klant — dan wordt automatisch het e-mailadres van die klant als
+ * ontvanger ingevuld.
  */
 export function MailOpstellen({
   verstuurActie,
   geconfigureerd,
+  klanten = [],
 }: {
   verstuurActie: (formData: FormData) => void;
   geconfigureerd: boolean;
+  klanten?: KlantOptie[];
 }) {
   const [onderwerp, setOnderwerp] = useState("");
   const [tekst, setTekst] = useState("");
+  const [naar, setNaar] = useState("");
+  const listId = useId();
 
   function kiesTemplate(key: string) {
     const t = MAIL_TEMPLATES.find((x) => x.key === key);
     if (!t) return;
     setOnderwerp(t.onderwerp);
     setTekst(t.tekst);
+  }
+
+  function kiesKlant(bedrijf: string) {
+    const k = klanten.find((x) => x.bedrijf === bedrijf);
+    if (k?.email) setNaar(k.email);
   }
 
   return (
@@ -47,8 +59,37 @@ export function MailOpstellen({
         </span>
       </div>
 
+      {/* Klant kiezen → vult automatisch het e-mailadres */}
+      {klanten.length > 0 && (
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <label className="text-sm font-medium text-navy">Klant:</label>
+          <input
+            list={listId}
+            placeholder="Klant zoeken → vult e-mail…"
+            onChange={(e) => kiesKlant(e.target.value)}
+            autoComplete="off"
+            className="rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
+          />
+          <datalist id={listId}>
+            {klanten
+              .filter((k) => k.email)
+              .map((k) => (
+                <option key={k.id} value={k.bedrijf} />
+              ))}
+          </datalist>
+        </div>
+      )}
+
       <div className="grid gap-3 sm:grid-cols-2">
-        <input name="naar" type="email" required placeholder="Aan (ontvanger) *" className={inputCls} />
+        <input
+          name="naar"
+          type="email"
+          required
+          placeholder="Aan (ontvanger) *"
+          value={naar}
+          onChange={(e) => setNaar(e.target.value)}
+          className={inputCls}
+        />
         <input name="antwoord_naar" type="email" placeholder="Antwoord naar (optioneel)" className={inputCls} />
       </div>
       <input

@@ -35,6 +35,7 @@ export default async function MailPagina({
   const opstellen = searchParams.nieuw === "1";
 
   let emails: Email[] = [];
+  let klanten: { id: string; bedrijf: string; email: string | null }[] = [];
   let schemaOntbreekt = false;
   let foutmelding = "";
   try {
@@ -48,6 +49,15 @@ export default async function MailPagina({
   } catch (e) {
     schemaOntbreekt = true;
     foutmelding = leesFout(e);
+  }
+  try {
+    const { data } = await supabase
+      .from("klanten")
+      .select("id, bedrijf, email")
+      .order("bedrijf");
+    klanten = data ?? [];
+  } catch {
+    /* klanten-tabel nog niet aanwezig */
   }
 
   const uitgaand = emails.filter((e) => e.richting === "uitgaand").length;
@@ -113,7 +123,11 @@ export default async function MailPagina({
         /* Opstellen-scherm */
         <Kaart>
           <p className="mb-3 text-sm font-medium text-navy">Nieuw bericht</p>
-          <MailOpstellen verstuurActie={verstuurBericht} geconfigureerd={geconfigureerd} />
+          <MailOpstellen
+            verstuurActie={verstuurBericht}
+            geconfigureerd={geconfigureerd}
+            klanten={klanten}
+          />
         </Kaart>
       ) : schemaOntbreekt ? (
         <div className="rounded-xl border border-oranje/40 bg-oranje/5 p-4 text-sm text-navy">
