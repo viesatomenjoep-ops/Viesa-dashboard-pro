@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { icalEvents } from "@/lib/ical";
 import type { AgendaItem } from "@/lib/google";
 import { leesFout } from "@/lib/fout";
-import { maakHerinnering, verwijderHerinnering } from "./acties";
+import { maakHerinnering, verwijderHerinnering, voegAgendaBronToe } from "./acties";
 
 export const dynamic = "force-dynamic";
 
@@ -165,6 +165,33 @@ export default async function AgendaPagina({
           </div>
         }
       />
+
+      {/* Agenda koppelen — de geheime iCal-link, helemaal bovenaan */}
+      <form
+        action={voegAgendaBronToe}
+        className="mb-6 grid gap-2 rounded-xl border border-navy/10 bg-white p-3 shadow-sm sm:grid-cols-[1fr_2fr_auto]"
+      >
+        <input type="hidden" name="terug" value="/agenda" />
+        <input name="naam" placeholder="Naam (bv. Werkagenda)" className={inputCls} />
+        <input
+          name="ical_url"
+          required
+          placeholder="Geheime iCal-link (https://… of webcal://…) *"
+          className={inputCls}
+        />
+        <button
+          type="submit"
+          className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"
+        >
+          Agenda koppelen
+        </button>
+        {bronnen.length > 0 && (
+          <p className="text-xs text-navy/40 sm:col-span-3">
+            {bronnen.length} agenda{bronnen.length === 1 ? "" : "'s"} gekoppeld — beheren kan bij
+            Koppelingen.
+          </p>
+        )}
+      </form>
 
       <section className="mb-8 grid grid-cols-3 gap-4">
         <StatKaart

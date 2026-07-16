@@ -39,7 +39,13 @@ export function ScanUpload({ actie }: { actie: (formData: FormData) => void }) {
           ))}
         </select>
         <input name="omschrijving" placeholder="Omschrijving" className={inputCls} />
-        <input name="bedrag" inputMode="decimal" placeholder="Bedrag (€)" className={inputCls} />
+        <input
+          name="bedrag"
+          inputMode="decimal"
+          placeholder="Bedrag (€) — bv. 12,99"
+          title="Op de cent nauwkeurig; komma of punt mag"
+          className={inputCls}
+        />
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <button

@@ -113,42 +113,14 @@ export default async function DashboardPagina() {
         }
       />
 
-      {/* KPI's — bovenaan, direct onder de welkomstbanner */}
-      <section className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <StatKaart
-          label="Omzet deze maand"
-          waarde={euro(data.omzetMaand)}
-          icoon={Euro}
-          toon="teal"
-          href="/facturen"
-          sparkline={omzetReeks}
-          trend={
-            omzetPct === null
-              ? undefined
-              : { waarde: `${omzetPct >= 0 ? "+" : ""}${omzetPct}%`, positief: omzetPct >= 0 }
-          }
-        />
-        <StatKaart
-          label="Openstaand gefactureerd"
-          waarde={euro(data.openstaandBedrag)}
-          icoon={Receipt}
-          toon="amber"
-          href="/facturen"
-        />
-        <StatKaart
-          label="Pipeline-prognose"
-          waarde={euro(data.prognoseOmzet)}
-          subtekst={`pipeline ${euro(data.pipelineWaarde)}`}
-          icoon={Target}
-          toon="blauw"
-          href="/leads"
-        />
-        <StatKaart
-          label="Lopende offertes"
-          waarde={String(data.lopendeOffertes)}
-          icoon={FileText}
-          toon="paars"
-          href="/offertes"
+      {/* To-do lijst — op één, direct onder de welkomstbanner (mobiel pakket) */}
+      <section className="mt-6">
+        <TakenLijst
+          taken={taken}
+          klanten={klantOpties}
+          maakActie={maakTaak}
+          wisselActie={wisselTaakKlaar}
+          verwijderActie={verwijderTaak}
         />
       </section>
 
@@ -205,6 +177,45 @@ export default async function DashboardPagina() {
             </ul>
           )}
         </Kaart>
+      </section>
+
+      {/* KPI's — naar onder verplaatst; de to-do's staan bovenaan */}
+      <section className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <StatKaart
+          label="Omzet deze maand"
+          waarde={euro(data.omzetMaand)}
+          icoon={Euro}
+          toon="teal"
+          href="/facturen"
+          sparkline={omzetReeks}
+          trend={
+            omzetPct === null
+              ? undefined
+              : { waarde: `${omzetPct >= 0 ? "+" : ""}${omzetPct}%`, positief: omzetPct >= 0 }
+          }
+        />
+        <StatKaart
+          label="Openstaand gefactureerd"
+          waarde={euro(data.openstaandBedrag)}
+          icoon={Receipt}
+          toon="amber"
+          href="/facturen"
+        />
+        <StatKaart
+          label="Pipeline-prognose"
+          waarde={euro(data.prognoseOmzet)}
+          subtekst={`pipeline ${euro(data.pipelineWaarde)}`}
+          icoon={Target}
+          toon="blauw"
+          href="/leads"
+        />
+        <StatKaart
+          label="Lopende offertes"
+          waarde={String(data.lopendeOffertes)}
+          icoon={FileText}
+          toon="paars"
+          href="/offertes"
+        />
       </section>
 
       {/* Recente leads + activiteitenlog */}
@@ -283,16 +294,6 @@ export default async function DashboardPagina() {
         </Kaart>
       </section>
 
-      {/* To-do lijst — net onder de omzetgrafiek */}
-      <section className="mt-8">
-        <TakenLijst
-          taken={taken}
-          klanten={klantOpties}
-          maakActie={maakTaak}
-          wisselActie={wisselTaakKlaar}
-          verwijderActie={verwijderTaak}
-        />
-      </section>
     </>
   );
 }

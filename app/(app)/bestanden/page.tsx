@@ -39,6 +39,13 @@ type FactuurRij = {
   klanten?: { bedrijf?: string } | null;
 };
 
+type AuditRij = {
+  id: string;
+  nummer: string;
+  titel: string;
+  klanten?: { bedrijf?: string } | null;
+};
+
 export const dynamic = "force-dynamic";
 
 const inputCls =
@@ -105,7 +112,18 @@ export default async function BestandenPagina({
   } catch {
     /* facturen-tabel nog niet aanwezig */
   }
-  let scans: AdministratieItem[] = [];
+  let audits: AuditRij[] = [];
+  try {
+    const { data } = await supabase
+      .from("audits")
+      .select("id, nummer, titel, klanten(bedrijf)")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    audits = (data ?? []) as unknown as AuditRij[];
+  } catch {
+    /* audits-tabel nog niet aanwezig */
+  }
+  let scans: (AdministratieItem & { download_url?: string | null })[] = [];
   try {
     const { data } = await supabase
       .from("administratie")
@@ -115,13 +133,18 @@ export default async function BestandenPagina({
     scans = await Promise.all(
       ((data ?? []) as AdministratieItem[]).map(async (r) => {
         let bekijk_url: string | null = null;
+        let download_url: string | null = null;
         if (r.storage_pad) {
-          const { data: signed } = await supabase.storage
-            .from("administratie")
-            .createSignedUrl(r.storage_pad, 3600);
-          bekijk_url = signed?.signedUrl ?? null;
+          const [inline, attachment] = await Promise.all([
+            supabase.storage.from("administratie").createSignedUrl(r.storage_pad, 3600),
+            supabase.storage
+              .from("administratie")
+              .createSignedUrl(r.storage_pad, 3600, { download: true }),
+          ]);
+          bekijk_url = inline.data?.signedUrl ?? null;
+          download_url = attachment.data?.signedUrl ?? null;
         }
-        return { ...r, bekijk_url };
+        return { ...r, bekijk_url, download_url };
       }),
     );
   } catch {
@@ -150,10 +173,13 @@ export default async function BestandenPagina({
       <Kaart className="mb-8">
         <div className="mb-1 flex items-center gap-2">
           <Camera size={18} className="text-oranje" />
-          <h2 className="text-lg font-semibold text-navy">Administratie</h2>
+          <h2 className="text-lg font-semibold text-navy">Administratie Viesa Automations</h2>
         </div>
         <p className="mb-3 text-sm text-navy/60">
-          Maak met je camera een foto van een bonnetje, factuur of bestelling — alles staat hier bij elkaar.
+          Maak met je camera een foto van een bonnetje, factuur of bestelling — alles staat hier bij
+          elkaar. Met Google Drive verbonden gaat elke scan automatisch ook naar Drive; voor iCloud
+          gebruik je <span className="font-medium text-navy">Download</span> bij een scan en bewaar
+          je hem via Bestanden in je iCloud.
         </p>
         <ScanUpload actie={voegScanToe} />
 
@@ -177,6 +203,38 @@ export default async function BestandenPagina({
                 <Badge toon={factuurStatusToon(f.status)}>{factuurStatusLabel(f.status)}</Badge>
                 <a
                   href={`/print/factuur/${f.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs font-medium text-oranje hover:underline"
+                >
+                  PDF
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <h3 className="mb-2 mt-6 text-sm font-medium text-navy">Auditverslagen</h3>
+        {audits.length === 0 ? (
+          <p className="text-sm text-navy/50">Nog geen auditverslagen.</p>
+        ) : (
+          <ul className="overflow-hidden rounded-lg border border-navy/10">
+            {audits.map((a, i) => (
+              <li
+                key={a.id}
+                className={`flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm ${
+                  i > 0 ? "border-t border-navy/10" : ""
+                }`}
+              >
+                <Link href={`/audits/${a.id}`} className="font-medium text-navy hover:underline">
+                  {a.nummer}
+                </Link>
+                <span className="min-w-0 flex-1 truncate text-navy/60">
+                  {a.titel}
+                  {a.klanten?.bedrijf ? ` · ${a.klanten.bedrijf}` : ""}
+                </span>
+                <a
+                  href={`/print/audit/${a.id}`}
                   target="_blank"
                   rel="noreferrer"
                   className="text-xs font-medium text-oranje hover:underline"
@@ -228,16 +286,23 @@ export default async function BestandenPagina({
                       <button className="hover:text-red-500">Verwijderen</button>
                     </form>
                   </div>
-                  {s.drive_url && (
-                    <a
-                      href={s.drive_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-[11px] font-medium text-oranje hover:underline"
-                    >
-                      In Drive
-                    </a>
-                  )}
+                  <div className="mt-0.5 flex items-center gap-3 text-[11px] font-medium">
+                    {s.download_url && (
+                      <a href={s.download_url} className="text-oranje hover:underline">
+                        Download
+                      </a>
+                    )}
+                    {s.drive_url && (
+                      <a
+                        href={s.drive_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-oranje hover:underline"
+                      >
+                        In Drive
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

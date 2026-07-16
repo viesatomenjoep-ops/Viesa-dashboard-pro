@@ -15,7 +15,9 @@ export async function voegScanToe(formData: FormData) {
   }
   const type = (String(formData.get("type") ?? "bonnetje") || "bonnetje") as AdminType;
   const omschrijving = String(formData.get("omschrijving") ?? "").trim() || null;
-  const bedragRuw = String(formData.get("bedrag") ?? "").replace(",", ".").trim();
+  // Bedrag op de cent nauwkeurig; accepteert "12,99", "12.99" en "€ 1.234,56".
+  let bedragRuw = String(formData.get("bedrag") ?? "").replace(/[^\d,.-]/g, "");
+  if (bedragRuw.includes(",")) bedragRuw = bedragRuw.replace(/\./g, "").replace(",", ".");
   const bedrag = bedragRuw ? Number(bedragRuw) : null;
 
   const bytes = new Uint8Array(await file.arrayBuffer());
