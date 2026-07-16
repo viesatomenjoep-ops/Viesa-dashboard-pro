@@ -207,17 +207,6 @@ export default async function DashboardPagina() {
         </Kaart>
       </section>
 
-      {/* To-do lijst — onder Follow-ups/Agenda */}
-      <section className="mt-8">
-        <TakenLijst
-          taken={taken}
-          klanten={klantOpties}
-          maakActie={maakTaak}
-          wisselActie={wisselTaakKlaar}
-          verwijderActie={verwijderTaak}
-        />
-      </section>
-
       {/* Recente leads + activiteitenlog */}
       <section className="mt-8 grid gap-6 lg:grid-cols-2">
         <div>
@@ -292,6 +281,17 @@ export default async function DashboardPagina() {
           </h2>
           <AreaGrafiek data={areaData} formaat="euro" />
         </Kaart>
+      </section>
+
+      {/* To-do lijst — net onder de omzetgrafiek */}
+      <section className="mt-8">
+        <TakenLijst
+          taken={taken}
+          klanten={klantOpties}
+          maakActie={maakTaak}
+          wisselActie={wisselTaakKlaar}
+          verwijderActie={verwijderTaak}
+        />
       </section>
     </>
   );
