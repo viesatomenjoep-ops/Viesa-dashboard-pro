@@ -51,6 +51,8 @@ export default async function HomePagina() {
   return (
     <div className="overflow-hidden">
       <WidgetLauncher
+        metKop={false}
+        roosterAlleenMobiel
         bovenGrid={
           <InfoWidgets
             openTaken={openTaken}

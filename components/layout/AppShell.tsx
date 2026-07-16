@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { signOut } from "@/app/login/actions";
 import { Zijbalk } from "@/components/layout/Zijbalk";
 import { ZoekBalk } from "@/components/layout/ZoekBalk";
+import { Logo } from "@/components/ui/Logo";
 import { AgendaMeldingen } from "@/components/AgendaMeldingen";
 import { MeldingenDropdown } from "@/components/layout/MeldingenDropdown";
 import { GebruikerMenu } from "@/components/layout/GebruikerMenu";
@@ -30,10 +32,10 @@ export function AppShell({
   return (
     <div className="flex min-h-screen">
       <PrefetchRoutes />
-      {/* Desktop-zijbalk */}
+      {/* Desktop-zijbalk — grotere widget-tegels */}
       <aside className="hidden w-[256px] shrink-0 md:block">
         <div className="fixed h-screen w-[256px]">
-          <Zijbalk />
+          <Zijbalk variant="desktop" />
         </div>
       </aside>
 
@@ -49,7 +51,7 @@ export function AppShell({
             >
               ✕ Terug
             </button>
-            <Zijbalk onNavigate={() => setOpen(false)} />
+            <Zijbalk variant="mobiel" onNavigate={() => setOpen(false)} />
           </div>
         </div>
       )}
@@ -70,13 +72,25 @@ export function AppShell({
               </svg>
             </button>
 
+            {/* Merk — logo + naam (klein), tussen hamburger en de rest. Alleen op
+                mobiel; op desktop staat het merk al in de zijbalk. Klikt naar home. */}
+            <Link href="/" className="flex min-w-0 flex-1 items-center gap-2 md:hidden">
+              <Logo size={28} />
+              <span className="min-w-0 leading-tight">
+                <span className="block truncate font-merk text-sm font-semibold text-navy">
+                  Viesa Automations
+                </span>
+                <span className="block text-[10px] font-medium text-navy/50">Dashboard</span>
+              </span>
+            </Link>
+
             {/* Zoekbalk op één regel vanaf sm (tablet/desktop). */}
             <div className="hidden flex-1 sm:flex">
               <ZoekBalk />
             </div>
 
             {/* Rechts: push-belletje (alleen desktop), meldingen en gebruiker. */}
-            <div className="flex flex-1 items-center justify-end gap-2 sm:flex-none">
+            <div className="flex shrink-0 items-center justify-end gap-2">
               <span className="hidden sm:inline-flex">
                 <AgendaMeldingen />
               </span>
