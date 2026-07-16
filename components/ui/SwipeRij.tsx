@@ -44,24 +44,22 @@ export function SwipeRij({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-lg">
+    <div className="relative w-full overflow-hidden rounded-lg">
       <div className="absolute inset-0 flex items-center justify-end rounded-lg bg-red-500 pr-4 text-white">
         <Trash2 size={16} />
       </div>
       <div
-        onPointerDown={(e) => {
-          (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
-          begin(e.clientX);
-        }}
+        onPointerDown={(e) => begin(e.clientX)}
         onPointerMove={(e) => beweeg(e.clientX)}
         onPointerUp={eind}
         onPointerCancel={eind}
+        onPointerLeave={eind}
         style={{
           transform: `translateX(${dx}px)`,
           transition: animeer ? "transform .2s ease" : "none",
           touchAction: "pan-y",
         }}
-        className="relative bg-white"
+        className="relative w-full min-w-0 bg-white"
       >
         {children}
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 /**
@@ -29,6 +30,9 @@ export function VolScherm({
   knopKlasse?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [gemonteerd, setGemonteerd] = useState(false);
+
+  useEffect(() => setGemonteerd(true), []);
 
   useEffect(() => {
     if (!open) return;
@@ -64,24 +68,27 @@ export function VolScherm({
         {label}
       </button>
 
-      {open && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-achtergrond">
-          <div className="flex items-center justify-between border-b border-navy/10 bg-white px-4 py-3 sm:px-6">
-            <h2 className="truncate text-lg font-semibold text-navy">{titel ?? label}</h2>
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              aria-label="Sluiten"
-              className="rounded-lg border border-navy/20 p-2 text-navy hover:bg-navy/5"
-            >
-              <X size={18} />
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-            <div className={`mx-auto ${maxBreed}`}>{children}</div>
-          </div>
-        </div>
-      )}
+      {open &&
+        gemonteerd &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex flex-col bg-achtergrond">
+            <div className="flex items-center justify-between border-b border-navy/10 bg-white px-4 py-3 sm:px-6">
+              <h2 className="truncate text-lg font-semibold text-navy">{titel ?? label}</h2>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Sluiten"
+                className="rounded-lg border border-navy/20 p-2 text-navy hover:bg-navy/5"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+              <div className={`mx-auto ${maxBreed}`}>{children}</div>
+            </div>
+          </div>,
+          document.body,
+        )}
     </>
   );
 }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Camera, Upload } from "lucide-react";
+import { Camera, Link2, Tags, Upload } from "lucide-react";
 import { VolScherm } from "@/components/ui/VolScherm";
 import { uploadBestand } from "./upload-acties";
 import { PaginaKop } from "@/components/ui/PaginaKop";
@@ -186,7 +186,7 @@ export default async function BestandenPagina({
     <>
       <PaginaKop
         titel="Bestanden"
-        omschrijving="Alleen links (Drive, iCloud, Sheets, Docs…) in categorieën — nooit bestanden zelf."
+        omschrijving="Upload bestanden naar Drive of bewaar links — geordend in categorieën."
       />
 
       {searchParams.fout && (
@@ -195,19 +195,17 @@ export default async function BestandenPagina({
         </p>
       )}
 
-      {/* Administratie — gemaakte facturen + gescande bonnetjes */}
-      <Kaart className="mb-8">
+      {/* Volgorde via flex 'order': toolbar (1) → bestandenlijst (2) → administratie (3) */}
+      <div className="flex flex-col gap-6">
+
+      {/* Administratie — staat visueel onderaan */}
+      <Kaart className="order-3">
         <div className="mb-1 flex items-center gap-2">
           <Camera size={18} className="text-oranje" />
           <h2 className="text-lg font-semibold text-navy">Administratie Viesa Automations</h2>
         </div>
         <p className="mb-3 text-sm text-navy/60">
-          Maak met je camera een foto van een bonnetje, factuur of bestelling. Elke scan wordt
-          opgeslagen in de <span className="font-medium text-navy">Google Drive</span> van
-          viesatomenjoep@gmail.com (verbind Drive eenmalig via Koppelingen) — niet in Supabase, dus
-          het geheugen loopt niet vol. Voor iCloud gebruik je{" "}
-          <span className="font-medium text-navy">Download</span> bij een scan en bewaar je hem via
-          Bestanden.
+          Maak met je camera een foto van een bonnetje, factuur of bestelling.
         </p>
         <ScanUpload actie={voegScanToe} />
 
@@ -411,8 +409,8 @@ export default async function BestandenPagina({
         )}
       </Kaart>
 
-      {/* Bestand uploaden naar Google Drive — één knop, vol scherm */}
-      <div className="mb-4">
+      {/* Compacte toolbar: uploaden, link toevoegen, categorieën — elk uitklapbaar */}
+      <div className="order-1 flex flex-wrap gap-2">
         <VolScherm label="Bestand uploaden" titel="Bestand uploaden naar Drive" icoon={<Upload size={16} />}>
           <form action={uploadBestand} className="space-y-3">
             <input
@@ -440,58 +438,62 @@ export default async function BestandenPagina({
             </button>
           </form>
         </VolScherm>
-      </div>
 
-      {/* Link toevoegen (met categorie) */}
-      <form
-        action={voegBestandToe}
-        className="mb-4 grid gap-2 rounded-xl border border-navy/10 bg-white p-3 shadow-sm sm:grid-cols-[2fr_2fr_1fr_1fr_auto]"
-      >
-        <input name="titel" placeholder="Titel" className={inputCls} />
-        <input name="url" type="url" required placeholder="https://… *" className={inputCls} />
-        <select name="type" className={inputCls}>
-          {DRIVE_LINK_TYPES.map((t) => (
-            <option key={t.key} value={t.key}>{t.label}</option>
-          ))}
-        </select>
-        <input
-          name="categorie"
-          list="categorieen-lijst"
-          placeholder="Categorie (kies of typ)"
-          className={inputCls}
-        />
-        <button
-          type="submit"
-          className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"
-        >
-          + Toevoegen
-        </button>
+        <VolScherm label="Link toevoegen" titel="Link toevoegen" toon="navy" icoon={<Link2 size={16} />}>
+          <form action={voegBestandToe} className="space-y-3">
+            <input name="titel" placeholder="Titel" className={`${inputCls} w-full`} />
+            <input name="url" type="url" required placeholder="https://… *" className={`${inputCls} w-full`} />
+            <select name="type" className={`${inputCls} w-full`}>
+              {DRIVE_LINK_TYPES.map((t) => (
+                <option key={t.key} value={t.key}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+            <input
+              name="categorie"
+              list="categorieen-lijst"
+              placeholder="Categorie (kies of typ)"
+              className={`${inputCls} w-full`}
+            />
+            <button
+              type="submit"
+              className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"
+            >
+              Toevoegen
+            </button>
+          </form>
+        </VolScherm>
+
+        <VolScherm label="Categorieën" titel="Categorieën" toon="navy" icoon={<Tags size={16} />}>
+          <form action={maakCategorie} className="mb-4 flex flex-wrap items-center gap-2">
+            <input name="naam" placeholder="Nieuwe categorie" className={inputCls} />
+            <button
+              type="submit"
+              className="rounded-lg border border-navy/20 px-3 py-2 text-sm font-medium text-navy hover:bg-navy/5"
+            >
+              Categorie opslaan
+            </button>
+          </form>
+          <p className="mb-2 text-sm text-navy/60">
+            Filter op categorie (sleep om te ordenen, × om te verwijderen):
+          </p>
+          <CategorieChips
+            categorieen={categorieen}
+            actief={filter}
+            bewaarVolgordeActie={bewaarCategorieVolgorde}
+            verwijderActie={verwijderCategorie}
+          />
+        </VolScherm>
+
         <datalist id="categorieen-lijst">
           {categorieen.map((c) => (
             <option key={c} value={c} />
           ))}
         </datalist>
-      </form>
+      </div>
 
-      {/* Eigen categorie opslaan */}
-      <form action={maakCategorie} className="mb-6 flex flex-wrap items-center gap-2">
-        <input name="naam" placeholder="Nieuwe categorie" className={inputCls} />
-        <button
-          type="submit"
-          className="rounded-lg border border-navy/20 px-3 py-2 text-sm font-medium text-navy hover:bg-navy/5"
-        >
-          Categorie opslaan
-        </button>
-      </form>
-
-      {/* Categorie-filter — sleepbaar (herorderen) + × om te verwijderen */}
-      <CategorieChips
-        categorieen={categorieen}
-        actief={filter}
-        bewaarVolgordeActie={bewaarCategorieVolgorde}
-        verwijderActie={verwijderCategorie}
-      />
-
+      <div className="order-2">
       {schemaOntbreekt ? (
         <div className="rounded-xl border border-oranje/40 bg-oranje/5 p-4 text-sm text-navy">
           <p className="font-medium text-oranje">Datamodel nog niet actief</p>
@@ -518,6 +520,8 @@ export default async function BestandenPagina({
           </ul>
         </Kaart>
       )}
+      </div>
+      </div>
     </>
   );
 }
