@@ -55,27 +55,40 @@ export function AppShell({
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex items-center gap-2 border-b border-navy/10 bg-white px-4 py-3 sm:px-6">
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            aria-label="Menu openen"
-            className="rounded-lg border border-navy/20 p-3 text-navy md:hidden"
-          >
-            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <line x1="3" y1="12" x2="21" y2="12" />
-              <line x1="3" y1="18" x2="21" y2="18" />
-            </svg>
-          </button>
-          <ZoekBalk />
-          {/* Push-permissie-belletje: op mobiel verbergen om de balk niet te
-              overladen (blijft op de achtergrond werken; instelbaar op desktop). */}
-          <span className="hidden sm:inline-flex">
-            <AgendaMeldingen />
-          </span>
-          <MeldingenDropdown meldingen={meldingen} ongelezen={ongelezen} />
-          <GebruikerMenu email={userEmail} signOutActie={signOut} />
+        <header className="sticky top-0 z-30 border-b border-navy/10 bg-white px-4 py-3 sm:px-6">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setOpen(true)}
+              aria-label="Menu openen"
+              className="rounded-lg border border-navy/20 p-2.5 text-navy md:hidden"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            </button>
+
+            {/* Zoekbalk op één regel vanaf sm (tablet/desktop). */}
+            <div className="hidden flex-1 sm:flex">
+              <ZoekBalk />
+            </div>
+
+            {/* Rechts: push-belletje (alleen desktop), meldingen en gebruiker. */}
+            <div className="flex flex-1 items-center justify-end gap-2 sm:flex-none">
+              <span className="hidden sm:inline-flex">
+                <AgendaMeldingen />
+              </span>
+              <MeldingenDropdown meldingen={meldingen} ongelezen={ongelezen} />
+              <GebruikerMenu email={userEmail} signOutActie={signOut} />
+            </div>
+          </div>
+
+          {/* Op mobiel krijgt de zoekbalk een eigen, volledige regel. */}
+          <div className="mt-2 sm:hidden">
+            <ZoekBalk />
+          </div>
         </header>
         <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8">
           <div className="mx-auto max-w-6xl">{children}</div>
