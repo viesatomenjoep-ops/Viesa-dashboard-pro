@@ -7,5 +7,5 @@ export const dynamic = "force-dynamic";
  * Eén tik opent een sectie; "Dashboard" opent het welkomstscherm met to-do's.
  */
 export default function HomePagina() {
-  return <WidgetLauncher />;
+  return <WidgetLauncher gecentreerd />;
 }

@@ -5,7 +5,7 @@ import { navSecties } from "@/lib/navigatie";
 /**
  * iPhone-stijl "home screen": het Viesa-logo boven een rooster van vierkante
  * widget-blokken (één per sectie). Compact opgezet zodat alles in één oogopslag
- * past (geen scrollen). Wordt gebruikt als startscherm (/) én als hamburgermenu.
+ * past. Wordt gebruikt als startscherm (/) én als hamburgermenu (zijbalk).
  */
 
 // Vaste kleur per sectie (i.p.v. cyclisch), zodat kleuren betekenis houden.
@@ -31,10 +31,13 @@ const KLEUR: Record<string, string> = {
 export function WidgetLauncher({
   variant = "licht",
   smal = false,
+  gecentreerd = false,
   onNavigate,
 }: {
   variant?: "licht" | "donker";
   smal?: boolean;
+  /** Startscherm: logo + widgets verticaal en horizontaal in het midden. */
+  gecentreerd?: boolean;
   onNavigate?: () => void;
 }) {
   const items = navSecties.flatMap((s) => s.items);
@@ -42,14 +45,17 @@ export function WidgetLauncher({
   const merk = donker ? "text-white" : "text-navy";
   const merkSub = donker ? "text-white/70" : "text-navy/50";
   const label = donker ? "text-white/85" : "text-navy/80";
-  // Compacte tegels: meer kolommen = kleinere blokken die in één scherm passen.
   const grid = smal
     ? "grid grid-cols-4 gap-x-2 gap-y-3"
-    : "grid grid-cols-5 gap-x-2 gap-y-3 sm:grid-cols-8 lg:grid-cols-10";
+    : "mx-auto grid w-full max-w-sm grid-cols-5 gap-x-3 gap-y-4";
 
-  return (
-    <div>
-      <div className="mb-4 flex items-center gap-3 px-1">
+  const inhoud = (
+    <div className={gecentreerd ? "w-full" : ""}>
+      <div
+        className={`mb-5 flex items-center gap-3 px-1 ${
+          gecentreerd ? "justify-center" : ""
+        }`}
+      >
         <Logo size={smal ? 32 : 38} variant={donker ? "wit" : "navy"} />
         <div className="leading-tight">
           <div className={`font-merk text-base font-semibold tracking-tight ${merk}`}>
@@ -74,8 +80,8 @@ export function WidgetLauncher({
                   KLEUR[item.href] ?? "bg-navy"
                 }`}
               >
-                {/* Groot icoon dat het vierkant vult (schaalt mee met de tegel). */}
-                <Icoon className="h-[58%] w-[58%]" strokeWidth={1.75} />
+                {/* Subtiel, iets kleiner icoon dat meeschaalt met de tegel. */}
+                <Icoon className="h-[46%] w-[46%]" strokeWidth={1.5} />
               </span>
               <span className={`line-clamp-1 w-full text-center text-[11px] font-medium ${label}`}>
                 {item.label}
@@ -86,4 +92,14 @@ export function WidgetLauncher({
       </div>
     </div>
   );
+
+  // Startscherm: alles verticaal in het midden van het scherm.
+  if (gecentreerd) {
+    return (
+      <div className="flex min-h-[calc(100vh_-_9rem)] flex-col items-center justify-center">
+        {inhoud}
+      </div>
+    );
+  }
+  return inhoud;
 }
