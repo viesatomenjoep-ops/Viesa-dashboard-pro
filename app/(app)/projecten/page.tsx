@@ -51,9 +51,9 @@ export default async function ProjectenPagina({
       />
 
       <section className="mb-8 grid grid-cols-3 gap-4">
-        <StatKaart label="Totaal" waarde={String(projecten.length)} icoon={FolderKanban} toon="teal" />
-        <StatKaart label="Actief" waarde={String(actief)} icoon={FolderOpen} toon="blauw" />
-        <StatKaart label="Afgerond" waarde={String(afgerond)} icoon={CheckCircle2} toon="groen" />
+        <StatKaart label="Totaal" waarde={String(projecten.length)} icoon={FolderKanban} toon="teal" mobielGeenIcoon />
+        <StatKaart label="Actief" waarde={String(actief)} icoon={FolderOpen} toon="blauw" mobielGeenIcoon />
+        <StatKaart label="Afgerond" waarde={String(afgerond)} icoon={CheckCircle2} toon="groen" mobielGeenIcoon />
       </section>
 
       {searchParams.fout && (

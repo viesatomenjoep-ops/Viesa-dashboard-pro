@@ -40,6 +40,7 @@ export function StatKaart({
   trend,
   sparkline,
   href,
+  mobielGeenIcoon = false,
 }: {
   label: string;
   waarde: string;
@@ -49,21 +50,25 @@ export function StatKaart({
   trend?: { waarde: string; positief?: boolean };
   sparkline?: number[];
   href?: string;
+  /** Verberg het icoon op smalle schermen (voor krappe 3-koloms KPI-rijen). */
+  mobielGeenIcoon?: boolean;
 }) {
   const inhoud = (
-    <div className="flex h-full flex-col rounded-xl border border-navy/10 bg-white p-5 shadow-sm transition-colors">
-      <div className="flex items-start justify-between gap-3">
-        <span className="text-sm text-navy/60">{label}</span>
+    <div className="flex h-full flex-col rounded-xl border border-navy/10 bg-white p-4 shadow-sm transition-colors sm:p-5">
+      <div className="flex items-start justify-between gap-2">
+        <span className="min-w-0 text-sm text-navy/60">{label}</span>
         {Icoon && (
           <span
-            className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${vlakken[toon]}`}
+            className={`h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9 ${
+              mobielGeenIcoon ? "hidden sm:inline-flex" : "inline-flex"
+            } ${vlakken[toon]}`}
           >
             <Icoon size={18} />
           </span>
         )}
       </div>
-      <div className="mt-1 flex items-baseline gap-2">
-        <span className="text-3xl font-semibold text-navy">{waarde}</span>
+      <div className="mt-1 flex flex-wrap items-baseline gap-x-2">
+        <span className="text-2xl font-semibold text-navy sm:text-3xl">{waarde}</span>
         {trend && (
           <span
             className={`inline-flex items-center gap-0.5 text-xs font-medium ${

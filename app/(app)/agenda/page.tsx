@@ -172,9 +172,10 @@ export default async function AgendaPagina({
           waarde={String(vandaag)}
           icoon={CalendarClock}
           toon={vandaag > 0 ? "teal" : "grijs"}
+          mobielGeenIcoon
         />
-        <StatKaart label="Deze week" waarde={String(week)} icoon={CalendarDays} toon="blauw" />
-        <StatKaart label="Komende 30 dagen" waarde={String(items.length)} icoon={CalendarRange} toon="paars" />
+        <StatKaart label="Deze week" waarde={String(week)} icoon={CalendarDays} toon="blauw" mobielGeenIcoon />
+        <StatKaart label="Komende 30 dagen" waarde={String(items.length)} icoon={CalendarRange} toon="paars" mobielGeenIcoon />
       </section>
 
       {searchParams.fout && (

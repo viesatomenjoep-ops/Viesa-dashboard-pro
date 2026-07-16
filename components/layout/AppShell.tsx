@@ -69,7 +69,11 @@ export function AppShell({
             </svg>
           </button>
           <ZoekBalk />
-          <AgendaMeldingen />
+          {/* Push-permissie-belletje: op mobiel verbergen om de balk niet te
+              overladen (blijft op de achtergrond werken; instelbaar op desktop). */}
+          <span className="hidden sm:inline-flex">
+            <AgendaMeldingen />
+          </span>
           <MeldingenDropdown meldingen={meldingen} ongelezen={ongelezen} />
           <GebruikerMenu email={userEmail} signOutActie={signOut} />
         </header>

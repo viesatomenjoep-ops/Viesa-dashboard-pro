@@ -104,6 +104,7 @@ export default async function KlantenPagina({
           waarde={String(klanten.length)}
           icoon={Users}
           toon="teal"
+          mobielGeenIcoon
           href={tegelHref(klanten, "/klanten")}
         />
         <StatKaart
@@ -111,6 +112,7 @@ export default async function KlantenPagina({
           waarde={String(klantLijst.length)}
           icoon={Building2}
           toon="groen"
+          mobielGeenIcoon
           href={tegelHref(klantLijst, "/klanten?type=klant")}
         />
         <StatKaart
@@ -118,6 +120,7 @@ export default async function KlantenPagina({
           waarde={String(prospectLijst.length)}
           icoon={UserPlus}
           toon="blauw"
+          mobielGeenIcoon
           href={tegelHref(prospectLijst, "/klanten?type=prospect")}
         />
       </section>
@@ -157,7 +160,7 @@ export default async function KlantenPagina({
                 <th className="hidden px-3 py-3 font-medium sm:table-cell sm:px-5">Stad</th>
                 <th className="hidden px-3 py-3 font-medium sm:table-cell sm:px-5">Branche</th>
                 <th className="px-3 py-3 font-medium sm:px-5">Type</th>
-                <th className="px-3 py-3 font-medium sm:px-5">Status</th>
+                <th className="hidden px-3 py-3 font-medium sm:table-cell sm:px-5">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -200,7 +203,7 @@ export default async function KlantenPagina({
                       <span className="hidden sm:inline">{klantTypeLabel(k.type)}</span>
                     </Badge>
                   </td>
-                  <td className="px-3 py-3 sm:px-5">
+                  <td className="hidden px-3 py-3 sm:table-cell sm:px-5">
                     <Badge toon={klantStatusToon(k.status)}>{klantStatusLabel(k.status)}</Badge>
                   </td>
                 </RijLink>

@@ -51,7 +51,7 @@ export function MeldingenDropdown({
       </button>
 
       {open && (
-        <div className="absolute right-0 z-40 mt-2 w-80 overflow-hidden rounded-xl border border-navy/10 bg-white shadow-lg">
+        <div className="absolute right-0 z-40 mt-2 w-[calc(100vw-1.5rem)] max-w-80 overflow-hidden rounded-xl border border-navy/10 bg-white shadow-lg sm:w-80">
           <div className="flex items-center justify-between border-b border-navy/10 px-4 py-2.5">
             <span className="text-sm font-semibold text-navy">Notificaties</span>
             {ongelezen > 0 && <span className="text-xs text-navy/50">{ongelezen} ongelezen</span>}

@@ -189,12 +189,13 @@ export default async function MailPagina({
       />
 
       <section className="mb-6 grid grid-cols-3 gap-4">
-        <StatKaart label="Ongelezen" waarde={String(ongelezen)} icoon={Inbox} toon="blauw" href="/mail" />
+        <StatKaart label="Ongelezen" waarde={String(ongelezen)} icoon={Inbox} toon="blauw" mobielGeenIcoon href="/mail" />
         <StatKaart
           label="Verzonden"
           waarde={String(aantalPerMap.verzonden)}
           icoon={Send}
           toon="groen"
+          mobielGeenIcoon
           href="/mail?box=verzonden"
         />
         <StatKaart
@@ -202,6 +203,7 @@ export default async function MailPagina({
           waarde={String(aantalPerMap.concepten)}
           icoon={FileEdit}
           toon="amber"
+          mobielGeenIcoon
           href="/mail?box=concepten"
         />
       </section>
