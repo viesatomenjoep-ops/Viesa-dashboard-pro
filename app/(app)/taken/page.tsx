@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, ListTodo, Loader, Plus } from "lucide-react";
+import { CheckCircle2, Clock, KanbanSquare, ListTodo, Loader, Plus } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { StatKaart } from "@/components/ui/StatKaart";
 import { VolScherm } from "@/components/ui/VolScherm";
@@ -83,13 +83,22 @@ export default async function TakenPagina({
         </div>
       ) : (
         <>
-          {taken.length === 0 && (
-            <LegeStaat titel="Nog geen taken" omschrijving="Voeg hieronder je eerste taak toe." />
-          )}
-          {taken.length > 0 && <TakenKanban taken={taken} />}
+          {/* Onder de vier tegels: knoppen. De takenmanager (sleepbaar) opent vol scherm. */}
+          <div className="flex flex-wrap gap-2">
+            <VolScherm
+              label="Open de takenmanager"
+              titel="Takenmanager — sleep tussen de kolommen"
+              breed="vol"
+              toon="navy"
+              icoon={<KanbanSquare size={16} />}
+            >
+              {taken.length === 0 ? (
+                <LegeStaat titel="Nog geen taken" omschrijving="Voeg een taak toe met de knop hiernaast." />
+              ) : (
+                <TakenKanban taken={taken} />
+              )}
+            </VolScherm>
 
-          {/* Nieuwe taak — onder de kolommen, één knop die volledig openklapt */}
-          <div className="mt-6">
             <VolScherm label="Nieuwe taak" titel="Nieuwe taak" icoon={<Plus size={16} />}>
               <form action={maakTaak} className="space-y-3">
                 <input type="hidden" name="terug" value="/taken" />

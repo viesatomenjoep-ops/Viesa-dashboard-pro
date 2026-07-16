@@ -22,7 +22,9 @@ body {
   input,
   textarea,
   select {
-    font-size: 16px;
+    /* !important overrulet Tailwind-utilities zoals text-sm (die anders wint op
+       specificiteit en het veld op 14px zet → iOS zoomt dan alsnog in). */
+    font-size: 16px !important;
   }
 }
 

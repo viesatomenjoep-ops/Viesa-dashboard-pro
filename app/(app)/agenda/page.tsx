@@ -69,10 +69,9 @@ function embedUrl(bronnen: Bron[]): string | null {
 export default async function AgendaPagina({
   searchParams,
 }: {
-  searchParams: { fout?: string; weergave?: string };
+  searchParams: { fout?: string };
 }) {
   const supabase = createClient();
-  const google = searchParams.weergave === "google";
 
   let bronnen: Bron[] = [];
   let herinneringen: Herinnering[] = [];
@@ -146,24 +145,16 @@ export default async function AgendaPagina({
       <PaginaKop
         titel="Agenda"
         actie={
-          <div className="flex rounded-lg border border-navy/20 p-0.5 text-sm">
-            <Link
-              href="/agenda"
-              className={`rounded-md px-3 py-1.5 font-medium ${
-                !google ? "bg-navy text-white" : "text-navy/60 hover:bg-navy/5"
-              }`}
-            >
-              Lijst
-            </Link>
-            <Link
-              href="/agenda?weergave=google"
-              className={`rounded-md px-3 py-1.5 font-medium ${
-                google ? "bg-navy text-white" : "text-navy/60 hover:bg-navy/5"
-              }`}
-            >
-              Google-weergave
-            </Link>
-          </div>
+          embed ? (
+            <VolScherm label="Google-weergave" titel="Google Agenda" breed="vol" toon="navy">
+              <iframe
+                src={embed}
+                title="Google Agenda"
+                className="h-[80vh] w-full rounded-lg border border-navy/10"
+                style={{ border: 0 }}
+              />
+            </VolScherm>
+          ) : undefined
         }
       />
 
@@ -193,22 +184,6 @@ export default async function AgendaPagina({
             <p className="mt-2 font-mono text-xs text-navy/50">Details: {foutmelding}</p>
           )}
         </div>
-      ) : google ? (
-        embed ? (
-          <div className="overflow-hidden rounded-xl border border-navy/10 bg-white shadow-sm">
-            <iframe
-              src={embed}
-              title="Google Agenda"
-              className="h-[70vh] w-full"
-              style={{ border: 0 }}
-            />
-          </div>
-        ) : (
-          <LegeStaat
-            titel="Geen Google-weergave beschikbaar"
-            omschrijving="Koppel eerst een Google-agenda via Koppelingen (iCal-link)."
-          />
-        )
       ) : (
         <>
           {/* Eigen herinnering toevoegen — één knop die volledig openklapt */}
