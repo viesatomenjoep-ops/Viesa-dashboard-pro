@@ -4,22 +4,29 @@ import { navSecties } from "@/lib/navigatie";
 
 /**
  * iPhone-stijl "home screen": het Viesa-logo boven een rooster van vierkante
- * widget-blokken (één per sectie). Wordt gebruikt als startscherm (/) én als
- * inhoud van het hamburgermenu (zijbalk). Eén tik opent een sectie.
+ * widget-blokken (één per sectie). Compact opgezet zodat alles in één oogopslag
+ * past (geen scrollen). Wordt gebruikt als startscherm (/) én als hamburgermenu.
  */
 
-const KLEUREN = [
-  "bg-navy",
-  "bg-oranje",
-  "bg-blue-500",
-  "bg-amber-500",
-  "bg-purple-500",
-  "bg-emerald-500",
-  "bg-rose-500",
-  "bg-cyan-600",
-  "bg-indigo-500",
-  "bg-teal-600",
-];
+// Vaste kleur per sectie (i.p.v. cyclisch), zodat kleuren betekenis houden.
+const KLEUR: Record<string, string> = {
+  "/dashboard": "bg-purple-500",
+  "/taken": "bg-teal-600",
+  "/agenda": "bg-blue-500",
+  "/mail": "bg-sky-500",
+  "/notificaties": "bg-amber-500",
+  "/klanten": "bg-violet-500",
+  "/leads": "bg-emerald-500",
+  "/audits": "bg-rose-500",
+  "/offertes": "bg-cyan-600",
+  "/facturen": "bg-indigo-500",
+  "/sjablonen": "bg-red-500",
+  "/rapportage": "bg-navy",
+  "/projecten": "bg-orange-500",
+  "/whiteboard": "bg-fuchsia-500",
+  "/bestanden": "bg-amber-600",
+  "/koppelingen": "bg-purple-600",
+};
 
 export function WidgetLauncher({
   variant = "licht",
@@ -35,14 +42,15 @@ export function WidgetLauncher({
   const merk = donker ? "text-white" : "text-navy";
   const merkSub = donker ? "text-white/70" : "text-navy/50";
   const label = donker ? "text-white/85" : "text-navy/80";
+  // Compacte tegels: meer kolommen = kleinere blokken die in één scherm passen.
   const grid = smal
-    ? "grid grid-cols-3 gap-x-2 gap-y-3"
-    : "grid grid-cols-4 gap-x-3 gap-y-4 sm:grid-cols-6 lg:grid-cols-8";
+    ? "grid grid-cols-4 gap-x-2 gap-y-3"
+    : "grid grid-cols-5 gap-x-2 gap-y-3 sm:grid-cols-8 lg:grid-cols-10";
 
   return (
     <div>
-      <div className="mb-5 flex items-center gap-3 px-1">
-        <Logo size={smal ? 36 : 44} variant={donker ? "wit" : "navy"} />
+      <div className="mb-4 flex items-center gap-3 px-1">
+        <Logo size={smal ? 32 : 38} variant={donker ? "wit" : "navy"} />
         <div className="leading-tight">
           <div className={`font-merk text-base font-semibold tracking-tight ${merk}`}>
             Viesa Automations
@@ -52,21 +60,22 @@ export function WidgetLauncher({
       </div>
 
       <div className={grid}>
-        {items.map((item, i) => {
+        {items.map((item) => {
           const Icoon = item.icoon;
           return (
             <Link
               key={item.href}
               href={item.href}
               onClick={onNavigate}
-              className="group flex flex-col items-center gap-1.5"
+              className="group flex flex-col items-center gap-1"
             >
               <span
-                className={`flex aspect-square w-full items-center justify-center rounded-[22%] text-white shadow-sm transition-transform group-active:scale-95 ${
-                  KLEUREN[i % KLEUREN.length]
+                className={`flex aspect-square w-full items-center justify-center rounded-[24%] text-white shadow-sm transition-transform group-active:scale-90 ${
+                  KLEUR[item.href] ?? "bg-navy"
                 }`}
               >
-                <Icoon size={smal ? 22 : 26} strokeWidth={1.75} />
+                {/* Groot icoon dat het vierkant vult (schaalt mee met de tegel). */}
+                <Icoon className="h-[58%] w-[58%]" strokeWidth={1.75} />
               </span>
               <span className={`line-clamp-1 w-full text-center text-[11px] font-medium ${label}`}>
                 {item.label}
