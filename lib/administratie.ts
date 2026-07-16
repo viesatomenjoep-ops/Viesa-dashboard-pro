@@ -34,3 +34,32 @@ export function adminTypeToon(t: AdminType): "blauw" | "paars" | "amber" | "grij
   if (t === "bestelling") return "amber";
   return "grijs";
 }
+
+/** Scandatum (YYYY-MM-DD) in de Nederlandse tijdzone — voor filteren op dag/maand/jaar. */
+export function scanDatum(iso: string): string {
+  return new Date(iso).toLocaleDateString("sv-SE", { timeZone: "Europe/Amsterdam" });
+}
+
+/**
+ * Bouwt het periode-voorvoegsel uit de filtervelden: dag wint van maand, maand
+ * van jaar. Resultaat is "2026-07-16", "2026-07", "2026" of "" (alles).
+ */
+export function periodePrefix(f: { dag?: string; maand?: string; jaar?: string }): string {
+  if (f.dag?.trim()) return f.dag.trim();
+  if (f.maand?.trim()) return f.maand.trim();
+  if (f.jaar?.trim()) return f.jaar.trim();
+  return "";
+}
+
+/** Filtert scans op type en periode (op basis van de automatische scandatum). */
+export function filterScans<T extends { type: AdminType; created_at: string }>(
+  scans: T[],
+  type: string,
+  periode: string,
+): T[] {
+  return scans.filter((s) => {
+    if (type && s.type !== type) return false;
+    if (periode && !scanDatum(s.created_at).startsWith(periode)) return false;
+    return true;
+  });
+}

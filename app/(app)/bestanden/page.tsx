@@ -13,8 +13,11 @@ import {
   type DriveLink,
 } from "@/lib/drivelinks";
 import {
+  ADMIN_TYPES,
   adminTypeLabel,
   adminTypeToon,
+  filterScans,
+  periodePrefix,
   type AdministratieItem,
 } from "@/lib/administratie";
 import { factuurStatusLabel, factuurStatusToon, type FactuurStatus } from "@/lib/facturen";
@@ -54,7 +57,15 @@ const inputCls =
 export default async function BestandenPagina({
   searchParams,
 }: {
-  searchParams: { categorie?: string; fout?: string };
+  searchParams: {
+    categorie?: string;
+    fout?: string;
+    scan?: string;
+    atype?: string;
+    dag?: string;
+    maand?: string;
+    jaar?: string;
+  };
 }) {
   const supabase = createClient();
   let links: DriveLink[] = [];
@@ -150,6 +161,14 @@ export default async function BestandenPagina({
   } catch {
     /* administratie-tabel nog niet aanwezig */
   }
+
+  // Filter op type + periode (dag wint van maand, maand van jaar).
+  const atype = (searchParams.atype ?? "").trim();
+  const periode = periodePrefix(searchParams);
+  const scansGefilterd = filterScans(scans, atype, periode);
+  const zipHref = `/api/administratie/download?type=${encodeURIComponent(
+    atype,
+  )}&periode=${encodeURIComponent(periode)}`;
 
   const filter = searchParams.categorie;
   const zichtbaar = filter
@@ -247,11 +266,84 @@ export default async function BestandenPagina({
         )}
 
         <h3 className="mb-2 mt-6 text-sm font-medium text-navy">Gescande bonnetjes &amp; facturen</h3>
+
+        {/* Filteren op type + dag/maand/jaar (scandatum wordt automatisch vastgelegd) */}
+        {scans.length > 0 && (
+          <form
+            method="get"
+            action="/bestanden"
+            className="mb-3 flex flex-wrap items-end gap-2"
+          >
+            <label className="text-xs text-navy/50">
+              Type
+              <select name="atype" defaultValue={atype} className={`${inputCls} mt-0.5 block`}>
+                <option value="">Alles</option>
+                {ADMIN_TYPES.map((t) => (
+                  <option key={t.key} value={t.key}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs text-navy/50">
+              Dag
+              <input
+                type="date"
+                name="dag"
+                defaultValue={searchParams.dag ?? ""}
+                className={`${inputCls} mt-0.5 block`}
+              />
+            </label>
+            <label className="text-xs text-navy/50">
+              Maand
+              <input
+                type="month"
+                name="maand"
+                defaultValue={searchParams.maand ?? ""}
+                className={`${inputCls} mt-0.5 block`}
+              />
+            </label>
+            <label className="text-xs text-navy/50">
+              Jaar
+              <input
+                type="number"
+                name="jaar"
+                min="2020"
+                max="2100"
+                placeholder="2026"
+                defaultValue={searchParams.jaar ?? ""}
+                className={`${inputCls} mt-0.5 block w-24`}
+              />
+            </label>
+            <button
+              type="submit"
+              className="rounded-lg border border-navy/20 px-3 py-2 text-sm font-medium text-navy hover:bg-navy/5"
+            >
+              Filter
+            </button>
+            {(atype || periode) && (
+              <Link href="/bestanden" className="px-1 py-2 text-sm text-navy/50 hover:underline">
+                Wissen
+              </Link>
+            )}
+            {scansGefilterd.length > 0 && (
+              <a
+                href={zipHref}
+                className="ml-auto rounded-lg bg-oranje px-3 py-2 text-sm font-medium text-white hover:bg-oranje/90"
+              >
+                ↓ Download selectie ({scansGefilterd.length}) als zip
+              </a>
+            )}
+          </form>
+        )}
+
         {scans.length === 0 ? (
           <p className="text-sm text-navy/50">Nog niks gescand — maak hierboven je eerste foto.</p>
+        ) : scansGefilterd.length === 0 ? (
+          <p className="text-sm text-navy/50">Geen scans in deze selectie — pas het filter aan.</p>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {scans.map((s) => (
+            {scansGefilterd.map((s) => (
               <div key={s.id} className="overflow-hidden rounded-lg border border-navy/10">
                 <a
                   href={s.bekijk_url ?? s.drive_url ?? "#"}
