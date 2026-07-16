@@ -18,7 +18,7 @@ import { createClient } from "@/lib/supabase/server";
 import { resendGeconfigureerd } from "@/lib/resend";
 import { datumKort } from "@/lib/format";
 import { leesFout } from "@/lib/fout";
-import { MailOpstellen } from "@/components/MailOpstellen";
+import { MailOpstellen, type KlantOptie } from "@/components/MailOpstellen";
 import {
   verstuurBericht,
   wisselSter,
@@ -96,7 +96,7 @@ export default async function MailPagina({
   const selId = !opstellen ? searchParams.sel ?? null : null;
 
   let emails: Email[] = [];
-  let klanten: { id: string; bedrijf: string; email: string | null }[] = [];
+  let klanten: KlantOptie[] = [];
   let schemaOntbreekt = false;
   let foutmelding = "";
   try {
@@ -112,10 +112,25 @@ export default async function MailPagina({
     foutmelding = leesFout(e);
   }
   try {
-    const { data } = await supabase.from("klanten").select("id, bedrijf, email").order("bedrijf");
+    const { data } = await supabase
+      .from("klanten")
+      .select("id, bedrijf, email, contact_naam, voornaam, achternaam, website, stad, telefoon")
+      .order("bedrijf");
     klanten = data ?? [];
   } catch {
     /* klanten-tabel nog niet aanwezig */
+  }
+  // E-mailsjablonen uit de sjablonen-machine (best effort — tabel kan ontbreken).
+  let mailSjablonen: { id: string; naam: string; onderwerp: string | null; inhoud_html: string }[] = [];
+  try {
+    const { data } = await supabase
+      .from("sjablonen")
+      .select("id, naam, onderwerp, inhoud_html")
+      .eq("type", "email")
+      .order("naam");
+    mailSjablonen = data ?? [];
+  } catch {
+    /* sjablonen-tabel nog niet aanwezig */
   }
 
   const inMap = (m: MailMap) => emails.filter((e) => (e.map ?? "inbox") === m);
@@ -338,6 +353,7 @@ export default async function MailPagina({
                   verstuurActie={verstuurBericht}
                   geconfigureerd={geconfigureerd}
                   klanten={klanten}
+                  sjablonen={mailSjablonen}
                   initieelNaar={searchParams.naar ?? ""}
                   initieelOnderwerp={searchParams.onderwerp ?? ""}
                 />

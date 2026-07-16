@@ -4,6 +4,7 @@ import { Briefpapier } from "@/components/document/Briefpapier";
 import { PrintKnop } from "@/components/document/PrintKnop";
 import { Markdown } from "@/components/ui/Markdown";
 import { datumKort } from "@/lib/format";
+import { contextVanKlant, vulVariabelen } from "@/lib/variabelen";
 import type { Audit } from "@/lib/audits";
 
 export default async function AuditPrint({ params }: { params: { id: string } }) {
@@ -15,6 +16,7 @@ export default async function AuditPrint({ params }: { params: { id: string } })
     .single();
   if (error || !data) notFound();
   const audit = data as Audit & { klanten?: { bedrijf?: string } | null };
+  const ctx = contextVanKlant({ bedrijf: audit.klanten?.bedrijf ?? null });
 
   return (
     <div className="min-h-screen bg-achtergrond py-6">
@@ -28,7 +30,16 @@ export default async function AuditPrint({ params }: { params: { id: string } })
         >
           <h2 className="text-lg font-semibold text-navy">{audit.titel}</h2>
           <div className="mt-4">
-            <Markdown tekst={audit.inhoud_markdown} />
+            {audit.inhoud_html ? (
+              <div
+                className="prose-viesa"
+                dangerouslySetInnerHTML={{ __html: vulVariabelen(audit.inhoud_html, ctx) }}
+              />
+            ) : audit.inhoud_markdown ? (
+              <Markdown tekst={audit.inhoud_markdown} />
+            ) : (
+              <p className="text-sm text-navy/50">Nog geen inhoud ingevuld.</p>
+            )}
           </div>
         </Briefpapier>
       </div>

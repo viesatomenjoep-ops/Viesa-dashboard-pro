@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Kaart } from "@/components/ui/Kaart";
 import { Badge } from "@/components/ui/Badge";
-import { MarkdownEditor } from "@/components/MarkdownEditor";
+import { DocumentBewerker } from "@/components/DocumentBewerker";
+import { contextVanKlant } from "@/lib/variabelen";
+import { tekstNaarHtml } from "@/lib/sjablonen";
 import { auditStatusToon, AUDIT_STATUSSEN, type Audit } from "@/lib/audits";
 import { werkAuditBij, wijzigAuditStatus, verwijderAudit } from "../acties";
 
@@ -18,6 +20,29 @@ export default async function AuditDetail({
   const { data, error } = await supabase.from("audits").select("*").eq("id", params.id).single();
   if (error || !data) notFound();
   const audit = data as Audit;
+
+  // Audit-sjablonen + klant-context voor de variabelen (best effort).
+  let auditSjablonen: { id: string; naam: string; inhoud_html: string }[] = [];
+  try {
+    const { data: sj } = await supabase
+      .from("sjablonen")
+      .select("id, naam, inhoud_html")
+      .eq("type", "audit")
+      .order("naam");
+    auditSjablonen = sj ?? [];
+  } catch {
+    /* sjablonen-tabel nog niet aanwezig */
+  }
+  let klantCtx = {};
+  if (audit.klant_id) {
+    const { data: k } = await supabase
+      .from("klanten")
+      .select("bedrijf, contact_naam, voornaam, achternaam, website, stad, email, telefoon")
+      .eq("id", audit.klant_id)
+      .maybeSingle();
+    if (k) klantCtx = contextVanKlant(k);
+  }
+  const beginHtml = audit.inhoud_html || tekstNaarHtml(audit.inhoud_markdown ?? "");
 
   return (
     <>
@@ -82,7 +107,7 @@ export default async function AuditDetail({
             className="mb-4 w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
           />
           <label className="mb-1 block text-sm font-medium text-navy">Inhoud auditverslag</label>
-          <MarkdownEditor naam="inhoud_markdown" beginwaarde={audit.inhoud_markdown} hoogte={420} />
+          <DocumentBewerker beginHtml={beginHtml} sjablonen={auditSjablonen} ctx={klantCtx} />
           <div className="mt-4">
             <button className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90">
               Opslaan

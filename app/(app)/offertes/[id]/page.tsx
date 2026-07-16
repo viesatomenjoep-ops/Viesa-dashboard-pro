@@ -3,8 +3,10 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Kaart } from "@/components/ui/Kaart";
 import { Badge } from "@/components/ui/Badge";
-import { MarkdownEditor } from "@/components/MarkdownEditor";
+import { DocumentBewerker } from "@/components/DocumentBewerker";
 import { KlantLogoUpload } from "@/components/KlantLogoUpload";
+import { contextVanKlant, type VariabeleContext } from "@/lib/variabelen";
+import { tekstNaarHtml } from "@/lib/sjablonen";
 import {
   offerteStatusToon,
   offerteStatusLabel,
@@ -33,6 +35,30 @@ export default async function OfferteDetail({
     .single();
   if (error || !data) notFound();
   const offerte = data as Offerte;
+
+  // Offerte-sjablonen + klant-context voor de variabelen (best effort).
+  let offerteSjablonen: { id: string; naam: string; inhoud_html: string }[] = [];
+  try {
+    const { data: sj } = await supabase
+      .from("sjablonen")
+      .select("id, naam, inhoud_html")
+      .eq("type", "offerte")
+      .order("naam");
+    offerteSjablonen = sj ?? [];
+  } catch {
+    /* sjablonen-tabel nog niet aanwezig */
+  }
+  let klantCtx: VariabeleContext = { bedrijf: offerte.klant };
+  if (offerte.klant_id) {
+    const { data: k } = await supabase
+      .from("klanten")
+      .select("bedrijf, contact_naam, voornaam, achternaam, website, stad, email, telefoon")
+      .eq("id", offerte.klant_id)
+      .maybeSingle();
+    if (k) klantCtx = contextVanKlant(k);
+  }
+  // Startinhoud: bestaande HTML, anders een lichte omzetting van oude markdown.
+  const beginHtml = offerte.inhoud_html || tekstNaarHtml(offerte.inhoud_markdown ?? "");
 
   return (
     <>
@@ -189,7 +215,7 @@ export default async function OfferteDetail({
 
           <div className="mt-4">
             <label className="mb-1 block text-sm font-medium text-navy">Inhoud offerte</label>
-            <MarkdownEditor naam="inhoud_markdown" beginwaarde={offerte.inhoud_markdown} />
+            <DocumentBewerker beginHtml={beginHtml} sjablonen={offerteSjablonen} ctx={klantCtx} />
           </div>
 
           <div className="mt-5">

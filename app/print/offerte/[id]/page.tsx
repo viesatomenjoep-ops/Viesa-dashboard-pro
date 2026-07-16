@@ -5,6 +5,7 @@ import { PrintKnop } from "@/components/document/PrintKnop";
 import { UploadbaarLogo } from "@/components/document/UploadbaarLogo";
 import { Markdown } from "@/components/ui/Markdown";
 import { euro, datumKort } from "@/lib/format";
+import { contextVanKlant, vulVariabelen } from "@/lib/variabelen";
 import type { Offerte } from "@/lib/offertes";
 
 export default async function OffertePrint({
@@ -21,15 +22,19 @@ export default async function OffertePrint({
   if (error || !data) notFound();
   const offerte = data as Offerte;
 
-  // Logo: eerst het op de offerte opgeslagen logo, anders dat van de klant.
+  // Logo + variabele-context: klantgegevens ophalen (voor logo én {{variabelen}}).
   let klantLogo: string | null = offerte.logo_url ?? null;
-  if (!klantLogo && offerte.klant_id) {
+  let ctx = contextVanKlant({ bedrijf: offerte.klant });
+  if (offerte.klant_id) {
     const { data: klant } = await supabase
       .from("klanten")
-      .select("logo_url")
+      .select("logo_url, bedrijf, contact_naam, voornaam, achternaam, website, stad, email, telefoon")
       .eq("id", offerte.klant_id)
       .maybeSingle();
-    klantLogo = (klant?.logo_url as string | null) ?? null;
+    if (klant) {
+      if (!klantLogo) klantLogo = (klant.logo_url as string | null) ?? null;
+      ctx = contextVanKlant(klant);
+    }
   }
 
   return (
@@ -48,7 +53,12 @@ export default async function OffertePrint({
         >
           <h2 className="text-lg font-semibold text-navy">{offerte.titel}</h2>
           <div className="mt-4">
-            {offerte.inhoud_markdown ? (
+            {offerte.inhoud_html ? (
+              <div
+                className="prose-viesa"
+                dangerouslySetInnerHTML={{ __html: vulVariabelen(offerte.inhoud_html, ctx) }}
+              />
+            ) : offerte.inhoud_markdown ? (
               <Markdown tekst={offerte.inhoud_markdown} />
             ) : (
               <p className="text-sm text-navy/50">Nog geen inhoud ingevuld.</p>

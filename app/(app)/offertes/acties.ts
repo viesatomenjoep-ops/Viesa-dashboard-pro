@@ -87,7 +87,7 @@ export async function werkOfferteBij(id: string, formData: FormData) {
       titel: String(formData.get("titel") ?? "").trim(),
       klant: leeg(formData.get("klant")),
       bedrag: Number(formData.get("bedrag") ?? 0) || 0,
-      inhoud_markdown: String(formData.get("inhoud_markdown") ?? ""),
+      inhoud_html: String(formData.get("inhoud_html") ?? ""),
       logo_url: leeg(formData.get("logo_url")),
       drive_pdf_url: leeg(formData.get("drive_pdf_url")),
     })

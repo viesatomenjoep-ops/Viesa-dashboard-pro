@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AUDIT_SJABLOON, type AuditStatus } from "@/lib/audits";
+import { AUDIT_START_HTML } from "@/lib/sjablonen";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 async function volgendNummer(supabase: SupabaseClient): Promise<string> {
@@ -26,6 +27,7 @@ export async function maakAudit(formData: FormData) {
       titel,
       klant_id: leeg(formData.get("klant_id")),
       inhoud_markdown: AUDIT_SJABLOON,
+      inhoud_html: AUDIT_START_HTML,
     })
     .select("id")
     .single();
@@ -40,7 +42,7 @@ export async function werkAuditBij(id: string, formData: FormData) {
     .from("audits")
     .update({
       titel: String(formData.get("titel") ?? "").trim() || "Auditverslag",
-      inhoud_markdown: String(formData.get("inhoud_markdown") ?? ""),
+      inhoud_html: String(formData.get("inhoud_html") ?? ""),
     })
     .eq("id", id);
   revalidatePath(`/audits/${id}`);

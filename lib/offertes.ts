@@ -15,6 +15,7 @@ export type Offerte = {
   nummer: string;
   titel: string;
   inhoud_markdown: string;
+  inhoud_html: string;
   bedrag: number;
   status: OfferteStatus;
   logo_url: string | null;

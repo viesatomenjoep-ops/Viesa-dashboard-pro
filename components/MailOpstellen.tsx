@@ -1,38 +1,48 @@
 "use client";
 
 import { useId, useState } from "react";
-import { MAIL_TEMPLATES } from "@/lib/mailtemplates";
-import { RijkeEditor } from "@/components/RijkeEditor";
+import { GroteEditor } from "@/components/GroteEditor";
+import { contextVanKlant, vulVariabelen, type VariabeleContext } from "@/lib/variabelen";
 
 const inputCls =
   "w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy";
 
-type KlantOptie = { id: string; bedrijf: string; email: string | null };
+export type KlantOptie = {
+  id: string;
+  bedrijf: string;
+  email: string | null;
+  contact_naam?: string | null;
+  voornaam?: string | null;
+  achternaam?: string | null;
+  website?: string | null;
+  stad?: string | null;
+  telefoon?: string | null;
+};
 
-/** Zet platte sjabloontekst om naar veilige HTML (voor de rich-editor). */
-function tekstNaarHtml(tekst: string): string {
-  const veilig = tekst
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-  return veilig.replace(/\n/g, "<br/>");
-}
+type MailSjabloon = {
+  id: string;
+  naam: string;
+  onderwerp: string | null;
+  inhoud_html: string;
+};
 
 /**
- * Opstelvenster voor een e-mail. Kies een sjabloon (vult onderwerp + bericht),
- * of kies een klant — dan wordt automatisch het e-mailadres van die klant als
- * ontvanger ingevuld.
+ * Opstelvenster voor een e-mail. Kies een sjabloon uit de sjablonen-machine
+ * (vult onderwerp + bericht) en/of een klant — dan vullen we het e-mailadres in
+ * én de {{variabelen}} in het sjabloon met de gegevens van die klant.
  */
 export function MailOpstellen({
   verstuurActie,
   geconfigureerd,
   klanten = [],
+  sjablonen = [],
   initieelNaar = "",
   initieelOnderwerp = "",
 }: {
   verstuurActie: (formData: FormData) => void;
   geconfigureerd: boolean;
   klanten?: KlantOptie[];
+  sjablonen?: MailSjabloon[];
   initieelNaar?: string;
   initieelOnderwerp?: string;
 }) {
@@ -41,20 +51,31 @@ export function MailOpstellen({
   const [toonCcBcc, setToonCcBcc] = useState(false);
   const [editorHtml, setEditorHtml] = useState("");
   const [editorSleutel, setEditorSleutel] = useState(0);
+  const [ctx, setCtx] = useState<VariabeleContext>({});
+  const [sjabloonId, setSjabloonId] = useState("");
   const listId = useId();
 
-  function kiesTemplate(key: string) {
-    const t = MAIL_TEMPLATES.find((x) => x.key === key);
-    if (!t) return;
-    setOnderwerp(t.onderwerp);
-    // Editor opnieuw opbouwen met de sjabloontekst als startinhoud.
-    setEditorHtml(tekstNaarHtml(t.tekst));
+  function pasSjabloonToe(id: string, context: VariabeleContext) {
+    const s = sjablonen.find((x) => x.id === id);
+    if (!s) return;
+    setOnderwerp(vulVariabelen(s.onderwerp ?? "", context, false));
+    setEditorHtml(vulVariabelen(s.inhoud_html, context));
     setEditorSleutel((n) => n + 1);
+  }
+
+  function kiesSjabloon(id: string) {
+    setSjabloonId(id);
+    if (id) pasSjabloonToe(id, ctx);
   }
 
   function kiesKlant(bedrijf: string) {
     const k = klanten.find((x) => x.bedrijf === bedrijf);
-    if (k?.email) setNaar(k.email);
+    if (!k) return;
+    if (k.email) setNaar(k.email);
+    const nieuweCtx = contextVanKlant(k);
+    setCtx(nieuweCtx);
+    // Sjabloon opnieuw invullen met de gegevens van deze klant.
+    if (sjabloonId) pasSjabloonToe(sjabloonId, nieuweCtx);
   }
 
   return (
@@ -62,38 +83,39 @@ export function MailOpstellen({
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <label className="text-sm font-medium text-navy">Sjabloon:</label>
         <select
-          defaultValue="leeg"
-          onChange={(e) => kiesTemplate(e.target.value)}
+          value={sjabloonId}
+          onChange={(e) => kiesSjabloon(e.target.value)}
           className="rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
         >
-          {MAIL_TEMPLATES.map((t) => (
-            <option key={t.key} value={t.key}>
-              {t.naam}
+          <option value="">Leeg bericht</option>
+          {sjablonen.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.naam}
             </option>
           ))}
         </select>
         <span className="text-xs text-navy/40">
-          Vult onderwerp + bericht in — je kunt daarna nog aanpassen.
+          {sjablonen.length === 0
+            ? "Nog geen sjablonen — maak ze bij Sjablonen."
+            : "Vult onderwerp + bericht; kies ook een klant om variabelen in te vullen."}
         </span>
       </div>
 
-      {/* Klant kiezen → vult automatisch het e-mailadres */}
+      {/* Klant kiezen → vult e-mailadres én variabelen */}
       {klanten.length > 0 && (
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <label className="text-sm font-medium text-navy">Klant:</label>
           <input
             list={listId}
-            placeholder="Klant zoeken → vult e-mail…"
+            placeholder="Klant zoeken → vult e-mail + variabelen…"
             onChange={(e) => kiesKlant(e.target.value)}
             autoComplete="off"
             className="rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
           />
           <datalist id={listId}>
-            {klanten
-              .filter((k) => k.email)
-              .map((k) => (
-                <option key={k.id} value={k.bedrijf} />
-              ))}
+            {klanten.map((k) => (
+              <option key={k.id} value={k.bedrijf} />
+            ))}
           </datalist>
         </div>
       )}
@@ -124,16 +146,8 @@ export function MailOpstellen({
 
       {toonCcBcc && (
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <input
-            name="cc"
-            placeholder="Cc (komma's tussen adressen)"
-            className={inputCls}
-          />
-          <input
-            name="bcc"
-            placeholder="Bcc (komma's tussen adressen)"
-            className={inputCls}
-          />
+          <input name="cc" placeholder="Cc (komma's tussen adressen)" className={inputCls} />
+          <input name="bcc" placeholder="Bcc (komma's tussen adressen)" className={inputCls} />
         </div>
       )}
       <input
@@ -145,7 +159,7 @@ export function MailOpstellen({
         className={`${inputCls} mt-3`}
       />
       <div className="mt-3">
-        <RijkeEditor key={editorSleutel} beginHtml={editorHtml} />
+        <GroteEditor key={editorSleutel} beginHtml={editorHtml} />
       </div>
       <div className="mt-4">
         <button

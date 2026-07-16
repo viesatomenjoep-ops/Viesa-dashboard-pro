@@ -10,6 +10,7 @@ export type Audit = {
   titel: string;
   status: AuditStatus;
   inhoud_markdown: string;
+  inhoud_html: string;
   created_at: string;
   updated_at: string;
 };
