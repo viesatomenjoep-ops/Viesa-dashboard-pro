@@ -145,7 +145,12 @@ export default async function BestandenPagina({
       ((data ?? []) as AdministratieItem[]).map(async (r) => {
         let bekijk_url: string | null = null;
         let download_url: string | null = null;
-        if (r.storage_pad) {
+        if (r.drive_file_id) {
+          // Nieuw: het bestand staat in Google Drive; via onze proxy bekijken.
+          bekijk_url = `/api/administratie/bestand?id=${r.id}`;
+          download_url = `/api/administratie/bestand?id=${r.id}&download=1`;
+        } else if (r.storage_pad) {
+          // Oudere scans (vóór de Drive-omschakeling) staan nog in de bucket.
           const [inline, attachment] = await Promise.all([
             supabase.storage.from("administratie").createSignedUrl(r.storage_pad, 3600),
             supabase.storage
@@ -195,10 +200,12 @@ export default async function BestandenPagina({
           <h2 className="text-lg font-semibold text-navy">Administratie Viesa Automations</h2>
         </div>
         <p className="mb-3 text-sm text-navy/60">
-          Maak met je camera een foto van een bonnetje, factuur of bestelling — alles staat hier bij
-          elkaar. Met Google Drive verbonden gaat elke scan automatisch ook naar Drive; voor iCloud
-          gebruik je <span className="font-medium text-navy">Download</span> bij een scan en bewaar
-          je hem via Bestanden in je iCloud.
+          Maak met je camera een foto van een bonnetje, factuur of bestelling. Elke scan wordt
+          opgeslagen in de <span className="font-medium text-navy">Google Drive</span> van
+          viesatomenjoep@gmail.com (verbind Drive eenmalig via Koppelingen) — niet in Supabase, dus
+          het geheugen loopt niet vol. Voor iCloud gebruik je{" "}
+          <span className="font-medium text-navy">Download</span> bij een scan en bewaar je hem via
+          Bestanden.
         </p>
         <ScanUpload actie={voegScanToe} />
 
@@ -374,7 +381,7 @@ export default async function BestandenPagina({
                   )}
                   <div className="mt-1 flex items-center justify-between text-[11px] text-navy/40">
                     <span>{datumKort(s.created_at)}</span>
-                    <form action={verwijderScan.bind(null, s.id, s.storage_pad)}>
+                    <form action={verwijderScan.bind(null, s.id)}>
                       <button className="hover:text-red-500">Verwijderen</button>
                     </form>
                   </div>

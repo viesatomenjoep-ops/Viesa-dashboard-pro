@@ -2,6 +2,8 @@ import JSZip from "jszip";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { driveAccessToken } from "@/lib/drive";
+import { driveDownloadResponse } from "@/lib/google";
 import {
   filterScans,
   scanDatum,
@@ -37,7 +39,7 @@ export async function GET(request: Request) {
   }
 
   const selectie = filterScans((data ?? []) as AdministratieItem[], type, periode).filter(
-    (s) => s.storage_pad,
+    (s) => s.drive_file_id || s.storage_pad,
   );
   if (selectie.length === 0) {
     return NextResponse.json(
@@ -46,14 +48,24 @@ export async function GET(request: Request) {
     );
   }
 
-  // Bestanden uit de private bucket halen (service-role) en inpakken.
+  // Bestanden ophalen — uit Google Drive (nieuw) of de bucket (oudere scans).
+  const drieToken = selectie.some((s) => s.drive_file_id) ? await driveAccessToken() : null;
   const svc = createServiceClient();
   const zip = new JSZip();
   const gebruikt = new Set<string>();
   for (const s of selectie) {
-    const { data: blob } = await svc.storage.from("administratie").download(s.storage_pad!);
-    if (!blob) continue;
-    const ext = s.storage_pad!.split(".").pop() ?? "jpg";
+    let inhoud: ArrayBuffer | null = null;
+    if (s.drive_file_id && drieToken) {
+      inhoud = await driveDownloadResponse(drieToken, s.drive_file_id)
+        .then((r) => r.arrayBuffer())
+        .catch(() => null);
+    } else if (s.storage_pad) {
+      const { data: blob } = await svc.storage.from("administratie").download(s.storage_pad);
+      inhoud = blob ? await blob.arrayBuffer() : null;
+    }
+    if (!inhoud) continue;
+
+    const ext = (s.storage_pad?.split(".").pop() ?? s.mime?.split("/")[1] ?? "jpg").toLowerCase();
     const schoon = (s.omschrijving ?? "")
       .replace(/[^a-zA-Z0-9À-ſ _-]/g, "")
       .trim()
@@ -65,7 +77,14 @@ export async function GET(request: Request) {
       naam = `${scanDatum(s.created_at)}-${s.type}${schoon ? `-${schoon}` : ""}-${i++}.${ext}`;
     }
     gebruikt.add(naam);
-    zip.file(naam, await blob.arrayBuffer());
+    zip.file(naam, inhoud);
+  }
+
+  if (gebruikt.size === 0) {
+    return NextResponse.json(
+      { fout: "Geen bestanden op te halen — is Google Drive verbonden (Koppelingen)?" },
+      { status: 503 },
+    );
   }
 
   const inhoud = await zip.generateAsync({ type: "uint8array" });

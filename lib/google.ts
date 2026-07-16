@@ -96,6 +96,27 @@ export async function driveUpload(
   return { id: data.id, url: data.webViewLink ?? null };
 }
 
+/** Haalt de bestandsinhoud van een Drive-bestand op (alt=media), als stream. */
+export async function driveDownloadResponse(
+  accessToken: string,
+  fileId: string,
+): Promise<Response> {
+  const res = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+  );
+  if (!res.ok) throw new Error(`Drive download ${res.status}: ${await res.text()}`);
+  return res;
+}
+
+/** Verwijdert een bestand uit Drive (best effort — fouten negeren we bewust). */
+export async function driveDelete(accessToken: string, fileId: string): Promise<void> {
+  await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  }).catch(() => {});
+}
+
 export async function exchangeCode(
   cfg: GoogleConfig,
   code: string,
