@@ -99,6 +99,20 @@ export async function verwijderBestand(formData: FormData) {
   const id = String(formData.get("id") ?? "").trim();
   if (!id) return;
   const supabase = createClient();
+  // Geüpload bestand? Ruim het ook in Google Drive op.
+  const { data: rij } = await supabase
+    .from("drive_links")
+    .select("drive_file_id")
+    .eq("id", id)
+    .maybeSingle();
+  if (rij?.drive_file_id) {
+    try {
+      const { verwijderVanDrive } = await import("@/lib/drive");
+      await verwijderVanDrive(rij.drive_file_id as string);
+    } catch {
+      /* best effort */
+    }
+  }
   await supabase.from("drive_links").delete().eq("id", id);
   revalidatePath("/bestanden");
 }

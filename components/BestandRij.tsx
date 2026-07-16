@@ -116,7 +116,7 @@ export function BestandRij({
               );
             })()}
             <a
-              href={link.url}
+              href={link.drive_file_id ? `/api/bestand?id=${link.id}` : link.url}
               target="_blank"
               rel="noreferrer"
               className="truncate text-[15px] font-medium text-navy hover:underline"

@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { Camera } from "lucide-react";
+import { Camera, Upload } from "lucide-react";
+import { VolScherm } from "@/components/ui/VolScherm";
+import { uploadBestand } from "./upload-acties";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { Kaart } from "@/components/ui/Kaart";
 import { Badge } from "@/components/ui/Badge";
@@ -408,6 +410,37 @@ export default async function BestandenPagina({
           </div>
         )}
       </Kaart>
+
+      {/* Bestand uploaden naar Google Drive — één knop, vol scherm */}
+      <div className="mb-4">
+        <VolScherm label="Bestand uploaden" titel="Bestand uploaden naar Drive" icoon={<Upload size={16} />}>
+          <form action={uploadBestand} className="space-y-3">
+            <input
+              type="file"
+              name="bestand"
+              required
+              className="w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy file:mr-3 file:rounded-md file:border-0 file:bg-navy/5 file:px-3 file:py-1.5 file:text-navy"
+            />
+            <input name="titel" placeholder="Titel (optioneel)" className={`${inputCls} w-full`} />
+            <input
+              name="categorie"
+              list="categorieen-lijst"
+              placeholder="Categorie (kies of typ)"
+              className={`${inputCls} w-full`}
+            />
+            <p className="text-xs text-navy/50">
+              Het bestand gaat naar de Google Drive van viesatomenjoep@gmail.com. Verbind Drive
+              eenmalig via Koppelingen.
+            </p>
+            <button
+              type="submit"
+              className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"
+            >
+              Uploaden
+            </button>
+          </form>
+        </VolScherm>
+      </div>
 
       {/* Link toevoegen (met categorie) */}
       <form

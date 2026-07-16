@@ -25,6 +25,9 @@ export type DriveLink = {
   context_type: DriveContextType;
   context_id: string | null;
   categorie: string | null;
+  // 0035: geüploade bestanden staan in Google Drive.
+  drive_file_id: string | null;
+  mime: string | null;
   created_at: string;
   updated_at: string;
 };
