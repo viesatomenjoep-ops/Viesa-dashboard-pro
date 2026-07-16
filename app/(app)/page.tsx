@@ -7,6 +7,7 @@ import { LegeStaat } from "@/components/ui/LegeStaat";
 import { Badge } from "@/components/ui/Badge";
 import { AreaGrafiek } from "@/components/ui/AreaGrafiek";
 import { TakenLijst } from "@/components/TakenLijst";
+import { AppRooster } from "@/components/AppRooster";
 import { createClient } from "@/lib/supabase/server";
 import { icalEvents } from "@/lib/ical";
 import type { AgendaItem } from "@/lib/google";
@@ -98,6 +99,9 @@ export default async function DashboardPagina() {
 
   return (
     <>
+      {/* iPhone-stijl app-rooster — eerste oogopslag: alle secties als blokken */}
+      <AppRooster />
+
       <HeroBanner
         titel="Welkom terug"
         subtekst={`Je hebt ${data.followups.length} follow-up${
