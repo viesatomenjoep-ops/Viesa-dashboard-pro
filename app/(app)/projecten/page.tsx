@@ -2,6 +2,8 @@ import Link from "next/link";
 import { CheckCircle2, FolderKanban, FolderOpen } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { StatKaart } from "@/components/ui/StatKaart";
+import { TegelSheet } from "@/components/ui/TegelSheet";
+import { ProjectenLijst } from "@/components/ProjectenLijst";
 import { Kaart } from "@/components/ui/Kaart";
 import { Badge } from "@/components/ui/Badge";
 import { LegeStaat } from "@/components/ui/LegeStaat";
@@ -50,10 +52,26 @@ export default async function ProjectenPagina({
         omschrijving="Houd per project notities en Drive-links bij."
       />
 
+      {/* KPI-tegels — klikken opent een vol scherm met de projecten en sluit met X. */}
       <section className="mb-8 grid grid-cols-3 gap-4">
-        <StatKaart label="Totaal" waarde={String(projecten.length)} icoon={FolderKanban} toon="teal" mobielGeenIcoon />
-        <StatKaart label="Actief" waarde={String(actief)} icoon={FolderOpen} toon="blauw" mobielGeenIcoon />
-        <StatKaart label="Afgerond" waarde={String(afgerond)} icoon={CheckCircle2} toon="groen" mobielGeenIcoon />
+        <TegelSheet
+          titel="Alle projecten"
+          tegel={<StatKaart label="Totaal" waarde={String(projecten.length)} icoon={FolderKanban} toon="teal" mobielGeenIcoon />}
+        >
+          <ProjectenLijst projecten={projecten} />
+        </TegelSheet>
+        <TegelSheet
+          titel="Actieve projecten"
+          tegel={<StatKaart label="Actief" waarde={String(actief)} icoon={FolderOpen} toon="blauw" mobielGeenIcoon />}
+        >
+          <ProjectenLijst projecten={projecten.filter((p) => p.status === "actief")} />
+        </TegelSheet>
+        <TegelSheet
+          titel="Afgeronde projecten"
+          tegel={<StatKaart label="Afgerond" waarde={String(afgerond)} icoon={CheckCircle2} toon="groen" mobielGeenIcoon />}
+        >
+          <ProjectenLijst projecten={projecten.filter((p) => p.status === "afgerond")} />
+        </TegelSheet>
       </section>
 
       {searchParams.fout && (

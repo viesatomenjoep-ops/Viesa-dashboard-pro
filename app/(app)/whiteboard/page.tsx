@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { Maximize2 } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
+import { VolScherm } from "@/components/ui/VolScherm";
 import { createClient } from "@/lib/supabase/server";
 import { Whiteboard } from "./Whiteboard";
 import { maakBord, verwijderBord, type StickyNote } from "./acties";
@@ -93,7 +95,14 @@ export default async function WhiteboardPagina({
           </div>
 
           {actiefId ? (
-            <Whiteboard key={actiefId} whiteboardId={actiefId} beginNotes={notes} />
+            <VolScherm
+              label="Open ideeën-whiteboard"
+              titel="Ideeën-whiteboard"
+              breed="vol"
+              icoon={<Maximize2 size={16} />}
+            >
+              <Whiteboard key={actiefId} whiteboardId={actiefId} beginNotes={notes} />
+            </VolScherm>
           ) : (
             <form action={maakBord}>
               <input type="hidden" name="naam" value="Ideeën" />

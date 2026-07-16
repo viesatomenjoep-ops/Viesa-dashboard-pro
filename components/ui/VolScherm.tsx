@@ -21,6 +21,7 @@ export function VolScherm({
   breed = "3xl",
   knopKlasse,
   standaardOpen = false,
+  vullend = false,
 }: {
   label: string;
   titel?: string;
@@ -30,6 +31,8 @@ export function VolScherm({
   breed?: "3xl" | "6xl" | "vol";
   knopKlasse?: string;
   standaardOpen?: boolean;
+  /** Laat de inhoud het scherm exact vullen (geen padding/scroll) — bv. een iframe. */
+  vullend?: boolean;
 }) {
   const [open, setOpen] = useState(standaardOpen);
   const [gemonteerd, setGemonteerd] = useState(false);
@@ -85,9 +88,13 @@ export function VolScherm({
                 <X size={18} />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-              <div className={`mx-auto ${maxBreed}`}>{children}</div>
-            </div>
+            {vullend ? (
+              <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
+            ) : (
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+                <div className={`mx-auto ${maxBreed}`}>{children}</div>
+              </div>
+            )}
           </div>,
           document.body,
         )}

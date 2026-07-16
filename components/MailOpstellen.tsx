@@ -54,6 +54,17 @@ export function MailOpstellen({
   const [ctx, setCtx] = useState<VariabeleContext>({});
   const [sjabloonId, setSjabloonId] = useState("");
   const listId = useId();
+  const emailListId = useId();
+
+  // Bekende e-mailadressen uit het klantenbestand (uniek, gesorteerd) — voor het
+  // automatisch aanvullen van het Aan-veld.
+  const bekendeAdressen = Array.from(
+    new Map(
+      klanten
+        .filter((k) => k.email && k.email.includes("@"))
+        .map((k) => [k.email!.toLowerCase(), { email: k.email!, bedrijf: k.bedrijf }]),
+    ).values(),
+  ).sort((a, b) => a.email.localeCompare(b.email));
 
   function pasSjabloonToe(id: string, context: VariabeleContext) {
     const s = sjablonen.find((x) => x.id === id);
@@ -79,7 +90,14 @@ export function MailOpstellen({
   }
 
   return (
-    <form action={verstuurActie}>
+    <form
+      action={verstuurActie}
+      onSubmit={(e) => {
+        if (!window.confirm("Weet u zeker dat u deze e-mail wilt versturen?")) {
+          e.preventDefault();
+        }
+      }}
+    >
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <label className="text-sm font-medium text-navy">Sjabloon:</label>
         <select
@@ -121,15 +139,17 @@ export function MailOpstellen({
       )}
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           <input
             name="naar"
             type="email"
             required
+            list={emailListId}
+            autoComplete="off"
             placeholder="Aan (ontvanger) *"
             value={naar}
             onChange={(e) => setNaar(e.target.value)}
-            className={inputCls}
+            className={`${inputCls} min-w-0 flex-1`}
           />
           {!toonCcBcc && (
             <button
@@ -143,6 +163,14 @@ export function MailOpstellen({
         </div>
         <input name="antwoord_naar" type="email" placeholder="Antwoord naar (optioneel)" className={inputCls} />
       </div>
+      {/* Onthouden e-mailadressen uit het klantenbestand voor het Aan-veld. */}
+      <datalist id={emailListId}>
+        {bekendeAdressen.map((a) => (
+          <option key={a.email} value={a.email}>
+            {a.bedrijf}
+          </option>
+        ))}
+      </datalist>
 
       {toonCcBcc && (
         <div className="mt-3 grid gap-3 sm:grid-cols-2">

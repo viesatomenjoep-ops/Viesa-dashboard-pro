@@ -146,11 +146,11 @@ export default async function AgendaPagina({
         titel="Agenda"
         actie={
           embed ? (
-            <VolScherm label="Google-weergave" titel="Google Agenda" breed="vol" toon="navy">
+            <VolScherm label="Google-weergave" titel="Google Agenda" breed="vol" toon="navy" vullend>
               <iframe
                 src={embed}
                 title="Google Agenda"
-                className="h-[80vh] w-full rounded-lg border border-navy/10"
+                className="h-full w-full"
                 style={{ border: 0 }}
               />
             </VolScherm>

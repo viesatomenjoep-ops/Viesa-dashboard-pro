@@ -1,6 +1,8 @@
 import { CheckCircle2, Coins, FileStack, FileText, Plus } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { StatKaart } from "@/components/ui/StatKaart";
+import { TegelSheet } from "@/components/ui/TegelSheet";
+import { OffertesLijst } from "@/components/OffertesLijst";
 import { VolScherm } from "@/components/ui/VolScherm";
 import { Kaart } from "@/components/ui/Kaart";
 import { Badge } from "@/components/ui/Badge";
@@ -52,26 +54,40 @@ export default async function OffertesPagina({
         omschrijving="Stel offertes op, volg de status en bewaar de PDF-link."
       />
 
+      {/* KPI-tegels — klikken opent een vol scherm met de offertes en sluit met X.
+          De waarde-tegel toont alle geaccepteerde offertes. */}
       <section className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatKaart label="Totaal" waarde={String(offertes.length)} icoon={FileStack} toon="teal" />
-        <StatKaart
-          label="Lopend"
-          waarde={String(lopend.length)}
-          icoon={FileText}
-          toon={lopend.length > 0 ? "amber" : "grijs"}
-        />
-        <StatKaart
-          label="Geaccepteerd"
-          waarde={String(geaccepteerd.length)}
-          icoon={CheckCircle2}
-          toon="groen"
-        />
-        <StatKaart
-          label="Waarde geaccepteerd"
-          waarde={euro(waardeGeaccepteerd)}
-          icoon={Coins}
-          toon="blauw"
-        />
+        <TegelSheet
+          titel="Alle offertes"
+          tegel={<StatKaart label="Totaal" waarde={String(offertes.length)} icoon={FileStack} toon="teal" />}
+        >
+          <OffertesLijst offertes={offertes} />
+        </TegelSheet>
+        <TegelSheet
+          titel="Lopende offertes"
+          tegel={
+            <StatKaart
+              label="Lopend"
+              waarde={String(lopend.length)}
+              icoon={FileText}
+              toon={lopend.length > 0 ? "amber" : "grijs"}
+            />
+          }
+        >
+          <OffertesLijst offertes={lopend} />
+        </TegelSheet>
+        <TegelSheet
+          titel="Geaccepteerde offertes"
+          tegel={<StatKaart label="Geaccepteerd" waarde={String(geaccepteerd.length)} icoon={CheckCircle2} toon="groen" />}
+        >
+          <OffertesLijst offertes={geaccepteerd} />
+        </TegelSheet>
+        <TegelSheet
+          titel="Waarde geaccepteerd"
+          tegel={<StatKaart label="Waarde geaccepteerd" waarde={euro(waardeGeaccepteerd)} icoon={Coins} toon="blauw" />}
+        >
+          <OffertesLijst offertes={geaccepteerd} />
+        </TegelSheet>
       </section>
 
       {searchParams.fout && (

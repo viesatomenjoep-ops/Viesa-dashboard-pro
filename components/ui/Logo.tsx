@@ -17,7 +17,7 @@ export function Logo({
   className = "",
 }: {
   size?: number;
-  variant?: "navy" | "wit";
+  variant?: "navy" | "wit" | "navytegel";
   className?: string;
 }) {
   const img = (
@@ -34,6 +34,15 @@ export function Logo({
   if (variant === "wit") {
     return (
       <span className="inline-flex items-center justify-center rounded-xl bg-white p-1.5">
+        {img}
+      </span>
+    );
+  }
+  // Navy tegel op donkere achtergrond: dezelfde blauwtint als de zijbalk met een
+  // fijne witte rand, zodat het logo groot en met minimale rand toch afgebakend blijft.
+  if (variant === "navytegel") {
+    return (
+      <span className="inline-flex items-center justify-center rounded-xl bg-navy p-1 ring-1 ring-white/25">
         {img}
       </span>
     );

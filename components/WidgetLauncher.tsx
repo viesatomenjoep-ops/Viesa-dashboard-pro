@@ -61,7 +61,7 @@ export function WidgetLauncher({
     <div className="w-full">
       {metKop && (
         <div className={`mb-4 flex items-center gap-3 px-1 ${gecentreerd ? "justify-center" : ""}`}>
-          <Logo size={groot ? 40 : 34} variant={donker ? "wit" : "navy"} />
+          <Logo size={groot ? 52 : 44} variant={donker ? "navytegel" : "navy"} />
           <div className="leading-tight">
             <div className={`font-merk text-base font-semibold tracking-tight ${merk}`}>
               Viesa Automations

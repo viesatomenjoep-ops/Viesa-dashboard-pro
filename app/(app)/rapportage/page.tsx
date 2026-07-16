@@ -1,7 +1,8 @@
-import { Euro, Receipt, UserPlus, Users } from "lucide-react";
+import { Euro, Maximize2, Receipt, UserPlus, Users } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { Kaart } from "@/components/ui/Kaart";
 import { StatKaart } from "@/components/ui/StatKaart";
+import { VolScherm } from "@/components/ui/VolScherm";
 import { createClient } from "@/lib/supabase/server";
 import { euro } from "@/lib/format";
 
@@ -89,51 +90,52 @@ export default async function RapportagePagina() {
         <StatKaart label="Nieuwe leads (12 mnd)" waarde={String(jaarLeads)} icoon={UserPlus} toon="blauw" />
       </section>
 
-      {/* Exports */}
-      <section className="mt-8">
-        <Kaart>
-          <h2 className="text-sm font-medium text-navy">Exporteren (CSV)</h2>
+      {/* Eén knop opent het volledige rapportageblad (exports + maandtabel). */}
+      <div className="mt-6">
+        <VolScherm label="Open rapportage" titel="Rapportage" breed="vol" icoon={<Maximize2 size={16} />}>
+          {/* Exports */}
+          <Kaart>
+            <h2 className="text-sm font-medium text-navy">Exporteren (CSV)</h2>
           <p className="mt-1 text-xs text-navy/60">
             Download een compleet overzicht als CSV — opent direct in Excel of Google Sheets.
           </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <ExportKnop type="facturen" label="Facturen" />
-            <ExportKnop type="offertes" label="Offertes" />
-            <ExportKnop type="klanten" label="Klanten" />
-            <ExportKnop type="maandomzet" label="Maandomzet" />
-          </div>
-        </Kaart>
-      </section>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <ExportKnop type="facturen" label="Facturen" />
+              <ExportKnop type="offertes" label="Offertes" />
+              <ExportKnop type="klanten" label="Klanten" />
+              <ExportKnop type="maandomzet" label="Maandomzet" />
+            </div>
+          </Kaart>
 
-      {/* Maandtabel */}
-      <section className="mt-8">
-        <Kaart className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-navy/10 text-left text-xs uppercase tracking-wide text-navy/50">
-                  <th className="px-5 py-3 font-medium">Maand</th>
-                  <th className="px-5 py-3 text-right font-medium">Omzet</th>
-                  <th className="px-5 py-3 text-right font-medium">Betaalde facturen</th>
-                  <th className="px-5 py-3 text-right font-medium">Nieuwe klanten</th>
-                  <th className="px-5 py-3 text-right font-medium">Nieuwe leads</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rijen.map((r) => (
-                  <tr key={r.key} className="border-b border-navy/5 last:border-0">
-                    <td className="px-5 py-3 capitalize text-navy">{r.label}</td>
-                    <td className="px-5 py-3 text-right font-medium text-navy">{euro(r.omzet)}</td>
-                    <td className="px-5 py-3 text-right text-navy/70">{r.betaald}</td>
-                    <td className="px-5 py-3 text-right text-navy/70">{r.nieuweKlanten}</td>
-                    <td className="px-5 py-3 text-right text-navy/70">{r.nieuweLeads}</td>
+          {/* Maandtabel */}
+          <Kaart className="mt-6 p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-navy/10 text-left text-xs uppercase tracking-wide text-navy/50">
+                    <th className="px-5 py-3 font-medium">Maand</th>
+                    <th className="px-5 py-3 text-right font-medium">Omzet</th>
+                    <th className="px-5 py-3 text-right font-medium">Betaalde facturen</th>
+                    <th className="px-5 py-3 text-right font-medium">Nieuwe klanten</th>
+                    <th className="px-5 py-3 text-right font-medium">Nieuwe leads</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Kaart>
-      </section>
+                </thead>
+                <tbody>
+                  {rijen.map((r) => (
+                    <tr key={r.key} className="border-b border-navy/5 last:border-0">
+                      <td className="px-5 py-3 capitalize text-navy">{r.label}</td>
+                      <td className="px-5 py-3 text-right font-medium text-navy">{euro(r.omzet)}</td>
+                      <td className="px-5 py-3 text-right text-navy/70">{r.betaald}</td>
+                      <td className="px-5 py-3 text-right text-navy/70">{r.nieuweKlanten}</td>
+                      <td className="px-5 py-3 text-right text-navy/70">{r.nieuweLeads}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Kaart>
+        </VolScherm>
+      </div>
     </>
   );
 }

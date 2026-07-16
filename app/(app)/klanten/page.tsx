@@ -1,6 +1,8 @@
 import { Building2, Plus, Search, Upload, UserPlus, Users } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { StatKaart } from "@/components/ui/StatKaart";
+import { TegelSheet } from "@/components/ui/TegelSheet";
+import { KlantenLijst } from "@/components/KlantenLijst";
 import { VolScherm } from "@/components/ui/VolScherm";
 import { Kaart } from "@/components/ui/Kaart";
 import { Badge } from "@/components/ui/Badge";
@@ -104,26 +106,33 @@ export default async function KlantenPagina({
         omschrijving="Je centrale klantenbestand — leads, offertes en facturen hangen hieraan."
       />
 
-      {/* Zes categorie-tegels: totaal + elk klanttype */}
+      {/* Zes categorie-tegels: totaal + elk klanttype. Klikken opent een vol
+          scherm met de bijbehorende klanten en sluit met een kruisje. */}
       <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <StatKaart
-          label="Totaal"
-          waarde={String(klanten.length)}
-          icoon={Users}
-          toon="teal"
-          mobielGeenIcoon
-          href="/klanten"
-        />
+        <TegelSheet
+          titel="Alle klanten"
+          tegel={
+            <StatKaart label="Totaal" waarde={String(klanten.length)} icoon={Users} toon="teal" mobielGeenIcoon />
+          }
+        >
+          <KlantenLijst klanten={klanten} />
+        </TegelSheet>
         {KLANT_TYPES.map((t) => (
-          <StatKaart
+          <TegelSheet
             key={t.key}
-            label={t.label}
-            waarde={String(perType[t.key] ?? 0)}
-            icoon={t.key === "klant" ? Building2 : UserPlus}
-            toon={typeToonKaart[t.key] ?? "grijs"}
-            mobielGeenIcoon
-            href={`/klanten?type=${t.key}`}
-          />
+            titel={t.label}
+            tegel={
+              <StatKaart
+                label={t.label}
+                waarde={String(perType[t.key] ?? 0)}
+                icoon={t.key === "klant" ? Building2 : UserPlus}
+                toon={typeToonKaart[t.key] ?? "grijs"}
+                mobielGeenIcoon
+              />
+            }
+          >
+            <KlantenLijst klanten={klanten.filter((k) => k.type === t.key)} />
+          </TegelSheet>
         ))}
       </section>
 

@@ -19,6 +19,8 @@ import { resendGeconfigureerd } from "@/lib/resend";
 import { datumKort } from "@/lib/format";
 import { leesFout } from "@/lib/fout";
 import { MailOpstellen, type KlantOptie } from "@/components/MailOpstellen";
+import { VerzondenMelding } from "@/components/VerzondenMelding";
+import { MailLeesPaneel } from "@/components/MailLeesPaneel";
 import { VolScherm } from "@/components/ui/VolScherm";
 import {
   verstuurBericht,
@@ -225,9 +227,7 @@ export default async function MailPagina({
         />
       </section>
 
-      {searchParams.verzonden && (
-        <p className="mb-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">E-mail verzonden.</p>
-      )}
+      {searchParams.verzonden && <VerzondenMelding />}
       {searchParams.fout && (
         <p className="mb-4 rounded-lg bg-oranje/10 px-3 py-2 text-sm text-oranje">{searchParams.fout}</p>
       )}
@@ -340,12 +340,14 @@ export default async function MailPagina({
             )}
           </div>
 
-          {/* Kolom 3 — leesvenster */}
+          {/* Kolom 3 — leesvenster (mobiel als volledig overlay, desktop inline) */}
           <div className="lg:max-h-[calc(100vh-230px)] lg:overflow-y-auto">
             {sel ? (
-              <Leesvenster e={sel} bijlagen={bijlagen} />
+              <MailLeesPaneel sluitHref={actieveMap === "inbox" ? "/mail" : `/mail?box=${actieveMap}`}>
+                <Leesvenster e={sel} bijlagen={bijlagen} />
+              </MailLeesPaneel>
             ) : (
-              <Kaart className="flex min-h-[300px] items-center justify-center">
+              <Kaart className="hidden min-h-[300px] items-center justify-center lg:flex">
                 <p className="text-sm text-navy/40">Selecteer een bericht om te lezen.</p>
               </Kaart>
             )}
