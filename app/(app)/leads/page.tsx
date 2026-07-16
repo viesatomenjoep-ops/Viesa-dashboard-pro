@@ -1,6 +1,7 @@
-import { Coins, Trophy, Users, Waypoints } from "lucide-react";
+import { Coins, Maximize2, Plus, Trophy, Upload, Users, Waypoints } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { StatKaart } from "@/components/ui/StatKaart";
+import { VolScherm } from "@/components/ui/VolScherm";
 import { createClient } from "@/lib/supabase/server";
 import { type Lead } from "@/lib/leads";
 import { euro } from "@/lib/format";
@@ -101,11 +102,15 @@ export default async function LeadsPagina({
         )}
       </form>
 
-      <SnelToevoegen />
-
-      <MassaImport
-        titel="Lijst importeren uit Excel"
-        importActie={importeerLeads}
+      {/* Toolbar: nieuwe lead + importeren — elk als vol scherm */}
+      <div className="mb-6 flex flex-wrap gap-2">
+        <VolScherm label="Nieuwe lead toevoegen" titel="Nieuwe lead" toon="blauw" icoon={<Plus size={16} />}>
+          <SnelToevoegen />
+        </VolScherm>
+        <VolScherm label="Lijst importeren" titel="Leadlijst importeren" toon="navy" icoon={<Upload size={16} />}>
+          <MassaImport
+            titel="Lijst importeren uit Excel"
+            importActie={importeerLeads}
         velden={[
           { key: "bedrijf", label: "Bedrijf", synoniemen: ["bedrijfsnaam", "company", "naam"] },
           { key: "plaats", label: "Plaats", synoniemen: ["stad", "city", "woonplaats"] },
@@ -134,13 +139,29 @@ export default async function LeadsPagina({
           { key: "aantal_medewerkers", label: "Aantal medewerkers", synoniemen: ["medewerkers", "employees", "fte"] },
           { key: "score", label: "Score" },
           { key: "verwachte_waarde", label: "Verwachte waarde", synoniemen: ["waarde", "value"] },
-        ]}
-      />
+            ]}
+          />
+        </VolScherm>
+      </div>
 
       {schemaOntbreekt ? (
         <SchemaMelding />
       ) : (
-        <KanbanBord leads={leads} />
+        <>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-medium text-navy">Pipeline</h2>
+            <VolScherm
+              label="Pipeline vergroten"
+              titel="Pipeline — sleep tussen de kolommen"
+              toon="navy"
+              breed="vol"
+              icoon={<Maximize2 size={16} />}
+            >
+              <KanbanBord leads={leads} />
+            </VolScherm>
+          </div>
+          <KanbanBord leads={leads} />
+        </>
       )}
     </>
   );

@@ -9,6 +9,8 @@ import { KlantZoeker } from "@/components/KlantZoeker";
 import { BevestigKnop } from "@/components/ui/BevestigKnop";
 import { datumKort } from "@/lib/format";
 import { RijLink } from "@/components/ui/RijLink";
+import { VolScherm } from "@/components/ui/VolScherm";
+import { Plus } from "lucide-react";
 import { leesFout } from "@/lib/fout";
 import { maakAudit, verwijderAudit } from "./acties";
 
@@ -50,29 +52,30 @@ export default async function AuditsPagina({
         </p>
       )}
 
-      <form
-        action={maakAudit}
-        className="mb-8 grid gap-2 rounded-xl border border-navy/10 bg-white p-3 shadow-sm sm:grid-cols-[2fr_1fr_auto]"
-      >
-        <input
-          name="titel"
-          placeholder="Titel auditverslag"
-          defaultValue="Auditverslag"
-          className="rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
-        />
-        <KlantZoeker
-          klanten={klanten}
-          tekstNaam="klant_naam"
-          placeholder="Klant zoeken (optioneel)…"
-          className="rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
-        />
-        <button
-          type="submit"
-          className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"
-        >
-          + Nieuwe audit
-        </button>
-      </form>
+      <div className="mb-8">
+        <VolScherm label="Nieuwe audit" titel="Nieuwe audit" icoon={<Plus size={16} />}>
+          <form action={maakAudit} className="space-y-3">
+            <input
+              name="titel"
+              placeholder="Titel auditverslag"
+              defaultValue="Auditverslag"
+              className="w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
+            />
+            <KlantZoeker
+              klanten={klanten}
+              tekstNaam="klant_naam"
+              placeholder="Klant zoeken (optioneel)…"
+              className="w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
+            />
+            <button
+              type="submit"
+              className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"
+            >
+              Audit aanmaken
+            </button>
+          </form>
+        </VolScherm>
+      </div>
 
       {schemaOntbreekt ? (
         <div className="rounded-xl border border-oranje/40 bg-oranje/5 p-4 text-sm text-navy">

@@ -1,6 +1,7 @@
-import { CheckCircle2, Clock, ListTodo, Loader } from "lucide-react";
+import { CheckCircle2, Clock, ListTodo, Loader, Plus } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { StatKaart } from "@/components/ui/StatKaart";
+import { VolScherm } from "@/components/ui/VolScherm";
 import { LegeStaat } from "@/components/ui/LegeStaat";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -60,58 +61,64 @@ export default async function TakenPagina() {
         <StatKaart label="Klaar" waarde={String(tel("klaar"))} icoon={CheckCircle2} toon="groen" />
       </section>
 
-      {/* Snel een taak toevoegen */}
-      <form
-        action={maakTaak}
-        className="mb-8 grid gap-2 rounded-xl border border-navy/10 bg-white p-3 shadow-sm sm:grid-cols-[2fr_1fr_1fr_1fr_1fr_auto]"
-      >
-        <input name="titel" required placeholder="Nieuwe taak *" className={inputCls} />
-        <select name="wie" defaultValue="algemeen" className={inputCls}>
-          {TAAK_PERSONEN.map((p) => (
-            <option key={p.key} value={p.key}>
-              {p.label}
-            </option>
-          ))}
-        </select>
-        <select name="prioriteit" defaultValue="normaal" className={inputCls}>
-          {TAAK_PRIORITEITEN.map((p) => (
-            <option key={p.key} value={p.key}>
-              {p.label}
-            </option>
-          ))}
-        </select>
-        <select name="periode" defaultValue="week" className={inputCls}>
-          {TAAK_PERIODES.map((p) => (
-            <option key={p.key} value={p.key}>
-              {p.label}
-            </option>
-          ))}
-        </select>
-        <select name="klant_id" defaultValue="" className={inputCls}>
-          <option value="">Geen klant</option>
-          {klantOpties.map((k) => (
-            <option key={k.id} value={k.id}>
-              {k.bedrijf}
-            </option>
-          ))}
-        </select>
-        <button
-          type="submit"
-          className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"
-        >
-          + Toevoegen
-        </button>
-      </form>
-
       {schemaOntbreekt ? (
         <div className="rounded-xl border border-oranje/40 bg-oranje/5 p-4 text-sm text-navy">
           <p className="font-medium text-oranje">Datamodel nog niet actief</p>
           <p className="mt-1 text-navy/70">Voer 0029_taken_kanban.sql uit in de Supabase SQL Editor.</p>
         </div>
-      ) : taken.length === 0 ? (
-        <LegeStaat titel="Nog geen taken" omschrijving="Voeg hierboven je eerste taak toe." />
       ) : (
-        <TakenKanban taken={taken} />
+        <>
+          {taken.length === 0 && (
+            <LegeStaat titel="Nog geen taken" omschrijving="Voeg hieronder je eerste taak toe." />
+          )}
+          {taken.length > 0 && <TakenKanban taken={taken} />}
+
+          {/* Nieuwe taak — onder de kolommen, één knop die volledig openklapt */}
+          <div className="mt-6">
+            <VolScherm label="Nieuwe taak" titel="Nieuwe taak" icoon={<Plus size={16} />}>
+              <form action={maakTaak} className="space-y-3">
+                <input name="titel" required placeholder="Nieuwe taak *" className={`${inputCls} w-full`} />
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <select name="wie" defaultValue="algemeen" className={`${inputCls} w-full`}>
+                    {TAAK_PERSONEN.map((p) => (
+                      <option key={p.key} value={p.key}>
+                        {p.label}
+                      </option>
+                    ))}
+                  </select>
+                  <select name="prioriteit" defaultValue="normaal" className={`${inputCls} w-full`}>
+                    {TAAK_PRIORITEITEN.map((p) => (
+                      <option key={p.key} value={p.key}>
+                        {p.label}
+                      </option>
+                    ))}
+                  </select>
+                  <select name="periode" defaultValue="week" className={`${inputCls} w-full`}>
+                    {TAAK_PERIODES.map((p) => (
+                      <option key={p.key} value={p.key}>
+                        {p.label}
+                      </option>
+                    ))}
+                  </select>
+                  <select name="klant_id" defaultValue="" className={`${inputCls} w-full`}>
+                    <option value="">Geen klant</option>
+                    {klantOpties.map((k) => (
+                      <option key={k.id} value={k.id}>
+                        {k.bedrijf}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  type="submit"
+                  className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"
+                >
+                  Taak toevoegen
+                </button>
+              </form>
+            </VolScherm>
+          </div>
+        </>
       )}
     </>
   );

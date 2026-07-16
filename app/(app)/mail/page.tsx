@@ -253,7 +253,7 @@ export default async function MailPagina({
               href="/mail?nieuw=1"
               className="mb-2 flex items-center justify-center gap-2 rounded-lg bg-oranje px-3 py-2 text-sm font-medium text-white hover:bg-oranje/90"
             >
-              ✚ Nieuw bericht
+              ✚ Nieuwe e-mail
             </Link>
             <div className="flex flex-wrap gap-1 lg:flex-col">
               {MAPPEN.map((m) => {
@@ -348,7 +348,7 @@ export default async function MailPagina({
           <div className="lg:max-h-[calc(100vh-230px)] lg:overflow-y-auto">
             {opstellen ? (
               <Kaart>
-                <p className="mb-3 text-sm font-medium text-navy">Nieuw bericht</p>
+                <p className="mb-3 text-sm font-medium text-navy">Nieuwe e-mail</p>
                 <MailOpstellen
                   verstuurActie={verstuurBericht}
                   geconfigureerd={geconfigureerd}

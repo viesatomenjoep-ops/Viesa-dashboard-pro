@@ -89,7 +89,7 @@ export default async function NotificatiesPagina() {
           {foutmelding && <p className="mt-2 font-mono text-xs text-navy/50">Details: {foutmelding}</p>}
         </div>
       ) : notificaties.length === 0 ? (
-        <LegeStaat titel="Geen notificaties" omschrijving="Nieuwe meldingen verschijnen hier." />
+        <p className="px-1 text-sm text-navy/40">Geen notificaties.</p>
       ) : (
         <div className="space-y-6">
           {groepen.map((groep) => (

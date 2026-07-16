@@ -1,6 +1,7 @@
-import { Building2, UserPlus, Users } from "lucide-react";
+import { Building2, Plus, Search, Upload, UserPlus, Users } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { StatKaart } from "@/components/ui/StatKaart";
+import { VolScherm } from "@/components/ui/VolScherm";
 import { Kaart } from "@/components/ui/Kaart";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
@@ -84,12 +85,17 @@ export default async function KlantenPagina({
     return true;
   });
 
-  const klantLijst = klanten.filter((k) => k.type === "klant");
-  const prospectLijst = klanten.filter((k) => k.type === "prospect");
-  // Bij precies één resultaat klik je meteen door naar die klant; anders filtert
-  // de tegel de lijst.
-  const tegelHref = (lijst: Klant[], basis: string) =>
-    lijst.length === 1 ? `/klanten/${lijst[0].id}` : basis;
+  // Aantallen per commercieel type — voor de categorie-tegels.
+  const perType = Object.fromEntries(
+    KLANT_TYPES.map((t) => [t.key, klanten.filter((k) => k.type === t.key).length]),
+  ) as Record<string, number>;
+  const typeToonKaart: Record<string, "amber" | "blauw" | "grijs" | "groen" | "paars"> = {
+    hot_lead: "amber",
+    cold_lead: "blauw",
+    prospect: "grijs",
+    klant: "groen",
+    partner: "paars",
+  };
 
   return (
     <>
@@ -98,31 +104,27 @@ export default async function KlantenPagina({
         omschrijving="Je centrale klantenbestand — leads, offertes en facturen hangen hieraan."
       />
 
-      <section className="mb-6 grid grid-cols-3 gap-4">
+      {/* Zes categorie-tegels: totaal + elk klanttype */}
+      <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <StatKaart
           label="Totaal"
           waarde={String(klanten.length)}
           icoon={Users}
           toon="teal"
           mobielGeenIcoon
-          href={tegelHref(klanten, "/klanten")}
+          href="/klanten"
         />
-        <StatKaart
-          label="Klanten"
-          waarde={String(klantLijst.length)}
-          icoon={Building2}
-          toon="groen"
-          mobielGeenIcoon
-          href={tegelHref(klantLijst, "/klanten?type=klant")}
-        />
-        <StatKaart
-          label="Prospects"
-          waarde={String(prospectLijst.length)}
-          icoon={UserPlus}
-          toon="blauw"
-          mobielGeenIcoon
-          href={tegelHref(prospectLijst, "/klanten?type=prospect")}
-        />
+        {KLANT_TYPES.map((t) => (
+          <StatKaart
+            key={t.key}
+            label={t.label}
+            waarde={String(perType[t.key] ?? 0)}
+            icoon={t.key === "klant" ? Building2 : UserPlus}
+            toon={typeToonKaart[t.key] ?? "grijs"}
+            mobielGeenIcoon
+            href={`/klanten?type=${t.key}`}
+          />
+        ))}
       </section>
 
       {searchParams.fout && (
@@ -131,15 +133,97 @@ export default async function KlantenPagina({
         </p>
       )}
 
-      {/* Filters — direct onder de tegels (land eerst, dan regio's) */}
-      <KlantFilters
-        q={searchParams.q ?? ""}
-        land={landFilter}
-        regio={searchParams.regio ?? ""}
-        branche={searchParams.branche ?? ""}
-        type={searchParams.type ?? ""}
-        branches={brancheOpties}
-      />
+      {/* Toolbar: zoeken/filteren, nieuwe klant en importeren — elk als vol scherm */}
+      <div className="mb-4 flex flex-wrap gap-2">
+        <VolScherm label="Zoeken & filteren" titel="Klanten zoeken & filteren" toon="navy" icoon={<Search size={16} />}>
+          <KlantFilters
+            q={searchParams.q ?? ""}
+            land={landFilter}
+            regio={searchParams.regio ?? ""}
+            branche={searchParams.branche ?? ""}
+            type={searchParams.type ?? ""}
+            branches={brancheOpties}
+          />
+          <p className="mt-3 text-xs text-navy/50">
+            Kies je filters en druk op zoeken — de lijst hieronder wordt bijgewerkt en dit scherm
+            klapt vanzelf in.
+          </p>
+        </VolScherm>
+
+        <VolScherm label="Nieuwe klant aanmaken" titel="Nieuwe klant" icoon={<Plus size={16} />}>
+          <form action={maakKlant}>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <input name="bedrijf" required placeholder="Bedrijf *" className={inputCls} />
+              <input name="contact_naam" placeholder="Contactpersoon" className={inputCls} />
+              <input name="email" type="email" placeholder="E-mail" className={inputCls} />
+              <input name="telefoon" placeholder="Telefoon" className={inputCls} />
+              <WebsiteVeld compact waarde={null} placeholder="Website" />
+              <input name="logo_url" type="url" placeholder="Logo-URL (voor offertes)" className={inputCls} />
+              <input name="straat" placeholder="Straat + nr" className={inputCls} />
+              <input name="postcode" placeholder="Postcode" className={inputCls} />
+              <input name="stad" placeholder="Stad" className={inputCls} />
+              <LandRegio className={inputCls} />
+              <input
+                name="branche"
+                list="nieuwe-klant-branches"
+                placeholder="Branche (kies of typ)"
+                className={inputCls}
+              />
+              <datalist id="nieuwe-klant-branches">
+                {brancheOpties.map((b) => (
+                  <option key={b} value={b} />
+                ))}
+              </datalist>
+              <select name="type" defaultValue="prospect" className={inputCls}>
+                {KLANT_TYPES.map((t) => (
+                  <option key={t.key} value={t.key}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              type="submit"
+              className="mt-4 rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"
+            >
+              Klant toevoegen
+            </button>
+          </form>
+        </VolScherm>
+
+        <VolScherm label="Klantenlijst importeren" titel="Klantenlijst importeren" toon="navy" icoon={<Upload size={16} />}>
+          <MassaImport
+            titel="Klantenlijst importeren uit Excel"
+            importActie={importeerKlanten}
+            velden={[
+              { key: "bedrijf", label: "Bedrijf", synoniemen: ["bedrijfsnaam", "company"] },
+              { key: "contact_naam", label: "Contactpersoon", synoniemen: ["contact"] },
+              { key: "voornaam", label: "Voornaam", synoniemen: ["first name", "firstname"] },
+              { key: "achternaam", label: "Achternaam", synoniemen: ["last name", "lastname"] },
+              { key: "functie", label: "Functie", synoniemen: ["title", "rol"] },
+              { key: "seniority", label: "Seniority", synoniemen: ["niveau"] },
+              { key: "afdeling", label: "Afdeling", synoniemen: ["department"] },
+              { key: "email", label: "E-mail", synoniemen: ["e-mail", "mail"] },
+              { key: "telefoon", label: "Telefoon", synoniemen: ["tel"] },
+              { key: "telefoon_contact", label: "Direct telefoonnr", synoniemen: ["direct", "mobiel"] },
+              { key: "website", label: "Website", synoniemen: ["url"] },
+              { key: "logo_url", label: "Logo-URL", synoniemen: ["logo", "logourl"] },
+              { key: "stad", label: "Stad", synoniemen: ["plaats", "city"] },
+              { key: "regio", label: "Regio", synoniemen: ["provincie"] },
+              { key: "land", label: "Land" },
+              { key: "place_id", label: "Google place_id", synoniemen: ["placeid"] },
+              { key: "rating_google", label: "Google rating", synoniemen: ["rating", "sterren"] },
+              { key: "aantal_reviews", label: "Aantal reviews", synoniemen: ["reviews", "recensies"] },
+              { key: "it_aanbod", label: "IT-aanbod", synoniemen: ["aanbod", "dienst"] },
+              { key: "platform", label: "Platform", synoniemen: ["cms", "webshopplatform"] },
+              { key: "branche", label: "Branche", synoniemen: ["niche", "sector"] },
+              { key: "bedrijfsgrootte", label: "Bedrijfsgrootte", synoniemen: ["grootte", "size"] },
+              { key: "aantal_medewerkers", label: "Aantal medewerkers", synoniemen: ["medewerkers", "employees", "fte"] },
+              { key: "type", label: "Type" },
+            ]}
+          />
+        </VolScherm>
+      </div>
 
       {schemaOntbreekt ? (
         <div className="rounded-xl border border-oranje/40 bg-oranje/5 p-4 text-sm text-navy">
@@ -213,80 +297,6 @@ export default async function KlantenPagina({
         </Kaart>
       )}
 
-      {/* Nieuwe klant — onderaan de pagina */}
-      <form action={maakKlant} className="mb-6 mt-10">
-        <Kaart>
-          <p className="mb-3 text-sm font-medium text-navy">Nieuwe klant</p>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <input name="bedrijf" required placeholder="Bedrijf *" className={inputCls} />
-            <input name="contact_naam" placeholder="Contactpersoon" className={inputCls} />
-            <input name="email" type="email" placeholder="E-mail" className={inputCls} />
-            <input name="telefoon" placeholder="Telefoon" className={inputCls} />
-            <WebsiteVeld compact waarde={null} placeholder="Website" />
-            <input name="logo_url" type="url" placeholder="Logo-URL (voor offertes)" className={inputCls} />
-            <input name="straat" placeholder="Straat + nr" className={inputCls} />
-            <input name="postcode" placeholder="Postcode" className={inputCls} />
-            <input name="stad" placeholder="Stad" className={inputCls} />
-            <LandRegio className={inputCls} />
-            <input
-              name="branche"
-              list="nieuwe-klant-branches"
-              placeholder="Branche (kies of typ)"
-              className={inputCls}
-            />
-            <datalist id="nieuwe-klant-branches">
-              {brancheOpties.map((b) => (
-                <option key={b} value={b} />
-              ))}
-            </datalist>
-            <select name="type" defaultValue="prospect" className={inputCls}>
-              {KLANT_TYPES.map((t) => (
-                <option key={t.key} value={t.key}>{t.label}</option>
-              ))}
-            </select>
-          </div>
-          <div className="mt-4">
-            <button
-              type="submit"
-              className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"
-            >
-              + Klant toevoegen
-            </button>
-          </div>
-        </Kaart>
-      </form>
-
-      {/* Bulk-import — onderaan de pagina */}
-      <MassaImport
-        titel="Klantenlijst importeren uit Excel"
-        importActie={importeerKlanten}
-        velden={[
-          { key: "bedrijf", label: "Bedrijf", synoniemen: ["bedrijfsnaam", "company"] },
-          { key: "contact_naam", label: "Contactpersoon", synoniemen: ["contact"] },
-          { key: "voornaam", label: "Voornaam", synoniemen: ["first name", "firstname"] },
-          { key: "achternaam", label: "Achternaam", synoniemen: ["last name", "lastname"] },
-          { key: "functie", label: "Functie", synoniemen: ["title", "rol"] },
-          { key: "seniority", label: "Seniority", synoniemen: ["niveau"] },
-          { key: "afdeling", label: "Afdeling", synoniemen: ["department"] },
-          { key: "email", label: "E-mail", synoniemen: ["e-mail", "mail"] },
-          { key: "telefoon", label: "Telefoon", synoniemen: ["tel"] },
-          { key: "telefoon_contact", label: "Direct telefoonnr", synoniemen: ["direct", "mobiel"] },
-          { key: "website", label: "Website", synoniemen: ["url"] },
-          { key: "logo_url", label: "Logo-URL", synoniemen: ["logo", "logourl"] },
-          { key: "stad", label: "Stad", synoniemen: ["plaats", "city"] },
-          { key: "regio", label: "Regio", synoniemen: ["provincie"] },
-          { key: "land", label: "Land" },
-          { key: "place_id", label: "Google place_id", synoniemen: ["placeid"] },
-          { key: "rating_google", label: "Google rating", synoniemen: ["rating", "sterren"] },
-          { key: "aantal_reviews", label: "Aantal reviews", synoniemen: ["reviews", "recensies"] },
-          { key: "it_aanbod", label: "IT-aanbod", synoniemen: ["aanbod", "dienst"] },
-          { key: "platform", label: "Platform", synoniemen: ["cms", "webshopplatform"] },
-          { key: "branche", label: "Branche", synoniemen: ["niche", "sector"] },
-          { key: "bedrijfsgrootte", label: "Bedrijfsgrootte", synoniemen: ["grootte", "size"] },
-          { key: "aantal_medewerkers", label: "Aantal medewerkers", synoniemen: ["medewerkers", "employees", "fte"] },
-          { key: "type", label: "Type" },
-        ]}
-      />
     </>
   );
 }

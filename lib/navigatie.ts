@@ -12,7 +12,6 @@ import {
   LayoutDashboard,
   Link2,
   Mail,
-  MessageSquare,
   Receipt,
   StickyNote,
   Users,
@@ -30,14 +29,8 @@ export const navSecties: NavSectie[] = [
       { label: "Dashboard", href: "/", icoon: LayoutDashboard },
       { label: "Taken", href: "/taken", icoon: KanbanSquare },
       { label: "Agenda", href: "/agenda", icoon: Calendar },
-      { label: "Notificaties", href: "/notificaties", icoon: Bell },
-    ],
-  },
-  {
-    titel: "Communicatie",
-    items: [
       { label: "E-mail", href: "/mail", icoon: Mail },
-      { label: "Chat", href: "/chat", icoon: MessageSquare },
+      { label: "Notificaties", href: "/notificaties", icoon: Bell },
     ],
   },
   {
