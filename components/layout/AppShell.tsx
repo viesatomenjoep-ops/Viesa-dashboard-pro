@@ -20,11 +20,13 @@ export function AppShell({
   userEmail,
   meldingen = [],
   ongelezen = 0,
+  info,
   children,
 }: {
   userEmail?: string;
   meldingen?: Notificatie[];
   ongelezen?: number;
+  info?: { openTaken: number; leads: number; openstaand: number; offertes: number };
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -51,7 +53,7 @@ export function AppShell({
             >
               ✕ Terug
             </button>
-            <Zijbalk variant="mobiel" onNavigate={() => setOpen(false)} />
+            <Zijbalk variant="mobiel" info={info} onNavigate={() => setOpen(false)} />
           </div>
         </div>
       )}

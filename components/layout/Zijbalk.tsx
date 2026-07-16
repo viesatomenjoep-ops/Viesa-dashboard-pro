@@ -1,17 +1,24 @@
 "use client";
 
 import { WidgetLauncher } from "@/components/WidgetLauncher";
+import { InfoWidgets } from "@/components/InfoWidgets";
+
+type Info = { openTaken: number; leads: number; openstaand: number; offertes: number };
 
 /**
  * Navigatie-inhoud (donkerblauw). Twee varianten:
  *  - "desktop": grotere widget-tegels (icoon + tekst eronder), 2 kolommen.
- *  - "mobiel": kleinere tegels, gecentreerd, geen scroll (hamburgermenu).
+ *  - "mobiel": hamburgermenu — logo linksboven, daaronder de info-balk
+ *    (dezelfde als op het startscherm) en daaronder de tegels; alles passend
+ *    zonder te scrollen.
  */
 export function Zijbalk({
   variant = "mobiel",
+  info,
   onNavigate,
 }: {
   variant?: "desktop" | "mobiel";
+  info?: Info;
   onNavigate?: () => void;
 }) {
   if (variant === "desktop") {
@@ -22,8 +29,14 @@ export function Zijbalk({
     );
   }
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-navy px-4 py-6">
-      <WidgetLauncher variant="donker" kolommen={4} gecentreerd onNavigate={onNavigate} />
+    <div className="flex h-full flex-col overflow-hidden bg-navy px-4 pb-4 pt-6">
+      <WidgetLauncher
+        variant="donker"
+        kolommen={4}
+        compact
+        bovenGrid={info ? <InfoWidgets {...info} /> : undefined}
+        onNavigate={onNavigate}
+      />
     </div>
   );
 }

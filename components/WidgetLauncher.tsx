@@ -6,7 +6,8 @@ import { navSecties } from "@/lib/navigatie";
 /**
  * iPhone-stijl widget-rooster. Wordt op meerdere plekken gebruikt:
  *  - startscherm (/) — kleine tegels, met info-balk erboven, zonder kop.
- *  - hamburgermenu (mobiel) — kleine tegels, met kop, gecentreerd.
+ *  - hamburgermenu (mobiel) — logo linksboven, daaronder de info-balk en de
+ *    tegels; compact zodat alles zonder scrollen past.
  *  - desktop-zijbalk — grotere tegels (icoon + tekst eronder), 2 kolommen.
  */
 
@@ -35,6 +36,7 @@ export function WidgetLauncher({
   kolommen = 5,
   metKop = true,
   gecentreerd = false,
+  compact = false,
   roosterAlleenMobiel = false,
   bovenGrid,
   onNavigate,
@@ -43,6 +45,8 @@ export function WidgetLauncher({
   kolommen?: 2 | 4 | 5;
   metKop?: boolean;
   gecentreerd?: boolean;
+  /** Compacter (kleinere marges, tegels en labels) — voor het hamburgermenu. */
+  compact?: boolean;
   /** Verberg het tegelrooster vanaf md (desktop toont de zijbalk al). */
   roosterAlleenMobiel?: boolean;
   bovenGrid?: ReactNode;
@@ -56,12 +60,17 @@ export function WidgetLauncher({
   const groot = kolommen === 2;
   const kolomKlasse =
     kolommen === 2 ? "grid-cols-2" : kolommen === 4 ? "grid-cols-4" : "grid-cols-5";
+  const labelKlasse = groot ? "text-xs" : compact ? "text-[10px]" : "text-[11px]";
 
   const inhoud = (
     <div className="w-full">
       {metKop && (
-        <div className={`mb-4 flex items-center gap-3 px-1 ${gecentreerd ? "justify-center" : ""}`}>
-          <Logo size={groot ? 52 : 44} variant={donker ? "navytegel" : "navy"} />
+        <div
+          className={`flex items-center gap-3 px-1 ${compact ? "mb-3" : "mb-4"} ${
+            gecentreerd ? "justify-center" : ""
+          }`}
+        >
+          <Logo size={groot ? 52 : compact ? 40 : 44} variant={donker ? "navytegel" : "navy"} />
           <div className="leading-tight">
             <div className={`font-merk text-base font-semibold tracking-tight ${merk}`}>
               Viesa Automations
@@ -71,10 +80,10 @@ export function WidgetLauncher({
         </div>
       )}
 
-      {bovenGrid && <div className="mb-5">{bovenGrid}</div>}
+      {bovenGrid && <div className={compact ? "mb-3" : "mb-5"}>{bovenGrid}</div>}
 
       <div
-        className={`grid gap-x-3 gap-y-4 ${kolomKlasse} ${
+        className={`grid gap-x-3 ${compact ? "gap-y-2.5" : "gap-y-4"} ${kolomKlasse} ${
           roosterAlleenMobiel ? "md:hidden" : ""
         }`}
       >
@@ -85,7 +94,7 @@ export function WidgetLauncher({
               key={item.href}
               href={item.href}
               onClick={onNavigate}
-              className="group flex flex-col items-center gap-1"
+              className={`group flex flex-col items-center ${compact ? "gap-0.5" : "gap-1"}`}
             >
               <span
                 className={`flex aspect-square w-full items-center justify-center rounded-[24%] text-white shadow-sm transition-transform group-active:scale-90 ${
@@ -94,11 +103,7 @@ export function WidgetLauncher({
               >
                 <Icoon className="h-[46%] w-[46%]" strokeWidth={1.5} />
               </span>
-              <span
-                className={`line-clamp-1 w-full text-center font-medium ${
-                  groot ? "text-xs" : "text-[11px]"
-                } ${label}`}
-              >
+              <span className={`line-clamp-1 w-full text-center font-medium ${labelKlasse} ${label}`}>
                 {item.label}
               </span>
             </Link>
