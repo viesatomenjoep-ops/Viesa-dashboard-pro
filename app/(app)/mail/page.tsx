@@ -19,6 +19,7 @@ import { resendGeconfigureerd } from "@/lib/resend";
 import { datumKort } from "@/lib/format";
 import { leesFout } from "@/lib/fout";
 import { MailOpstellen, type KlantOptie } from "@/components/MailOpstellen";
+import { VolScherm } from "@/components/ui/VolScherm";
 import {
   verstuurBericht,
   wisselSter,
@@ -92,8 +93,9 @@ export default async function MailPagina({
   const actieveMap = (geldig.includes(searchParams.box as MailMap)
     ? searchParams.box
     : "inbox") as MailMap;
+  // Compose opent nu als vol scherm; ?nieuw=1 of een reply (?naar=) opent het direct.
   const opstellen = searchParams.nieuw === "1" || Boolean(searchParams.naar);
-  const selId = !opstellen ? searchParams.sel ?? null : null;
+  const selId = searchParams.sel ?? null;
 
   let emails: Email[] = [];
   let klanten: KlantOptie[] = [];
@@ -185,21 +187,21 @@ export default async function MailPagina({
       <PaginaKop
         titel="E-mail"
         actie={
-          opstellen ? (
-            <Link
-              href="/mail"
-              className="rounded-lg border border-navy/20 px-4 py-2 text-sm font-medium text-navy hover:bg-navy/5"
-            >
-              ← Naar postvak
-            </Link>
-          ) : (
-            <Link
-              href="/mail?nieuw=1"
-              className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"
-            >
-              + Nieuwe e-mail
-            </Link>
-          )
+          <VolScherm
+            label="Nieuwe e-mail"
+            titel="Nieuwe e-mail"
+            breed="6xl"
+            standaardOpen={opstellen}
+          >
+            <MailOpstellen
+              verstuurActie={verstuurBericht}
+              geconfigureerd={geconfigureerd}
+              klanten={klanten}
+              sjablonen={mailSjablonen}
+              initieelNaar={searchParams.naar ?? ""}
+              initieelOnderwerp={searchParams.onderwerp ?? ""}
+            />
+          </VolScherm>
         }
       />
 
@@ -249,15 +251,9 @@ export default async function MailPagina({
         <div className="grid gap-4 lg:grid-cols-[200px_minmax(300px,340px)_1fr]">
           {/* Kolom 1 — mappen */}
           <aside className="space-y-1">
-            <Link
-              href="/mail?nieuw=1"
-              className="mb-2 flex items-center justify-center gap-2 rounded-lg bg-oranje px-3 py-2 text-sm font-medium text-white hover:bg-oranje/90"
-            >
-              ✚ Nieuwe e-mail
-            </Link>
             <div className="flex flex-wrap gap-1 lg:flex-col">
               {MAPPEN.map((m) => {
-                const actief = m.key === actieveMap && !opstellen;
+                const actief = m.key === actieveMap;
                 const MapIcoon = m.icoon;
                 return (
                   <Link
@@ -344,21 +340,9 @@ export default async function MailPagina({
             )}
           </div>
 
-          {/* Kolom 3 — leesvenster / opstellen */}
+          {/* Kolom 3 — leesvenster */}
           <div className="lg:max-h-[calc(100vh-230px)] lg:overflow-y-auto">
-            {opstellen ? (
-              <Kaart>
-                <p className="mb-3 text-sm font-medium text-navy">Nieuwe e-mail</p>
-                <MailOpstellen
-                  verstuurActie={verstuurBericht}
-                  geconfigureerd={geconfigureerd}
-                  klanten={klanten}
-                  sjablonen={mailSjablonen}
-                  initieelNaar={searchParams.naar ?? ""}
-                  initieelOnderwerp={searchParams.onderwerp ?? ""}
-                />
-              </Kaart>
-            ) : sel ? (
+            {sel ? (
               <Leesvenster e={sel} bijlagen={bijlagen} />
             ) : (
               <Kaart className="flex min-h-[300px] items-center justify-center">

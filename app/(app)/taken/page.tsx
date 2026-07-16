@@ -18,7 +18,11 @@ export const dynamic = "force-dynamic";
 const inputCls =
   "rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy";
 
-export default async function TakenPagina() {
+export default async function TakenPagina({
+  searchParams,
+}: {
+  searchParams: { taak?: string; taakfout?: string };
+}) {
   const supabase = createClient();
   let taken: Taak[] = [];
   let schemaOntbreekt = false;
@@ -54,6 +58,17 @@ export default async function TakenPagina() {
         omschrijving="Sleep taken tussen de kolommen om de status bij te werken."
       />
 
+      {searchParams.taak && (
+        <p className="mb-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          Taak opgeslagen.
+        </p>
+      )}
+      {searchParams.taakfout && (
+        <p className="mb-4 rounded-lg bg-oranje/10 px-3 py-2 text-sm text-oranje">
+          {searchParams.taakfout}
+        </p>
+      )}
+
       <section className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatKaart label="Te doen" waarde={String(tel("todo"))} icoon={ListTodo} toon="blauw" />
         <StatKaart label="Bezig" waarde={String(tel("bezig"))} icoon={Loader} toon="amber" />
@@ -77,6 +92,7 @@ export default async function TakenPagina() {
           <div className="mt-6">
             <VolScherm label="Nieuwe taak" titel="Nieuwe taak" icoon={<Plus size={16} />}>
               <form action={maakTaak} className="space-y-3">
+                <input type="hidden" name="terug" value="/taken" />
                 <input name="titel" required placeholder="Nieuwe taak *" className={`${inputCls} w-full`} />
                 <div className="grid gap-3 sm:grid-cols-2">
                   <select name="wie" defaultValue="algemeen" className={`${inputCls} w-full`}>

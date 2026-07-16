@@ -20,6 +20,7 @@ export function VolScherm({
   icoon,
   breed = "3xl",
   knopKlasse,
+  standaardOpen = false,
 }: {
   label: string;
   titel?: string;
@@ -28,8 +29,9 @@ export function VolScherm({
   icoon?: ReactNode;
   breed?: "3xl" | "6xl" | "vol";
   knopKlasse?: string;
+  standaardOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(standaardOpen);
   const [gemonteerd, setGemonteerd] = useState(false);
 
   useEffect(() => setGemonteerd(true), []);

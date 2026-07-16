@@ -26,7 +26,7 @@ export const navSecties: NavSectie[] = [
   {
     titel: "Overzicht",
     items: [
-      { label: "Dashboard", href: "/", icoon: LayoutDashboard },
+      { label: "Dashboard", href: "/dashboard", icoon: LayoutDashboard },
       { label: "Taken", href: "/taken", icoon: KanbanSquare },
       { label: "Agenda", href: "/agenda", icoon: Calendar },
       { label: "E-mail", href: "/mail", icoon: Mail },

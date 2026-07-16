@@ -96,7 +96,6 @@ export default async function AuditsPagina({
                 <th className="px-3 py-3 font-medium sm:px-5">Titel</th>
                 <th className="px-3 py-3 font-medium sm:px-5">Status</th>
                 <th className="hidden px-3 py-3 font-medium sm:table-cell sm:px-5">Aangemaakt</th>
-                <th className="px-3 py-3 text-right font-medium sm:px-5">Acties</th>
               </tr>
             </thead>
             <tbody>
@@ -117,21 +116,6 @@ export default async function AuditsPagina({
                   </td>
                   <td className="hidden px-3 py-3 text-navy/50 sm:table-cell sm:px-5">
                     {datumKort(a.created_at)}
-                  </td>
-                  <td className="px-3 py-3 sm:px-5">
-                    <div className="flex items-center justify-end gap-3">
-                      <Link
-                        href={`/audits/${a.id}`}
-                        className="text-sm font-medium text-navy/70 hover:text-navy"
-                      >
-                        Open
-                      </Link>
-                      <BevestigKnop
-                        actie={verwijderAudit.bind(null, a.id)}
-                        vraag={`Weet je zeker dat je audit ${a.nummer} wilt verwijderen?`}
-                        label="×"
-                      />
-                    </div>
                   </td>
                 </RijLink>
               ))}

@@ -1,13 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { TaakPeriode, TaakPrioriteit, TaakStatus, TaakWie } from "@/lib/taken";
 
-/** Voegt een to-do toe. */
+/** Voegt een to-do toe en keert terug met een bevestiging (of foutmelding). */
 export async function maakTaak(formData: FormData) {
+  const terug = String(formData.get("terug") ?? "/dashboard") || "/dashboard";
   const titel = String(formData.get("titel") ?? "").trim();
-  if (!titel) return;
+  if (!titel) redirect(`${terug}?taakfout=` + encodeURIComponent("Vul een taak in."));
   const wie = (String(formData.get("wie") ?? "algemeen") || "algemeen") as TaakWie;
   const periode = (String(formData.get("periode") ?? "week") || "week") as TaakPeriode;
   const deadline = String(formData.get("deadline") ?? "").trim() || null;
@@ -16,11 +18,14 @@ export async function maakTaak(formData: FormData) {
     "normaal") as TaakPrioriteit;
 
   const supabase = createClient();
-  await supabase
+  const { error } = await supabase
     .from("taken")
     .insert({ titel, wie, periode, deadline, klant_id, prioriteit, status: "todo" });
+  if (error) redirect(`${terug}?taakfout=` + encodeURIComponent(error.message));
   revalidatePath("/");
+  revalidatePath("/dashboard");
   revalidatePath("/taken");
+  redirect(`${terug}?taak=1`);
 }
 
 /** Vinkt een to-do (af/aan) en houdt de kanban-status gelijk. */

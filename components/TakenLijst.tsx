@@ -27,12 +27,14 @@ export function TakenLijst({
   maakActie,
   wisselActie,
   verwijderActie,
+  terug = "/dashboard",
 }: {
   taken: Taak[];
   klanten?: { id: string; bedrijf: string }[];
   maakActie: (formData: FormData) => void;
   wisselActie: (id: string, klaar: boolean) => void;
   verwijderActie: (id: string) => void;
+  terug?: string;
 }) {
   const [periode, setPeriode] = useState<TaakPeriode>("week");
 
@@ -47,6 +49,7 @@ export function TakenLijst({
           icoon={<Plus size={16} />}
         >
           <form action={maakActie} className="space-y-3">
+            <input type="hidden" name="terug" value={terug} />
             <input
               name="titel"
               required
