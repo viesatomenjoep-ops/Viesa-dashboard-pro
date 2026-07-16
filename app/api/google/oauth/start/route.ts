@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { googleConfig, oauthUrl } from "@/lib/google";
+import { DRIVE_SCOPES, googleConfig, oauthUrl } from "@/lib/google";
 
-/** Start de Google/Gmail OAuth-flow (vereist ingelogde gebruiker). */
-export async function GET() {
+/**
+ * Start de Google OAuth-flow (vereist ingelogde gebruiker). Standaard voor Gmail;
+ * met `?dienst=drive` vraagt hij alleen Drive-toegang (administratie-upload) en
+ * bewaart de tokens onder de aparte dienst 'google_drive'.
+ */
+export async function GET(request: Request) {
   const supabase = createClient();
   const {
     data: { user },
@@ -18,6 +22,11 @@ export async function GET() {
       { fout: "Google niet geconfigureerd (GOOGLE_CLIENT_ID/SECRET/REDIRECT_URI)." },
       { status: 500 },
     );
+  }
+
+  const dienst = new URL(request.url).searchParams.get("dienst");
+  if (dienst === "drive") {
+    return NextResponse.redirect(oauthUrl(cfg, "drive", DRIVE_SCOPES));
   }
   return NextResponse.redirect(oauthUrl(cfg, "gmail"));
 }

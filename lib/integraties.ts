@@ -26,7 +26,7 @@ export const DIENSTEN: {
   label: string;
   omschrijving: string;
 }[] = [
-  { key: "google_drive", label: "Google Drive", omschrijving: "PDF's en documenten als links." },
+  { key: "google_drive", label: "Google Drive", omschrijving: "Gescande bonnetjes & facturen automatisch in je Drive." },
   { key: "google_sheets", label: "Google Sheets", omschrijving: "Exports en overzichten." },
   { key: "google_docs", label: "Google Docs", omschrijving: "Documenten en sjablonen." },
   { key: "gmail", label: "Gmail", omschrijving: "Factuurherinneringen versturen." },

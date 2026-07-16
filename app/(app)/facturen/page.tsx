@@ -68,7 +68,7 @@ export default async function FacturenPagina({
   return (
     <>
       <PaginaKop
-        titel="Facturen"
+        titel="Facturenadministratie Viesa"
         omschrijving="Inschieten, vervaldatum bewaken en betaald zetten."
         actie={<Logo size={48} />}
       />

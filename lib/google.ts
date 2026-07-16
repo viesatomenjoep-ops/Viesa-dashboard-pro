@@ -17,6 +17,11 @@ export const GOOGLE_SCOPES = [
   "https://www.googleapis.com/auth/calendar.readonly",
 ];
 
+// Drive-scope voor de administratie-upload. `drive.file` geeft alleen toegang
+// tot bestanden die deze app zélf aanmaakt — niet-gevoelig, dus geen Google-
+// verificatie nodig.
+export const DRIVE_SCOPES = ["https://www.googleapis.com/auth/drive.file"];
+
 export type GoogleConfig = {
   clientId: string;
   clientSecret: string;
@@ -31,17 +36,64 @@ export function googleConfig(): GoogleConfig | null {
   return { clientId, clientSecret, redirectUri };
 }
 
-export function oauthUrl(cfg: GoogleConfig, state: string): string {
+export function oauthUrl(
+  cfg: GoogleConfig,
+  state: string,
+  scopes: string[] = GOOGLE_SCOPES,
+): string {
   const p = new URLSearchParams({
     client_id: cfg.clientId,
     redirect_uri: cfg.redirectUri,
     response_type: "code",
     access_type: "offline",
     prompt: "consent",
-    scope: GOOGLE_SCOPES.join(" "),
+    scope: scopes.join(" "),
     state,
   });
   return `${AUTH}?${p.toString()}`;
+}
+
+/**
+ * Uploadt een bestand naar Google Drive (multipart) met een access token.
+ * Retourneert het Drive-bestand-id en de deelbare weergavelink.
+ */
+export async function driveUpload(
+  accessToken: string,
+  filename: string,
+  mime: string,
+  bytes: Uint8Array,
+  folderId?: string,
+): Promise<{ id: string; url: string | null }> {
+  const grens = "viesa-" + filename.replace(/[^a-zA-Z0-9]/g, "").slice(0, 16);
+  const metadata: Record<string, unknown> = { name: filename };
+  if (folderId) metadata.parents = [folderId];
+
+  const voor =
+    `--${grens}\r\n` +
+    "Content-Type: application/json; charset=UTF-8\r\n\r\n" +
+    JSON.stringify(metadata) +
+    `\r\n--${grens}\r\n` +
+    `Content-Type: ${mime}\r\n\r\n`;
+  const na = `\r\n--${grens}--`;
+
+  const body = new Blob([voor, bytes as unknown as BlobPart, na], {
+    type: `multipart/related; boundary=${grens}`,
+  });
+
+  const res = await fetch(
+    "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": `multipart/related; boundary=${grens}`,
+      },
+      body,
+    },
+  );
+  if (!res.ok) throw new Error(`Drive upload ${res.status}: ${await res.text()}`);
+  const data = (await res.json()) as { id: string; webViewLink?: string };
+  return { id: data.id, url: data.webViewLink ?? null };
 }
 
 export async function exchangeCode(

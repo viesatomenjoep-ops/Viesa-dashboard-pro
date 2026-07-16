@@ -30,7 +30,7 @@ const TABELLEN = [
   "leads", "activiteiten", "offertes", "facturen", "projecten", "notities",
   "design_docs", "whiteboards", "stickies", "drive_links", "prospector_runs",
   "integraties", "ms_tokens", "klanten", "audits", "bestand_categorieen",
-  "emails", "notificaties", "chat_berichten", "sjablonen",
+  "emails", "notificaties", "chat_berichten", "sjablonen", "administratie",
 ];
 
 let geslaagd = true;

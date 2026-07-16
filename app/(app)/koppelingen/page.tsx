@@ -154,6 +154,17 @@ export default async function KoppelingenPagina({
                   >
                     Verbind met Google
                   </a>
+                ) : d.key === "google_drive" ? (
+                  <a
+                    href="/api/google/oauth/start?dienst=drive"
+                    className={`mt-4 block w-full rounded-lg border px-3 py-2 text-center text-sm font-medium transition-colors ${
+                      verbonden
+                        ? "border-navy/20 text-navy hover:bg-navy/5"
+                        : "border-oranje bg-oranje text-white hover:bg-oranje/90"
+                    }`}
+                  >
+                    {verbonden ? "Opnieuw koppelen" : "Verbind Google Drive"}
+                  </a>
                 ) : (
                   <form
                     action={wijzigIntegratieStatus.bind(null, d.key, nieuweStatus)}

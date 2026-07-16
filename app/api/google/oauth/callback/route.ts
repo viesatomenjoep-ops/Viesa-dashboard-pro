@@ -26,19 +26,36 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL("/koppelingen?fout=geen_config", site));
   }
 
+  // `state` bepaalt welke dienst we verbinden: Gmail (standaard) of Drive.
+  const dienst = url.searchParams.get("state") === "drive" ? "google_drive" : "gmail";
+
   try {
     const tokens = await exchangeCode(cfg, code);
-    await supabase
-      .from("integraties")
-      .update({
-        status: "verbonden",
-        config: { refresh_token: tokens.refresh_token ?? null },
-        laatst_gecontroleerd_op: new Date().toISOString(),
-      })
-      .eq("dienst", "gmail");
+    const config = { refresh_token: tokens.refresh_token ?? null };
+    if (dienst === "google_drive") {
+      await supabase.from("integraties").upsert(
+        {
+          dienst: "google_drive",
+          status: "verbonden",
+          config,
+          laatst_gecontroleerd_op: new Date().toISOString(),
+        },
+        { onConflict: "dienst" },
+      );
+    } else {
+      await supabase
+        .from("integraties")
+        .update({
+          status: "verbonden",
+          config,
+          laatst_gecontroleerd_op: new Date().toISOString(),
+        })
+        .eq("dienst", "gmail");
+    }
   } catch {
     return NextResponse.redirect(new URL("/koppelingen?fout=token", site));
   }
 
-  return NextResponse.redirect(new URL("/koppelingen?gmail=verbonden", site));
+  const param = dienst === "google_drive" ? "drive=verbonden" : "gmail=verbonden";
+  return NextResponse.redirect(new URL(`/koppelingen?${param}`, site));
 }
