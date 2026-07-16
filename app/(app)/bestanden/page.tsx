@@ -26,6 +26,7 @@ import { factuurStatusLabel, factuurStatusToon, type FactuurStatus } from "@/lib
 import { euro, datumKort } from "@/lib/format";
 import { leesFout } from "@/lib/fout";
 import { CategorieChips } from "@/components/CategorieChips";
+import { CategorieKiezer } from "@/components/CategorieKiezer";
 import {
   voegBestandToe,
   verwijderBestand,
@@ -494,6 +495,12 @@ export default async function BestandenPagina({
       </div>
 
       <div className="order-2">
+      {/* Categorie-filter als één uitklapknop */}
+      {!schemaOntbreekt && (
+        <div className="mb-3">
+          <CategorieKiezer categorieen={categorieen} actief={filter} />
+        </div>
+      )}
       {schemaOntbreekt ? (
         <div className="rounded-xl border border-oranje/40 bg-oranje/5 p-4 text-sm text-navy">
           <p className="font-medium text-oranje">Datamodel nog niet actief</p>

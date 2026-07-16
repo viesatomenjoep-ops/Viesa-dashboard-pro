@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { type ReactNode } from "react";
 import { Logo } from "@/components/ui/Logo";
 import { navSecties } from "@/lib/navigatie";
 
@@ -32,12 +33,15 @@ export function WidgetLauncher({
   variant = "licht",
   smal = false,
   gecentreerd = false,
+  bovenGrid,
   onNavigate,
 }: {
   variant?: "licht" | "donker";
   smal?: boolean;
   /** Startscherm: logo + widgets verticaal en horizontaal in het midden. */
   gecentreerd?: boolean;
+  /** Optionele inhoud tussen de kop en het rooster (bv. de info-balk). */
+  bovenGrid?: ReactNode;
   onNavigate?: () => void;
 }) {
   const items = navSecties.flatMap((s) => s.items);
@@ -64,6 +68,8 @@ export function WidgetLauncher({
           <div className={`text-xs font-medium ${merkSub}`}>Dashboard</div>
         </div>
       </div>
+
+      {bovenGrid && <div className="mb-5">{bovenGrid}</div>}
 
       <div className={grid}>
         {items.map((item) => {
