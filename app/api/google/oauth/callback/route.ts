@@ -9,7 +9,7 @@ import { googleConfig, exchangeCode } from "@/lib/google";
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
-  const site = process.env.NEXT_PUBLIC_SITE_URL ?? url.origin;
+  const site = process.env.NEXT_PUBLIC_SITE_URL || url.origin;
 
   if (!code) {
     return NextResponse.redirect(new URL("/koppelingen?fout=geen_code", site));

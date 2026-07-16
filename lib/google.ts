@@ -28,11 +28,21 @@ export type GoogleConfig = {
   redirectUri: string;
 };
 
+/**
+ * Haalt een env-waarde op en verwijdert sluipende opmaakfouten (aanhalings-
+ * tekens, spaties en regeleindes uit kopiëren/plakken). Zo'n teken in bv. de
+ * client-ID maakt de OAuth-redirect kapot ("antwoord heeft onjuiste opmaak").
+ */
+function schoonEnv(v: string | undefined): string {
+  return (v ?? "").trim().replace(/^['"]+|['"]+$/g, "").replace(/[\r\n\t]/g, "");
+}
+
 export function googleConfig(): GoogleConfig | null {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const redirectUri = process.env.GOOGLE_REDIRECT_URI;
+  const clientId = schoonEnv(process.env.GOOGLE_CLIENT_ID);
+  const clientSecret = schoonEnv(process.env.GOOGLE_CLIENT_SECRET);
+  const redirectUri = schoonEnv(process.env.GOOGLE_REDIRECT_URI);
   if (!clientId || !clientSecret || !redirectUri) return null;
+  if (!/^https?:\/\//i.test(redirectUri)) return null; // moet een volledige URL zijn
   return { clientId, clientSecret, redirectUri };
 }
 
