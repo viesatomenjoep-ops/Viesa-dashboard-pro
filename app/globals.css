@@ -14,6 +14,18 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Voorkom auto-inzoomen op mobiel (iOS/Safari): een invoerveld met een
+   lettergrootte < 16px laat de browser bij focus inzoomen. Op smalle schermen
+   dwingen we daarom minstens 16px af voor alle velden. De Tailwind-klassen
+   (bv. text-sm) blijven verder gewoon werken op grotere schermen. */
+@media (max-width: 639px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
 /* Briefpapier / PDF-weergave (A4) */
 .brief {
   width: 210mm;
