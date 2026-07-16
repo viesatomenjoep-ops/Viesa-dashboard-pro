@@ -1,5 +1,6 @@
+import { AlertTriangle, CalendarClock, CheckCircle2, FileClock } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
-import { KpiKaart } from "@/components/ui/KpiKaart";
+import { StatKaart } from "@/components/ui/StatKaart";
 import { Kaart } from "@/components/ui/Kaart";
 import { Badge } from "@/components/ui/Badge";
 import { LegeStaat } from "@/components/ui/LegeStaat";
@@ -73,21 +74,31 @@ export default async function FacturenPagina({
       />
 
       <section className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <KpiKaart
+        <StatKaart
           label="Open"
           waarde={euro(open.reduce((s, f) => s + Number(f.bedrag || 0), 0))}
           subtekst={`${open.length} facturen`}
+          icoon={FileClock}
+          toon="blauw"
         />
-        <KpiKaart
+        <StatKaart
           label="Vervallen"
           waarde={euro(vervallen.reduce((s, f) => s + Number(f.bedrag || 0), 0))}
-          accent={vervallen.length > 0}
           subtekst={`${vervallen.length} facturen`}
+          icoon={AlertTriangle}
+          toon={vervallen.length > 0 ? "rood" : "amber"}
         />
-        <KpiKaart label="Betaald deze maand" waarde={euro(betaaldMaand)} />
-        <KpiKaart
+        <StatKaart
+          label="Betaald deze maand"
+          waarde={euro(betaaldMaand)}
+          icoon={CheckCircle2}
+          toon="groen"
+        />
+        <StatKaart
           label="Gem. betaaltermijn"
           waarde={gemTermijn === null ? "—" : `${gemTermijn} dgn`}
+          icoon={CalendarClock}
+          toon="paars"
         />
       </section>
 

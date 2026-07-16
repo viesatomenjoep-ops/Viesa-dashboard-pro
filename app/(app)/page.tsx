@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { KpiKaart } from "@/components/ui/KpiKaart";
+import { Euro, FileText, Receipt, Target } from "lucide-react";
 import { Kaart } from "@/components/ui/Kaart";
-import { PaginaKop } from "@/components/ui/PaginaKop";
+import { HeroBanner } from "@/components/ui/HeroBanner";
+import { StatKaart } from "@/components/ui/StatKaart";
 import { LegeStaat } from "@/components/ui/LegeStaat";
 import { Badge } from "@/components/ui/Badge";
-import { StaafGrafiek } from "@/components/ui/StaafGrafiek";
-import { Logo } from "@/components/ui/Logo";
+import { AreaGrafiek } from "@/components/ui/AreaGrafiek";
 import { TakenLijst } from "@/components/TakenLijst";
 import { createClient } from "@/lib/supabase/server";
 import { icalEvents } from "@/lib/ical";
@@ -88,16 +88,72 @@ export default async function DashboardPagina() {
     /* geen agenda gekoppeld */
   }
 
+  // Sparkline + trend voor de omzet-KPI, afgeleid van de 12-maands grafiek.
+  const omzetReeks = data.omzetGrafiek.map((s) => s.waarde);
+  const dezeMaand = omzetReeks[omzetReeks.length - 1] ?? 0;
+  const vorigeMaand = omzetReeks[omzetReeks.length - 2] ?? 0;
+  const omzetPct =
+    vorigeMaand > 0 ? Math.round(((dezeMaand - vorigeMaand) / vorigeMaand) * 100) : null;
+  const areaData = data.omzetGrafiek.map((s) => ({ label: s.label, waarde: s.waarde }));
+
   return (
     <>
-      <PaginaKop
-        titel="Dashboard"
-        omschrijving="Alles in één scherm — van lead tot betaalde factuur."
-        actie={<Logo size={52} />}
+      <HeroBanner
+        titel="Welkom terug"
+        subtekst={`Je hebt ${data.followups.length} follow-up${
+          data.followups.length === 1 ? "" : "s"
+        } en ${vandaagItems.length} afspra${vandaagItems.length === 1 ? "ak" : "ken"} vandaag.`}
+        actie={
+          <Link
+            href="/leads"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-white/15 px-4 py-2 text-sm font-medium text-white backdrop-blur transition-colors hover:bg-white/25"
+          >
+            Naar pipeline →
+          </Link>
+        }
       />
 
-      {/* Follow-ups + Agenda vandaag — bovenaan (2 per rij, ook op mobiel) */}
-      <section className="grid grid-cols-2 gap-3 sm:gap-6">
+      {/* KPI's — bovenaan, direct onder de welkomstbanner */}
+      <section className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <StatKaart
+          label="Omzet deze maand"
+          waarde={euro(data.omzetMaand)}
+          icoon={Euro}
+          toon="teal"
+          href="/facturen"
+          sparkline={omzetReeks}
+          trend={
+            omzetPct === null
+              ? undefined
+              : { waarde: `${omzetPct >= 0 ? "+" : ""}${omzetPct}%`, positief: omzetPct >= 0 }
+          }
+        />
+        <StatKaart
+          label="Openstaand gefactureerd"
+          waarde={euro(data.openstaandBedrag)}
+          icoon={Receipt}
+          toon="amber"
+          href="/facturen"
+        />
+        <StatKaart
+          label="Pipeline-prognose"
+          waarde={euro(data.prognoseOmzet)}
+          subtekst={`pipeline ${euro(data.pipelineWaarde)}`}
+          icoon={Target}
+          toon="blauw"
+          href="/leads"
+        />
+        <StatKaart
+          label="Lopende offertes"
+          waarde={String(data.lopendeOffertes)}
+          icoon={FileText}
+          toon="paars"
+          href="/offertes"
+        />
+      </section>
+
+      {/* Follow-ups + Agenda vandaag — 2 per rij, ook op mobiel */}
+      <section className="mt-8 grid grid-cols-2 gap-3 sm:gap-6">
         <Kaart>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-medium text-navy">Follow-ups vandaag</h2>
@@ -160,26 +216,6 @@ export default async function DashboardPagina() {
           wisselActie={wisselTaakKlaar}
           verwijderActie={verwijderTaak}
         />
-      </section>
-
-      {/* KPI's — onder de to-do lijst */}
-      <section className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <Link href="/facturen">
-          <KpiKaart label="Omzet deze maand" waarde={euro(data.omzetMaand)} />
-        </Link>
-        <Link href="/facturen">
-          <KpiKaart label="Openstaand gefactureerd" waarde={euro(data.openstaandBedrag)} />
-        </Link>
-        <Link href="/leads">
-          <KpiKaart
-            label="Pipeline-prognose"
-            waarde={euro(data.prognoseOmzet)}
-            subtekst={`pipeline ${euro(data.pipelineWaarde)}`}
-          />
-        </Link>
-        <Link href="/offertes">
-          <KpiKaart label="Lopende offertes" waarde={String(data.lopendeOffertes)} />
-        </Link>
       </section>
 
       {/* Recente leads + activiteitenlog */}
@@ -254,7 +290,7 @@ export default async function DashboardPagina() {
           <h2 className="mb-4 text-sm font-medium text-navy">
             Omzet per maand <span className="text-navy/40">(laatste 12 maanden)</span>
           </h2>
-          <StaafGrafiek data={data.omzetGrafiek} />
+          <AreaGrafiek data={areaData} formaat="euro" />
         </Kaart>
       </section>
     </>

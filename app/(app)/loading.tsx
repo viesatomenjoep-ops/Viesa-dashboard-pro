@@ -5,13 +5,16 @@
 export default function Laden() {
   return (
     <div className="animate-pulse">
-      <div className="mb-8 h-8 w-56 rounded-lg bg-navy/10" />
+      <div className="mb-6 h-24 rounded-2xl bg-navy/10" />
       <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-24 rounded-xl border border-navy/10 bg-white" />
+          <div key={i} className="h-28 rounded-xl border border-navy/10 bg-white" />
         ))}
       </div>
-      <div className="h-64 rounded-xl border border-navy/10 bg-white" />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="h-64 rounded-xl border border-navy/10 bg-white" />
+        <div className="h-64 rounded-xl border border-navy/10 bg-white" />
+      </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
+import { Euro, Receipt, UserPlus, Users } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { Kaart } from "@/components/ui/Kaart";
-import { KpiKaart } from "@/components/ui/KpiKaart";
+import { StatKaart } from "@/components/ui/StatKaart";
 import { createClient } from "@/lib/supabase/server";
 import { euro } from "@/lib/format";
 
@@ -82,10 +83,10 @@ export default async function RapportagePagina() {
 
       {/* KPI's bovenaan */}
       <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <KpiKaart label="Omzet laatste 12 mnd" waarde={euro(jaarOmzet)} />
-        <KpiKaart label="Openstaand gefactureerd" waarde={euro(openstaand)} />
-        <KpiKaart label="Nieuwe klanten (12 mnd)" waarde={String(jaarKlanten)} />
-        <KpiKaart label="Nieuwe leads (12 mnd)" waarde={String(jaarLeads)} />
+        <StatKaart label="Omzet laatste 12 mnd" waarde={euro(jaarOmzet)} icoon={Euro} toon="teal" />
+        <StatKaart label="Openstaand gefactureerd" waarde={euro(openstaand)} icoon={Receipt} toon="amber" />
+        <StatKaart label="Nieuwe klanten (12 mnd)" waarde={String(jaarKlanten)} icoon={Users} toon="groen" />
+        <StatKaart label="Nieuwe leads (12 mnd)" waarde={String(jaarLeads)} icoon={UserPlus} toon="blauw" />
       </section>
 
       {/* Exports */}

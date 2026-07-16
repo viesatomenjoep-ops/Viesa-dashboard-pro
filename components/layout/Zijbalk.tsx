@@ -35,18 +35,23 @@ export function Zijbalk({ onNavigate }: { onNavigate?: () => void }) {
             <div className="space-y-1">
               {sectie.items.map((item) => {
                 const actief = isActief(item.href);
+                const Icoon = item.icoon;
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={onNavigate}
-                    className={`block rounded-lg px-3 py-3 text-base transition-colors md:py-2.5 md:text-[15px] ${
+                    className={`flex items-center gap-3 rounded-lg px-3 py-3 text-base transition-colors md:py-2.5 md:text-[15px] ${
                       actief
                         ? "bg-white/10 font-semibold text-oranje"
                         : "font-medium text-white hover:bg-white/10"
                     }`}
                   >
-                    {item.label}
+                    <Icoon
+                      size={18}
+                      className={`shrink-0 ${actief ? "text-oranje" : "text-white/70"}`}
+                    />
+                    <span>{item.label}</span>
                   </Link>
                 );
               })}

@@ -1,5 +1,6 @@
+import { Coins, Trophy, Users, Waypoints } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
-import { KpiKaart } from "@/components/ui/KpiKaart";
+import { StatKaart } from "@/components/ui/StatKaart";
 import { createClient } from "@/lib/supabase/server";
 import { type Lead } from "@/lib/leads";
 import { euro } from "@/lib/format";
@@ -58,10 +59,16 @@ export default async function LeadsPagina({
       />
 
       <section className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <KpiKaart label="Totaal leads" waarde={String(leads.length)} />
-        <KpiKaart label="Actief in pipeline" waarde={String(actief.length)} />
-        <KpiKaart label="Pipeline-waarde" waarde={euro(pipelineWaarde)} />
-        <KpiKaart label="Gewonnen" waarde={String(gewonnen)} subtekst={`gem. score ${gemScore}`} />
+        <StatKaart label="Totaal leads" waarde={String(leads.length)} icoon={Users} toon="teal" />
+        <StatKaart label="Actief in pipeline" waarde={String(actief.length)} icoon={Waypoints} toon="blauw" />
+        <StatKaart label="Pipeline-waarde" waarde={euro(pipelineWaarde)} icoon={Coins} toon="amber" />
+        <StatKaart
+          label="Gewonnen"
+          waarde={String(gewonnen)}
+          subtekst={`gem. score ${gemScore}`}
+          icoon={Trophy}
+          toon="groen"
+        />
       </section>
 
       {searchParams.fout && (

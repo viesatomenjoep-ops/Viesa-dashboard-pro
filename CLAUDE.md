@@ -102,6 +102,17 @@ Bij elke gemelde fout die niet nog eens mag gebeuren: hier bijwerken.
   teal `#1E9E93`; de klassenaam is bewust behouden zodat het accent op één plek
   te wijzigen is. Sticky-notes gebruiken eigen hex-kleuren.
 - **Env-wijzigingen** in Vercel vereisen een **redeploy** voordat ze meetellen.
+- **contentEditable + `dangerouslySetInnerHTML`**: React past de innerHTML bij
+  élke re-render opnieuw toe en wist dan alles wat de gebruiker typte (bug in de
+  mail-editor). Oplossing: het contentEditable-element met `useMemo` memoizen
+  zodat React het bij het diffen overslaat (zie `components/RijkeEditor.tsx`).
+  Opmaakknoppen boven zo'n editor krijgen `onMouseDown={preventDefault}` zodat
+  ze de tekstselectie niet stelen.
+- **Geen functies van server- naar client-component doorgeven**: een
+  `'use client'`-component (bv. `AreaGrafiek`) mag géén functie-prop krijgen
+  vanuit een server-component ("Functions cannot be passed directly to Client
+  Components"). Geef een string-enum door (bv. `formaat="euro"`) en doe de
+  formattering binnen de client-component.
 
 ## 9. Kwaliteitsborging
 

@@ -1,5 +1,6 @@
+import { CheckCircle2, Coins, FileStack, FileText } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
-import { KpiKaart } from "@/components/ui/KpiKaart";
+import { StatKaart } from "@/components/ui/StatKaart";
 import { Kaart } from "@/components/ui/Kaart";
 import { Badge } from "@/components/ui/Badge";
 import { LegeStaat } from "@/components/ui/LegeStaat";
@@ -51,10 +52,25 @@ export default async function OffertesPagina({
       />
 
       <section className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <KpiKaart label="Totaal" waarde={String(offertes.length)} />
-        <KpiKaart label="Lopend" waarde={String(lopend.length)} accent={lopend.length > 0} />
-        <KpiKaart label="Geaccepteerd" waarde={String(geaccepteerd.length)} />
-        <KpiKaart label="Waarde geaccepteerd" waarde={euro(waardeGeaccepteerd)} />
+        <StatKaart label="Totaal" waarde={String(offertes.length)} icoon={FileStack} toon="teal" />
+        <StatKaart
+          label="Lopend"
+          waarde={String(lopend.length)}
+          icoon={FileText}
+          toon={lopend.length > 0 ? "amber" : "grijs"}
+        />
+        <StatKaart
+          label="Geaccepteerd"
+          waarde={String(geaccepteerd.length)}
+          icoon={CheckCircle2}
+          toon="groen"
+        />
+        <StatKaart
+          label="Waarde geaccepteerd"
+          waarde={euro(waardeGeaccepteerd)}
+          icoon={Coins}
+          toon="blauw"
+        />
       </section>
 
       {searchParams.fout && (

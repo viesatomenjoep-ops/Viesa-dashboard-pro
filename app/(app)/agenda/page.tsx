@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { CalendarClock, CalendarDays, CalendarRange } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
-import { KpiKaart } from "@/components/ui/KpiKaart";
+import { StatKaart } from "@/components/ui/StatKaart";
 import { Kaart } from "@/components/ui/Kaart";
 import { LegeStaat } from "@/components/ui/LegeStaat";
 import { createClient } from "@/lib/supabase/server";
@@ -166,9 +167,14 @@ export default async function AgendaPagina({
       />
 
       <section className="mb-8 grid grid-cols-3 gap-4">
-        <KpiKaart label="Vandaag" waarde={String(vandaag)} accent={vandaag > 0} />
-        <KpiKaart label="Deze week" waarde={String(week)} />
-        <KpiKaart label="Komende 30 dagen" waarde={String(items.length)} />
+        <StatKaart
+          label="Vandaag"
+          waarde={String(vandaag)}
+          icoon={CalendarClock}
+          toon={vandaag > 0 ? "teal" : "grijs"}
+        />
+        <StatKaart label="Deze week" waarde={String(week)} icoon={CalendarDays} toon="blauw" />
+        <StatKaart label="Komende 30 dagen" waarde={String(items.length)} icoon={CalendarRange} toon="paars" />
       </section>
 
       {searchParams.fout && (

@@ -1,6 +1,14 @@
 import { type ReactNode } from "react";
 
-type Toon = "navy" | "groen" | "oranje" | "grijs" | "rood";
+type Toon =
+  | "navy"
+  | "groen"
+  | "oranje"
+  | "grijs"
+  | "rood"
+  | "amber"
+  | "blauw"
+  | "paars";
 
 const tonen: Record<Toon, string> = {
   navy: "bg-navy/10 text-navy",
@@ -8,6 +16,9 @@ const tonen: Record<Toon, string> = {
   oranje: "bg-oranje/10 text-oranje",
   grijs: "bg-navy/5 text-navy/60",
   rood: "bg-red-100 text-red-700",
+  amber: "bg-amber-100 text-amber-800",
+  blauw: "bg-blue-100 text-blue-800",
+  paars: "bg-purple-100 text-purple-800",
 };
 
 /** Compacte statuslabel. */

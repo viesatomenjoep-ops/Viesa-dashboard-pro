@@ -153,6 +153,17 @@ export function klantTypeLabel(t: KlantType): string {
   return KLANT_TYPES.find((x) => x.key === t)?.label ?? t;
 }
 
+/** Kleur voor de relatie-status (los van het commerciële `type`). */
+export function klantStatusToon(s: KlantStatus): "groen" | "rood" | "blauw" {
+  if (s === "actief") return "groen";
+  if (s === "inactief") return "rood";
+  return "blauw"; // prospect
+}
+
+export function klantStatusLabel(s: KlantStatus): string {
+  return KLANT_STATUSSEN.find((x) => x.key === s)?.label ?? s;
+}
+
 /** Korte afkorting van het type (voor smalle schermen). */
 export function klantTypeKort(t: KlantType): string {
   const kort: Record<KlantType, string> = {

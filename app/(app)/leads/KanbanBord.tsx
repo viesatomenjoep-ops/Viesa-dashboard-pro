@@ -19,7 +19,9 @@ import {
   type Lead,
   type LeadStatus,
 } from "@/lib/leads";
+import { MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
+import { Avatar } from "@/components/ui/Avatar";
 import { euro } from "@/lib/format";
 import { verplaatsLead } from "./acties";
 
@@ -151,23 +153,29 @@ function SleepbaarKaartje({ lead }: { lead: Lead }) {
 function Kaartje({ lead, sleep = false }: { lead: Lead; sleep?: boolean }) {
   return (
     <div
-      className={`rounded-lg border border-navy/10 bg-white p-3 shadow-sm ${
+      className={`rounded-xl border border-navy/10 bg-white p-3 shadow-sm ${
         sleep ? "rotate-1 shadow-md" : ""
       }`}
     >
-      <div className="flex items-start justify-between gap-2">
-        <Link
-          href={`/leads/${lead.id}`}
-          className="text-sm font-medium text-navy hover:underline"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {lead.bedrijf}
-        </Link>
+      <div className="flex items-start gap-2.5">
+        <Avatar naam={lead.bedrijf} size={28} />
+        <div className="min-w-0 flex-1">
+          <Link
+            href={`/leads/${lead.id}`}
+            className="block truncate text-sm font-medium text-navy hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {lead.bedrijf}
+          </Link>
+          {lead.plaats && (
+            <p className="mt-0.5 flex items-center gap-1 text-xs text-navy/50">
+              <MapPin size={11} className="shrink-0" />
+              <span className="truncate">{lead.plaats}</span>
+            </p>
+          )}
+        </div>
         <Badge toon={scoreToon(lead.score)}>{lead.score}</Badge>
       </div>
-      {lead.plaats && (
-        <p className="mt-1 text-xs text-navy/50">{lead.plaats}</p>
-      )}
       {lead.verwachte_waarde > 0 && (
         <p className="mt-2 text-xs font-medium text-navy/70">
           {euro(lead.verwachte_waarde)}

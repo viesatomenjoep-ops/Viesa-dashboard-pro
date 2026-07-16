@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { CheckCircle2, FolderKanban, FolderOpen } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
-import { KpiKaart } from "@/components/ui/KpiKaart";
+import { StatKaart } from "@/components/ui/StatKaart";
 import { Kaart } from "@/components/ui/Kaart";
 import { Badge } from "@/components/ui/Badge";
 import { LegeStaat } from "@/components/ui/LegeStaat";
@@ -50,9 +51,9 @@ export default async function ProjectenPagina({
       />
 
       <section className="mb-8 grid grid-cols-3 gap-4">
-        <KpiKaart label="Totaal" waarde={String(projecten.length)} />
-        <KpiKaart label="Actief" waarde={String(actief)} />
-        <KpiKaart label="Afgerond" waarde={String(afgerond)} />
+        <StatKaart label="Totaal" waarde={String(projecten.length)} icoon={FolderKanban} toon="teal" />
+        <StatKaart label="Actief" waarde={String(actief)} icoon={FolderOpen} toon="blauw" />
+        <StatKaart label="Afgerond" waarde={String(afgerond)} icoon={CheckCircle2} toon="groen" />
       </section>
 
       {searchParams.fout && (

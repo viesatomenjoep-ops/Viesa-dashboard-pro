@@ -11,6 +11,7 @@ import {
 import { Kaart } from "@/components/ui/Kaart";
 import { Badge } from "@/components/ui/Badge";
 import { LandRegio } from "@/components/LandRegio";
+import { WebsiteVeld } from "@/components/WebsiteVeld";
 import { datumKort } from "@/lib/format";
 import { Markdown } from "@/components/ui/Markdown";
 import type { Notitie } from "@/lib/projecten";
@@ -118,7 +119,7 @@ export default async function LeadDetail({
               <Veld label="Bedrijf" naam="bedrijf" waarde={lead.bedrijf} verplicht />
               <Veld label="Plaats" naam="plaats" waarde={lead.plaats} />
               <Veld label="Adres" naam="adres" waarde={lead.adres} />
-              <Veld label="Website" naam="website" waarde={lead.website} />
+              <WebsiteVeld waarde={lead.website} />
               <LandRegio
                 land={lead.land ?? "Nederland"}
                 regio={lead.provincie ?? ""}

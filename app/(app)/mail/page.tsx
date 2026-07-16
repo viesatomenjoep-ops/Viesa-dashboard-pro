@@ -1,7 +1,18 @@
 import Link from "next/link";
+import {
+  Archive,
+  FileEdit,
+  Inbox,
+  Paperclip,
+  Send,
+  Star,
+  Trash2,
+  type LucideIcon,
+} from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
-import { KpiKaart } from "@/components/ui/KpiKaart";
+import { StatKaart } from "@/components/ui/StatKaart";
 import { Kaart } from "@/components/ui/Kaart";
+import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { createClient } from "@/lib/supabase/server";
 import { resendGeconfigureerd } from "@/lib/resend";
@@ -41,12 +52,12 @@ type Email = {
 
 type Bijlage = { id: string; bestandsnaam: string; grootte: number | null; url: string | null };
 
-const MAPPEN: { key: MailMap; label: string; icoon: string }[] = [
-  { key: "inbox", label: "Postvak IN", icoon: "📥" },
-  { key: "verzonden", label: "Verzonden", icoon: "📤" },
-  { key: "concepten", label: "Concepten", icoon: "📝" },
-  { key: "archief", label: "Archief", icoon: "🗄️" },
-  { key: "prullenbak", label: "Prullenbak", icoon: "🗑️" },
+const MAPPEN: { key: MailMap; label: string; icoon: LucideIcon }[] = [
+  { key: "inbox", label: "Postvak IN", icoon: Inbox },
+  { key: "verzonden", label: "Verzonden", icoon: Send },
+  { key: "concepten", label: "Concepten", icoon: FileEdit },
+  { key: "archief", label: "Archief", icoon: Archive },
+  { key: "prullenbak", label: "Prullenbak", icoon: Trash2 },
 ];
 
 const LIJST_KOLOMMEN =
@@ -178,9 +189,21 @@ export default async function MailPagina({
       />
 
       <section className="mb-6 grid grid-cols-3 gap-4">
-        <KpiKaart label="Ongelezen" waarde={String(ongelezen)} href="/mail" />
-        <KpiKaart label="Verzonden" waarde={String(aantalPerMap.verzonden)} href="/mail?box=verzonden" />
-        <KpiKaart label="Concepten" waarde={String(aantalPerMap.concepten)} href="/mail?box=concepten" />
+        <StatKaart label="Ongelezen" waarde={String(ongelezen)} icoon={Inbox} toon="blauw" href="/mail" />
+        <StatKaart
+          label="Verzonden"
+          waarde={String(aantalPerMap.verzonden)}
+          icoon={Send}
+          toon="groen"
+          href="/mail?box=verzonden"
+        />
+        <StatKaart
+          label="Concepten"
+          waarde={String(aantalPerMap.concepten)}
+          icoon={FileEdit}
+          toon="amber"
+          href="/mail?box=concepten"
+        />
       </section>
 
       {searchParams.verzonden && (
@@ -218,6 +241,7 @@ export default async function MailPagina({
             <div className="flex flex-wrap gap-1 lg:flex-col">
               {MAPPEN.map((m) => {
                 const actief = m.key === actieveMap && !opstellen;
+                const MapIcoon = m.icoon;
                 return (
                   <Link
                     key={m.key}
@@ -226,7 +250,7 @@ export default async function MailPagina({
                       actief ? "bg-navy text-white" : "text-navy hover:bg-navy/5"
                     }`}
                   >
-                    <span aria-hidden>{m.icoon}</span>
+                    <MapIcoon size={16} className="shrink-0" />
                     <span className="flex-1">{m.label}</span>
                     {aantalPerMap[m.key] > 0 && (
                       <span className={`text-xs ${actief ? "text-white/70" : "text-navy/40"}`}>
@@ -255,24 +279,23 @@ export default async function MailPagina({
                     const ongelezenRij = !e.gelezen && !uit;
                     const geselecteerd = e.id === selId;
                     const afzender = uit ? `Aan ${e.naar ?? "—"}` : `${e.van_naam ?? e.van ?? "—"}`;
+                    const avatarNaam = uit ? e.naar ?? "?" : e.van_naam ?? e.van ?? "?";
                     return (
                       <li key={e.id} className={i > 0 ? "border-t border-navy/10" : ""}>
                         <Link
                           href={lijstHref(e.id)}
-                          className={`flex gap-2.5 px-4 py-3 ${
+                          className={`flex gap-3 px-4 py-3 ${
                             geselecteerd
                               ? "border-l-2 border-oranje bg-navy/[0.03]"
                               : "border-l-2 border-transparent hover:bg-navy/[0.02]"
                           }`}
                         >
-                          <span
-                            aria-hidden
-                            className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
-                              ongelezenRij ? "bg-oranje" : "bg-transparent"
-                            }`}
-                          />
+                          <Avatar naam={avatarNaam} size={36} className="mt-0.5" />
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
+                              {ongelezenRij && (
+                                <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-oranje" />
+                              )}
                               <span
                                 className={`truncate text-sm text-navy ${
                                   ongelezenRij ? "font-semibold" : "font-medium"
@@ -280,9 +303,11 @@ export default async function MailPagina({
                               >
                                 {afzender}
                               </span>
-                              {e.ster && <span className="shrink-0 text-oranje" aria-label="Ster">★</span>}
+                              {e.ster && (
+                                <Star size={13} className="shrink-0 fill-oranje text-oranje" aria-label="Ster" />
+                              )}
                               {e.heeft_bijlagen && (
-                                <span className="shrink-0 text-navy/40" aria-label="Bijlage">📎</span>
+                                <Paperclip size={13} className="shrink-0 text-navy/40" aria-label="Bijlage" />
                               )}
                               <span className="ml-auto shrink-0 text-xs text-navy/40">
                                 {datumKort(e.created_at)}

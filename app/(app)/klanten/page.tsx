@@ -1,7 +1,9 @@
+import { Building2, UserPlus, Users } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
-import { KpiKaart } from "@/components/ui/KpiKaart";
+import { StatKaart } from "@/components/ui/StatKaart";
 import { Kaart } from "@/components/ui/Kaart";
 import { Badge } from "@/components/ui/Badge";
+import { Avatar } from "@/components/ui/Avatar";
 import { LegeStaat } from "@/components/ui/LegeStaat";
 import { MassaImport } from "@/components/MassaImport";
 import { createClient } from "@/lib/supabase/server";
@@ -10,10 +12,14 @@ import {
   klantTypeToon,
   klantTypeLabel,
   klantTypeKort,
+  klantStatusToon,
+  klantStatusLabel,
   type Klant,
 } from "@/lib/klanten";
+import { categorieKleur } from "@/lib/kleuren";
 import { haalCategorieen } from "@/lib/categorieen";
 import { LandRegio } from "@/components/LandRegio";
+import { WebsiteVeld } from "@/components/WebsiteVeld";
 import { KlantFilters } from "@/components/KlantFilters";
 import { RijLink } from "@/components/ui/RijLink";
 import { leesFout } from "@/lib/fout";
@@ -93,19 +99,25 @@ export default async function KlantenPagina({
       />
 
       <section className="mb-6 grid grid-cols-3 gap-4">
-        <KpiKaart
+        <StatKaart
           label="Totaal"
           waarde={String(klanten.length)}
+          icoon={Users}
+          toon="teal"
           href={tegelHref(klanten, "/klanten")}
         />
-        <KpiKaart
+        <StatKaart
           label="Klanten"
           waarde={String(klantLijst.length)}
+          icoon={Building2}
+          toon="groen"
           href={tegelHref(klantLijst, "/klanten?type=klant")}
         />
-        <KpiKaart
+        <StatKaart
           label="Prospects"
           waarde={String(prospectLijst.length)}
+          icoon={UserPlus}
+          toon="blauw"
           href={tegelHref(prospectLijst, "/klanten?type=prospect")}
         />
       </section>
@@ -142,10 +154,10 @@ export default async function KlantenPagina({
             <thead>
               <tr className="border-b border-navy/10 text-left text-navy/50">
                 <th className="px-3 py-3 font-medium sm:px-5">Bedrijf</th>
-                <th className="px-3 py-3 font-medium sm:px-5">Stad</th>
-                <th className="hidden px-3 py-3 font-medium sm:table-cell sm:px-5">Regio</th>
+                <th className="hidden px-3 py-3 font-medium sm:table-cell sm:px-5">Stad</th>
                 <th className="hidden px-3 py-3 font-medium sm:table-cell sm:px-5">Branche</th>
                 <th className="px-3 py-3 font-medium sm:px-5">Type</th>
+                <th className="px-3 py-3 font-medium sm:px-5">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -155,17 +167,41 @@ export default async function KlantenPagina({
                   href={`/klanten/${k.id}`}
                   className="border-b border-navy/10 last:border-0 hover:bg-navy/[0.02]"
                 >
-                  <td className="max-w-[40vw] truncate px-3 py-3 font-medium text-navy sm:max-w-none sm:px-5">
-                    {k.bedrijf}
+                  <td className="px-3 py-3 sm:px-5">
+                    <div className="flex items-center gap-3">
+                      <Avatar naam={k.bedrijf} />
+                      <div className="min-w-0">
+                        <span className="block max-w-[46vw] truncate font-medium text-navy sm:max-w-none">
+                          {k.bedrijf}
+                        </span>
+                        <span className="block text-xs text-navy/40 sm:hidden">
+                          {k.stad ?? "—"}
+                        </span>
+                      </div>
+                    </div>
                   </td>
-                  <td className="px-3 py-3 text-navy/70 sm:px-5">{k.stad ?? "—"}</td>
-                  <td className="hidden px-3 py-3 text-navy/70 sm:table-cell sm:px-5">{k.regio ?? "—"}</td>
-                  <td className="hidden px-3 py-3 text-navy/70 sm:table-cell sm:px-5">{k.branche ?? "—"}</td>
+                  <td className="hidden px-3 py-3 text-navy/70 sm:table-cell sm:px-5">{k.stad ?? "—"}</td>
+                  <td className="hidden px-3 py-3 sm:table-cell sm:px-5">
+                    {k.branche ? (
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${categorieKleur(
+                          k.branche,
+                        )}`}
+                      >
+                        {k.branche}
+                      </span>
+                    ) : (
+                      <span className="text-navy/40">—</span>
+                    )}
+                  </td>
                   <td className="px-3 py-3 sm:px-5">
                     <Badge toon={klantTypeToon(k.type)}>
                       <span className="sm:hidden">{klantTypeKort(k.type)}</span>
                       <span className="hidden sm:inline">{klantTypeLabel(k.type)}</span>
                     </Badge>
+                  </td>
+                  <td className="px-3 py-3 sm:px-5">
+                    <Badge toon={klantStatusToon(k.status)}>{klantStatusLabel(k.status)}</Badge>
                   </td>
                 </RijLink>
               ))}
@@ -183,7 +219,7 @@ export default async function KlantenPagina({
             <input name="contact_naam" placeholder="Contactpersoon" className={inputCls} />
             <input name="email" type="email" placeholder="E-mail" className={inputCls} />
             <input name="telefoon" placeholder="Telefoon" className={inputCls} />
-            <input name="website" placeholder="Website" className={inputCls} />
+            <WebsiteVeld compact waarde={null} placeholder="Website" />
             <input name="logo_url" type="url" placeholder="Logo-URL (voor offertes)" className={inputCls} />
             <input name="straat" placeholder="Straat + nr" className={inputCls} />
             <input name="postcode" placeholder="Postcode" className={inputCls} />

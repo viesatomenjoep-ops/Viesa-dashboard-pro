@@ -5,6 +5,10 @@ import { signOut } from "@/app/login/actions";
 import { Zijbalk } from "@/components/layout/Zijbalk";
 import { ZoekBalk } from "@/components/layout/ZoekBalk";
 import { AgendaMeldingen } from "@/components/AgendaMeldingen";
+import { MeldingenDropdown } from "@/components/layout/MeldingenDropdown";
+import { GebruikerMenu } from "@/components/layout/GebruikerMenu";
+import { PrefetchRoutes } from "@/components/layout/PrefetchRoutes";
+import type { Notificatie } from "@/lib/notificaties";
 
 /**
  * Responsieve app-shell. Desktop: vaste zijbalk (232px). Mobiel: zijbalk als
@@ -12,15 +16,20 @@ import { AgendaMeldingen } from "@/components/AgendaMeldingen";
  */
 export function AppShell({
   userEmail,
+  meldingen = [],
+  ongelezen = 0,
   children,
 }: {
   userEmail?: string;
+  meldingen?: Notificatie[];
+  ongelezen?: number;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen">
+      <PrefetchRoutes />
       {/* Desktop-zijbalk */}
       <aside className="hidden w-[256px] shrink-0 md:block">
         <div className="fixed h-screen w-[256px]">
@@ -61,17 +70,8 @@ export function AppShell({
           </button>
           <ZoekBalk />
           <AgendaMeldingen />
-          {userEmail && (
-            <span className="hidden text-sm text-navy/60 sm:inline">{userEmail}</span>
-          )}
-          <form action={signOut}>
-            <button
-              type="submit"
-              className="rounded-lg border border-navy/20 px-3 py-1.5 text-sm font-medium text-navy transition-colors hover:bg-navy/5"
-            >
-              Uitloggen
-            </button>
-          </form>
+          <MeldingenDropdown meldingen={meldingen} ongelezen={ongelezen} />
+          <GebruikerMenu email={userEmail} signOutActie={signOut} />
         </header>
         <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8">
           <div className="mx-auto max-w-6xl">{children}</div>

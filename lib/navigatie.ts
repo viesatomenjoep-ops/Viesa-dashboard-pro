@@ -1,39 +1,67 @@
 /** Gesecteerde navigatie voor de zijbalk. */
-export type NavItem = { label: string; href: string };
+import {
+  BarChart3,
+  Bell,
+  Calendar,
+  ClipboardCheck,
+  FileText,
+  Files,
+  FolderOpen,
+  KanbanSquare,
+  LayoutDashboard,
+  Link2,
+  Mail,
+  MessageSquare,
+  Receipt,
+  StickyNote,
+  Users,
+  Waypoints,
+  type LucideIcon,
+} from "lucide-react";
+
+export type NavItem = { label: string; href: string; icoon: LucideIcon };
 export type NavSectie = { titel: string; items: NavItem[] };
 
 export const navSecties: NavSectie[] = [
   {
     titel: "Overzicht",
     items: [
-      { label: "Dashboard", href: "/" },
-      { label: "Agenda", href: "/agenda" },
-      { label: "E-mail", href: "/mail" },
+      { label: "Dashboard", href: "/", icoon: LayoutDashboard },
+      { label: "Taken", href: "/taken", icoon: KanbanSquare },
+      { label: "Agenda", href: "/agenda", icoon: Calendar },
+      { label: "Notificaties", href: "/notificaties", icoon: Bell },
+    ],
+  },
+  {
+    titel: "Communicatie",
+    items: [
+      { label: "E-mail", href: "/mail", icoon: Mail },
+      { label: "Chat", href: "/chat", icoon: MessageSquare },
     ],
   },
   {
     titel: "Commercieel",
     items: [
-      { label: "Klanten", href: "/klanten" },
-      { label: "Leads & pipeline", href: "/leads" },
-      { label: "Audits", href: "/audits" },
-      { label: "Offertes", href: "/offertes" },
-      { label: "Facturen", href: "/facturen" },
-      { label: "Rapportage", href: "/rapportage" },
+      { label: "Klanten", href: "/klanten", icoon: Users },
+      { label: "Leads & pipeline", href: "/leads", icoon: Waypoints },
+      { label: "Audits", href: "/audits", icoon: ClipboardCheck },
+      { label: "Offertes", href: "/offertes", icoon: FileText },
+      { label: "Facturen", href: "/facturen", icoon: Receipt },
+      { label: "Rapportage", href: "/rapportage", icoon: BarChart3 },
     ],
   },
   {
     titel: "Werk",
     items: [
-      { label: "Projecten & notities", href: "/projecten" },
-      { label: "Ideeën-whiteboard", href: "/whiteboard" },
+      { label: "Projecten & notities", href: "/projecten", icoon: FolderOpen },
+      { label: "Ideeën-whiteboard", href: "/whiteboard", icoon: StickyNote },
     ],
   },
   {
     titel: "Bibliotheek",
     items: [
-      { label: "Bestanden", href: "/bestanden" },
-      { label: "Koppelingen", href: "/koppelingen" },
+      { label: "Bestanden", href: "/bestanden", icoon: Files },
+      { label: "Koppelingen", href: "/koppelingen", icoon: Link2 },
     ],
   },
 ];

@@ -1,16 +1,36 @@
 "use client";
 
 import { useState } from "react";
-import { Badge } from "@/components/ui/Badge";
+import {
+  Cloud,
+  FileText,
+  Folder,
+  HardDrive,
+  Link2,
+  Table2,
+  type LucideIcon,
+} from "lucide-react";
 import {
   DRIVE_LINK_TYPES,
   driveTypeLabel,
   type DriveLink,
+  type DriveLinkType,
 } from "@/lib/drivelinks";
 import { datumKort } from "@/lib/format";
 
 const inputCls =
   "rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy";
+
+/** Icoon + gekleurde tegel per bestandstype (naar het voorbeeld van beeld #14). */
+const TYPE_STIJL: Record<DriveLinkType, { icoon: LucideIcon; vlak: string }> = {
+  drive: { icoon: HardDrive, vlak: "bg-blue-100 text-blue-700" },
+  sheet: { icoon: Table2, vlak: "bg-emerald-100 text-emerald-700" },
+  doc: { icoon: FileText, vlak: "bg-blue-100 text-blue-700" },
+  map: { icoon: Folder, vlak: "bg-amber-100 text-amber-700" },
+  pdf: { icoon: FileText, vlak: "bg-red-100 text-red-700" },
+  icloud: { icoon: Cloud, vlak: "bg-purple-100 text-purple-700" },
+  overig: { icoon: Link2, vlak: "bg-navy/10 text-navy" },
+};
 
 /**
  * Eén rij in de bestanden-lijst. Standaard tonen; met "Bewerk" klap je een
@@ -84,10 +104,17 @@ export function BestandRij({
       ) : (
         <div className="flex items-center justify-between gap-2 px-4 py-3.5 sm:gap-3 sm:px-5">
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            {/* Type-badge alleen op grotere schermen — op mobiel meer ruimte voor de titel */}
-            <span className="hidden sm:inline-flex">
-              <Badge toon="grijs">{driveTypeLabel(link.type)}</Badge>
-            </span>
+            {(() => {
+              const { icoon: Icoon, vlak } = TYPE_STIJL[link.type] ?? TYPE_STIJL.overig;
+              return (
+                <span
+                  className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${vlak}`}
+                  title={driveTypeLabel(link.type)}
+                >
+                  <Icoon size={16} />
+                </span>
+              );
+            })()}
             <a
               href={link.url}
               target="_blank"

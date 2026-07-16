@@ -13,6 +13,7 @@ import {
 } from "@/lib/klanten";
 import { haalCategorieen } from "@/lib/categorieen";
 import { LandRegio } from "@/components/LandRegio";
+import { WebsiteVeld } from "@/components/WebsiteVeld";
 import { KlantLogoUpload } from "@/components/KlantLogoUpload";
 import { TerugKnop } from "@/components/ui/TerugKnop";
 import {
@@ -172,7 +173,7 @@ export default async function KlantDetail({
             <Groep>Bedrijf &amp; adres</Groep>
             <div className="grid gap-3 sm:grid-cols-2">
               <Veld label="Bedrijf" naam="bedrijf" waarde={klant.bedrijf} verplicht />
-              <Veld label="Website" naam="website" waarde={klant.website} />
+              <WebsiteVeld waarde={klant.website} />
               <KlantLogoUpload initieel={klant.logo_url} />
               <Veld label="Straat + nr" naam="straat" waarde={klant.straat} />
               <Veld label="Postcode" naam="postcode" waarde={klant.postcode} />
