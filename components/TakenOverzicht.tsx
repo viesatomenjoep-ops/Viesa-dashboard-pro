@@ -40,13 +40,13 @@ export function TakenOverzicht({
 
   return (
     <>
-      {/* Persoonsfilter — blijft vaststaan tot je een andere kiest. Elke knop
-          heeft de kleur van die persoon zodat de bolletjes in de tegels kloppen. */}
+      {/* Persoonsfilter — blijft vaststaan tot je een andere kiest. "Team Viesa"
+          toont alles (iedereen); daarnaast alleen Tom en Joep. */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <FilterKnop actief={persoon === "alle"} onClick={() => setPersoon("alle")}>
-          Iedereen
+          Team Viesa
         </FilterKnop>
-        {TAAK_PERSONEN.map((p) => {
+        {TAAK_PERSONEN.filter((p) => p.key !== "algemeen").map((p) => {
           const kl = persoonKleur(p.key);
           return (
             <FilterKnop key={p.key} actief={persoon === p.key} onClick={() => setPersoon(p.key)}>

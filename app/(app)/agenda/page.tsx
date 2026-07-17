@@ -1,5 +1,4 @@
 import { Plus } from "lucide-react";
-import { PaginaKop } from "@/components/ui/PaginaKop";
 import { createClient } from "@/lib/supabase/server";
 import { icalEvents } from "@/lib/ical";
 import type { AgendaItem } from "@/lib/google";
@@ -138,40 +137,39 @@ export default async function AgendaPagina({
 
   return (
     <>
-      <PaginaKop
-        titel="Agenda"
-        actie={
-          <div className="flex items-center gap-2">
-            {bronnen.length > 0 && (
-              <VolScherm
-                label="Google"
-                titel="Google Agenda"
-                breed="3xl"
-                toon="navy"
-                knopKlasse="inline-flex items-center gap-1.5 rounded-lg border border-navy/20 px-3 py-2 text-sm font-medium text-navy hover:bg-navy/5"
-              >
-                {/* Google-synced afspraken in exact dezelfde lay-out als onze
-                    eigen agenda (zelfde cellen, bolletjes en grootte). */}
-                <MaandAgenda
-                  items={googleItems}
-                  vandaagSleutel={vandaagSleutel}
-                  verwijderHerinnering={verwijderHerinnering}
-                />
-              </VolScherm>
-            )}
+      {/* Compacte kop: 'Agenda' + Google + '+' subtiel, net boven de kalender. */}
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h1 className="text-lg font-semibold text-navy">Agenda</h1>
+        <div className="flex items-center gap-2">
+          {bronnen.length > 0 && (
             <VolScherm
-              label=""
-              titel="Nieuw"
+              label="Google"
+              titel="Google Agenda"
               breed="3xl"
-              icoon={<Plus size={22} />}
-              standaardOpen={Boolean(searchParams.fout)}
-              knopKlasse="inline-flex h-11 w-11 items-center justify-center rounded-full bg-oranje text-white shadow-sm hover:bg-oranje/90"
+              toon="navy"
+              knopKlasse="inline-flex items-center gap-1.5 rounded-lg border border-navy/20 px-2.5 py-1.5 text-xs font-medium text-navy hover:bg-navy/5"
             >
-              <AgendaToevoegen maakActie={maakAgendaItem} vandaag={vandaagSleutel} />
+              {/* Google-synced afspraken in exact dezelfde lay-out als onze
+                  eigen agenda (zelfde cellen, bolletjes en grootte). */}
+              <MaandAgenda
+                items={googleItems}
+                vandaagSleutel={vandaagSleutel}
+                verwijderHerinnering={verwijderHerinnering}
+              />
             </VolScherm>
-          </div>
-        }
-      />
+          )}
+          <VolScherm
+            label=""
+            titel="Nieuw"
+            breed="3xl"
+            icoon={<Plus size={18} />}
+            standaardOpen={Boolean(searchParams.fout)}
+            knopKlasse="inline-flex h-9 w-9 items-center justify-center rounded-full bg-oranje text-white shadow-sm hover:bg-oranje/90"
+          >
+            <AgendaToevoegen maakActie={maakAgendaItem} vandaag={vandaagSleutel} />
+          </VolScherm>
+        </div>
+      </div>
 
       <OpslagMelding toon={Boolean(searchParams.opgeslagen)} tekst="Toegevoegd aan agenda" />
 

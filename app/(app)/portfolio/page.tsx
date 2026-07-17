@@ -1,4 +1,4 @@
-import { ExternalLink, FileText, Globe, ImageIcon, Link2, Plus, Trash2, Upload } from "lucide-react";
+import { ExternalLink, FileText, ImageIcon, Link2, Plus, Trash2, Upload } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { VolScherm } from "@/components/ui/VolScherm";
 import { Kaart } from "@/components/ui/Kaart";
@@ -126,7 +126,9 @@ export default async function PortfolioPagina({
             const isPdf = s === "pdf";
             return (
               <Kaart key={it.id} className="flex flex-col gap-3 p-0">
-                {/* Preview: afbeelding toont een thumbnail; anders een gekleurd vlak. */}
+                {/* Preview: afbeelding = de foto zelf; website = echte screenshot
+                    van de homepage (via WordPress mShots, geen sleutel nodig);
+                    PDF = icoon. */}
                 <div className="flex aspect-[16/10] items-center justify-center overflow-hidden rounded-t-xl bg-navy/5">
                   {isImg ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -134,7 +136,13 @@ export default async function PortfolioPagina({
                   ) : isPdf ? (
                     <FileText size={40} className="text-red-500" />
                   ) : (
-                    <Globe size={40} className="text-emerald-600" />
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={`https://image.thum.io/get/width/800/crop/600/${it.url}`}
+                      alt={`Voorbeeld van ${it.titel}`}
+                      className="h-full w-full object-cover object-top"
+                      loading="lazy"
+                    />
                   )}
                 </div>
                 <div className="flex flex-1 flex-col gap-3 p-3 pt-0">
