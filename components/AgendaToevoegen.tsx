@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { LocatieVeld } from "@/components/LocatieVeld";
 
 const veld =
   "w-full rounded-lg border border-navy/20 bg-white px-3 py-2 text-base text-navy outline-none focus:border-navy";
@@ -46,16 +47,15 @@ export function AgendaToevoegen({
         ))}
       </div>
 
-      {/* Naam (+ locatie bij activiteit) */}
-      <div className="overflow-hidden rounded-xl border border-navy/15 bg-white">
-        <input name="titel" required placeholder="Naam" className={`${veld} border-0`} />
-        {tab === "activiteit" && (
-          <input
-            name="locatie"
-            placeholder="Locatie of videogesprek"
-            className={`${veld} border-0 border-t border-navy/10`}
-          />
-        )}
+      {/* Naam + (bij activiteit) locatie met echte adres-suggesties */}
+      <div className="space-y-2">
+        <input
+          name="titel"
+          required
+          placeholder="Naam"
+          className={`${veld} rounded-xl border-navy/15`}
+        />
+        {tab === "activiteit" && <LocatieVeld name="locatie" placeholder="Locatie of videogesprek" />}
       </div>
 
       {tab === "activiteit" ? (

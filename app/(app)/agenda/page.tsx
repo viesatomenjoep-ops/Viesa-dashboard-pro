@@ -33,15 +33,6 @@ function dagSleutel(iso: string): string {
   return new Date(iso).toLocaleDateString("sv-SE", { timeZone: TZ });
 }
 
-/** Leidt de Google-embed-URL af uit de iCal-links (agenda-id na /ical/). */
-function embedUrl(bronnen: Bron[]): string | null {
-  const ids = bronnen
-    .map((b) => b.ical_url.match(/\/ical\/([^/]+)\//)?.[1])
-    .filter(Boolean) as string[];
-  if (ids.length === 0) return null;
-  const src = ids.map((id) => `src=${id}`).join("&");
-  return `https://calendar.google.com/calendar/embed?ctz=Europe%2FAmsterdam&${src}`;
-}
 
 export default async function AgendaPagina({
   searchParams,
@@ -139,8 +130,11 @@ export default async function AgendaPagina({
 
   items.sort((a, b) => a.start.localeCompare(b.start));
 
+  // Alleen de Google/iCal-afspraken (zonder eigen herinneringen/activiteiten) —
+  // voor de aparte "Google"-weergave, maar wél in onze eigen kalenderlay-out.
+  const googleItems = items.filter((i) => !i.herinneringId && !i.activiteitId);
+
   const vandaagSleutel = dagSleutel(nu.toISOString());
-  const embed = embedUrl(bronnen);
 
   return (
     <>
@@ -148,20 +142,20 @@ export default async function AgendaPagina({
         titel="Agenda"
         actie={
           <div className="flex items-center gap-2">
-            {embed && (
+            {bronnen.length > 0 && (
               <VolScherm
                 label="Google"
                 titel="Google Agenda"
-                breed="vol"
+                breed="3xl"
                 toon="navy"
-                vullend
                 knopKlasse="inline-flex items-center gap-1.5 rounded-lg border border-navy/20 px-3 py-2 text-sm font-medium text-navy hover:bg-navy/5"
               >
-                <iframe
-                  src={embed}
-                  title="Google Agenda"
-                  className="h-full w-full"
-                  style={{ border: 0 }}
+                {/* Google-synced afspraken in exact dezelfde lay-out als onze
+                    eigen agenda (zelfde cellen, bolletjes en grootte). */}
+                <MaandAgenda
+                  items={googleItems}
+                  vandaagSleutel={vandaagSleutel}
+                  verwijderHerinnering={verwijderHerinnering}
                 />
               </VolScherm>
             )}
