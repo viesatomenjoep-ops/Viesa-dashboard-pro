@@ -123,7 +123,7 @@ function Kolom({
   return (
     <div
       ref={setNodeRef}
-      className={`flex w-[15rem] shrink-0 flex-col rounded-xl border p-3 transition-colors sm:w-64 ${
+      className={`flex w-[13rem] shrink-0 flex-col rounded-xl border p-2.5 transition-colors sm:w-64 ${
         isOver ? "border-oranje/40 bg-oranje/5" : "border-navy/10 bg-white/60"
       }`}
     >

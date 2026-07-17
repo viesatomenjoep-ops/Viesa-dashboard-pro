@@ -1,19 +1,23 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronDown, LogOut } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 
 /**
  * Gebruikersmenu rechtsboven: het Viesa-logo + het ingelogde e-mailadres, met
  * een dropdown voor uitloggen. Geen nep-persoon — dit is een gedeelde werkruimte.
+ * Via `extra` komen op mobiel de notificatie-opties (bel + meldingen aan/uit)
+ * hierin terecht, zodat de merknaam bovenaan mooi past.
  */
 export function GebruikerMenu({
   email,
   signOutActie,
+  extra,
 }: {
   email?: string;
   signOutActie: () => Promise<void>;
+  extra?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -44,6 +48,7 @@ export function GebruikerMenu({
             <p className="text-xs text-navy/50">Ingelogd als</p>
             <p className="truncate text-sm font-medium text-navy">{email ?? "—"}</p>
           </div>
+          {extra && <div className="border-b border-navy/10 p-3">{extra}</div>}
           <form action={signOutActie}>
             <button
               type="submit"

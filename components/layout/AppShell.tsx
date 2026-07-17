@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
+import { Bell } from "lucide-react";
 import { signOut } from "@/app/login/actions";
 import { Zijbalk } from "@/components/layout/Zijbalk";
 import { ZoekBalk } from "@/components/layout/ZoekBalk";
@@ -74,15 +75,15 @@ export function AppShell({
               </svg>
             </button>
 
-            {/* Merk — logo + naam, tussen hamburger en de rest. Alleen op
+            {/* Merk — logo + naam (compact), tussen hamburger en de rest. Alleen op
                 mobiel; op desktop staat het merk al in de zijbalk. Klikt naar home. */}
-            <Link href="/" className="flex min-w-0 flex-1 items-center gap-2.5 md:hidden">
-              <Logo size={38} />
+            <Link href="/" className="flex min-w-0 flex-1 items-center gap-2 md:hidden">
+              <Logo size={30} />
               <span className="min-w-0 leading-tight">
-                <span className="block truncate font-merk text-base font-semibold text-navy">
+                <span className="block truncate font-merk text-sm font-semibold text-navy">
                   Viesa Automations
                 </span>
-                <span className="block text-xs font-medium text-navy/50">Dashboard</span>
+                <span className="block text-[10px] font-medium text-navy/50">Dashboard</span>
               </span>
             </Link>
 
@@ -91,13 +92,37 @@ export function AppShell({
               <ZoekBalk />
             </div>
 
-            {/* Rechts: push-belletje (alleen desktop), meldingen en gebruiker. */}
+            {/* Rechts: op desktop de losse bel + meldingen; op mobiel zit dat in het
+                gebruikersmenu zodat de merknaam bovenaan mooi past. */}
             <div className="flex shrink-0 items-center justify-end gap-2">
               <span className="hidden sm:inline-flex">
                 <AgendaMeldingen />
               </span>
-              <MeldingenDropdown meldingen={meldingen} ongelezen={ongelezen} />
-              <GebruikerMenu email={userEmail} signOutActie={signOut} />
+              <span className="hidden sm:inline-flex">
+                <MeldingenDropdown meldingen={meldingen} ongelezen={ongelezen} />
+              </span>
+              <GebruikerMenu
+                email={userEmail}
+                signOutActie={signOut}
+                extra={
+                  <div className="space-y-2 sm:hidden">
+                    <Link
+                      href="/notificaties"
+                      className="flex items-center justify-between rounded-lg border border-navy/15 px-3 py-2 text-sm font-medium text-navy hover:bg-navy/5"
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <Bell size={16} /> Notificaties
+                      </span>
+                      {ongelezen > 0 && (
+                        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-oranje px-1.5 text-xs font-semibold text-white">
+                          {ongelezen > 9 ? "9+" : ongelezen}
+                        </span>
+                      )}
+                    </Link>
+                    <AgendaMeldingen />
+                  </div>
+                }
+              />
             </div>
           </div>
 

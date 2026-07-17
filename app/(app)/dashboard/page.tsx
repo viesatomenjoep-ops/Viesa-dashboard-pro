@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Euro, FileText, Receipt, Target } from "lucide-react";
+import { Euro, FileText, ReceiptEuro, Target } from "lucide-react";
 import { Kaart } from "@/components/ui/Kaart";
 import { HeroBanner } from "@/components/ui/HeroBanner";
 import { StatKaart } from "@/components/ui/StatKaart";
@@ -88,6 +88,32 @@ export default async function DashboardPagina({
     /* geen agenda gekoppeld */
   }
 
+  // Command center: per gebied één bolletje — groen = niets open, rood = er
+  // staat nog iets open. Zo zie je in één oogopslag wat er nog moet gebeuren.
+  const openTaken = taken.filter((t) => !t.klaar).length;
+  const statusItems: { label: string; waarde: string; open: boolean; href: string }[] = [
+    { label: "Open taken", waarde: String(openTaken), open: openTaken > 0, href: "/taken" },
+    {
+      label: "Follow-ups vandaag",
+      waarde: String(data.followups.length),
+      open: data.followups.length > 0,
+      href: "/leads",
+    },
+    {
+      label: "Openstaand gefactureerd",
+      waarde: euro(data.openstaandBedrag),
+      open: data.openstaandBedrag > 0,
+      href: "/facturen",
+    },
+    {
+      label: "Lopende offertes",
+      waarde: String(data.lopendeOffertes),
+      open: data.lopendeOffertes > 0,
+      href: "/offertes",
+    },
+  ];
+  const allesRustig = statusItems.every((s) => !s.open);
+
   // Sparkline + trend voor de omzet-KPI, afgeleid van de 12-maands grafiek.
   const omzetReeks = data.omzetGrafiek.map((s) => s.waarde);
   const dezeMaand = omzetReeks[omzetReeks.length - 1] ?? 0;
@@ -123,6 +149,39 @@ export default async function DashboardPagina({
           {searchParams.taakfout}
         </p>
       )}
+
+      {/* Command center — in één oogopslag wat er open staat (groen/rood bolletje) */}
+      <section className="mt-6">
+        <div className="mb-2 flex items-center gap-2">
+          <span
+            className={`inline-block h-2.5 w-2.5 rounded-full ${
+              allesRustig ? "bg-emerald-500" : "bg-red-500"
+            }`}
+          />
+          <h2 className="text-sm font-semibold text-navy">
+            {allesRustig ? "Alles bij — niets staat open" : "Er staat nog iets open"}
+          </h2>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {statusItems.map((s) => (
+            <Link
+              key={s.label}
+              href={s.href}
+              className="flex items-center gap-3 rounded-xl border border-navy/10 bg-white p-3 shadow-sm transition-colors hover:border-navy/30"
+            >
+              <span
+                className={`h-3 w-3 shrink-0 rounded-full ${
+                  s.open ? "bg-red-500 ring-4 ring-red-500/15" : "bg-emerald-500 ring-4 ring-emerald-500/15"
+                }`}
+              />
+              <div className="min-w-0">
+                <div className="truncate text-lg font-bold leading-tight text-navy">{s.waarde}</div>
+                <div className="truncate text-xs text-navy/50">{s.label}</div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
 
       {/* To-do lijst — direct onder de welkomstbanner */}
       <section className="mt-6">
@@ -209,7 +268,7 @@ export default async function DashboardPagina({
         <StatKaart
           label="Openstaand gefactureerd"
           waarde={euro(data.openstaandBedrag)}
-          icoon={Receipt}
+          icoon={ReceiptEuro}
           toon="amber"
           href="/facturen"
         />
