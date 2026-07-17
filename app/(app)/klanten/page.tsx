@@ -1,4 +1,4 @@
-import { Building2, Plus, Search, Upload, UserPlus, Users } from "lucide-react";
+import { Building2, Flame, Handshake, Plus, Search, Snowflake, Target, Upload, Users, type LucideIcon } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { StatKaart } from "@/components/ui/StatKaart";
 import { TegelSheet } from "@/components/ui/TegelSheet";
@@ -98,6 +98,14 @@ export default async function KlantenPagina({
     klant: "groen",
     partner: "paars",
   };
+  // Elk klanttype een eigen, herkenbaar icoon (kleur komt uit typeToonKaart).
+  const typeIcoon: Record<string, LucideIcon> = {
+    hot_lead: Flame,
+    cold_lead: Snowflake,
+    prospect: Target,
+    klant: Building2,
+    partner: Handshake,
+  };
 
   return (
     <>
@@ -111,9 +119,7 @@ export default async function KlantenPagina({
       <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <TegelSheet
           titel="Alle klanten"
-          tegel={
-            <StatKaart label="Totaal" waarde={String(klanten.length)} icoon={Users} toon="teal" mobielGeenIcoon />
-          }
+          tegel={<StatKaart label="Totaal" waarde={String(klanten.length)} icoon={Users} toon="teal" />}
         >
           <KlantenLijst klanten={klanten} />
         </TegelSheet>
@@ -125,9 +131,8 @@ export default async function KlantenPagina({
               <StatKaart
                 label={t.label}
                 waarde={String(perType[t.key] ?? 0)}
-                icoon={t.key === "klant" ? Building2 : UserPlus}
+                icoon={typeIcoon[t.key] ?? Users}
                 toon={typeToonKaart[t.key] ?? "grijs"}
-                mobielGeenIcoon
               />
             }
           >

@@ -106,10 +106,11 @@ export default async function TakenPagina({
           <div className="flex flex-wrap gap-2">
             <VolScherm
               label="Open de takenmanager"
-              titel="Takenmanager — sleep tussen de kolommen"
+              titel="Takenmanager — sleep of dubbelklik"
               breed="vol"
               toon="navy"
-              icoon={<KanbanSquare size={16} />}
+              icoon={<KanbanSquare size={20} />}
+              knopKlasse="inline-flex items-center justify-center gap-2 rounded-xl border border-navy/25 bg-white px-5 py-3 text-base font-semibold text-navy shadow-sm hover:bg-navy/5"
             >
               {taken.length === 0 ? (
                 <LegeStaat titel="Nog geen taken" omschrijving="Voeg een taak toe met de knop hiernaast." />

@@ -63,7 +63,10 @@ export default async function LeadDetail({
     <>
       <div className="mb-6 flex items-center justify-between gap-4">
         <div>
-          <Link href="/leads" className="text-sm text-navy/60 hover:underline">
+          <Link
+            href="/leads"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-navy/20 px-4 py-2 text-base font-semibold text-navy hover:bg-navy/5"
+          >
             ← Terug naar pipeline
           </Link>
           <h1 className="mt-1 flex items-center gap-2 text-2xl font-semibold text-navy">

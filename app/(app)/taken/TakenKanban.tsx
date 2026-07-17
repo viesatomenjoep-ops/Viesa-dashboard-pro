@@ -50,14 +50,7 @@ export function TakenKanban({ taken }: { taken: Taak[] }) {
     }
   }
 
-  async function onDragEnd(e: DragEndEvent) {
-    setActief(null);
-    const { active, over } = e;
-    if (!over) return;
-    const taakId = String(active.id);
-    const doel = over.id as TaakStatus;
-    if (!TAAK_STATUSSEN.some((s) => s.key === doel)) return;
-
+  async function verplaats(taakId: string, doel: TaakStatus) {
     const bron = (Object.keys(kolommen) as TaakStatus[]).find((s) =>
       kolommen[s].some((t) => t.id === taakId),
     );
@@ -83,11 +76,30 @@ export function TakenKanban({ taken }: { taken: Taak[] }) {
     }
   }
 
+  function onDragEnd(e: DragEndEvent) {
+    setActief(null);
+    const { active, over } = e;
+    if (!over) return;
+    const doel = over.id as TaakStatus;
+    if (!TAAK_STATUSSEN.some((s) => s.key === doel)) return;
+    void verplaats(String(active.id), doel);
+  }
+
+  // Dubbelklik → volgende status (todo → bezig → review → klaar → todo).
+  function volgende(taak: Taak) {
+    const idx = TAAK_STATUSSEN.findIndex((s) => s.key === taak.status);
+    const doel = TAAK_STATUSSEN[(idx + 1) % TAAK_STATUSSEN.length].key;
+    void verplaats(taak.id, doel);
+  }
+
   return (
     <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      <p className="mb-3 text-xs text-navy/45">
+        Sleep tussen de kolommen · <span className="font-medium text-navy/60">dubbelklik</span> om de status te wijzigen.
+      </p>
+      <div className="flex gap-3 overflow-x-auto pb-4">
         {TAAK_STATUSSEN.map((s) => (
-          <Kolom key={s.key} status={s.key} label={s.label} taken={kolommen[s.key]} />
+          <Kolom key={s.key} status={s.key} label={s.label} taken={kolommen[s.key]} onVolgende={volgende} />
         ))}
       </div>
       <DragOverlay>{actief ? <Kaartje taak={actief} sleep /> : null}</DragOverlay>
@@ -99,16 +111,18 @@ function Kolom({
   status,
   label,
   taken,
+  onVolgende,
 }: {
   status: TaakStatus;
   label: string;
   taken: Taak[];
+  onVolgende: (taak: Taak) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   return (
     <div
       ref={setNodeRef}
-      className={`flex w-72 shrink-0 flex-col rounded-xl border p-3 transition-colors ${
+      className={`flex w-[15rem] shrink-0 flex-col rounded-xl border p-3 transition-colors sm:w-64 ${
         isOver ? "border-oranje/40 bg-oranje/5" : "border-navy/10 bg-white/60"
       }`}
     >
@@ -120,7 +134,7 @@ function Kolom({
       </div>
       <div className="flex flex-1 flex-col gap-2">
         {taken.map((taak) => (
-          <SleepbaarKaartje key={taak.id} taak={taak} />
+          <SleepbaarKaartje key={taak.id} taak={taak} onVolgende={onVolgende} />
         ))}
         {taken.length === 0 && (
           <div className="rounded-lg border border-dashed border-navy/15 py-6 text-center text-xs text-navy/40">
@@ -132,7 +146,7 @@ function Kolom({
   );
 }
 
-function SleepbaarKaartje({ taak }: { taak: Taak }) {
+function SleepbaarKaartje({ taak, onVolgende }: { taak: Taak; onVolgende: (taak: Taak) => void }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: taak.id,
   });
@@ -141,6 +155,7 @@ function SleepbaarKaartje({ taak }: { taak: Taak }) {
       ref={setNodeRef}
       {...listeners}
       {...attributes}
+      onDoubleClick={() => onVolgende(taak)}
       className={isDragging ? "opacity-40" : ""}
     >
       <Kaartje taak={taak} />
