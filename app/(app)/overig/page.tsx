@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { BarChart3, Bell, Link2, type LucideIcon } from "lucide-react";
+import { BarChart3, Bell, DatabaseBackup, Download, Link2, type LucideIcon } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
+import { Kaart } from "@/components/ui/Kaart";
 
 type Tegel = { label: string; omschrijving: string; href: string; icoon: LucideIcon; vlak: string };
 
@@ -53,6 +54,28 @@ export default function OverigPagina() {
           );
         })}
       </div>
+
+      {/* Back-up van de volledige database */}
+      <Kaart className="mt-6">
+        <div className="flex items-start gap-3">
+          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+            <DatabaseBackup size={20} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-sm font-semibold text-navy">Database back-up</h2>
+            <p className="mt-0.5 text-xs text-navy/60">
+              Download het volledige schema (alle SQL-migraties) én alle data van Supabase als één
+              zip-bestand. Doe dit af en toe handmatig als veilige kopie.
+            </p>
+            <a
+              href="/api/backup"
+              className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-navy px-4 py-2 text-sm font-medium text-white hover:bg-navy/90"
+            >
+              <Download size={16} /> Download back-up (.zip)
+            </a>
+          </div>
+        </div>
+      </Kaart>
     </>
   );
 }

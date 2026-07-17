@@ -1,7 +1,8 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useState } from "react";
 import { GroteEditor } from "@/components/GroteEditor";
+import { ZoekKies } from "@/components/ZoekKies";
 import { contextVanKlant, vulVariabelen, type VariabeleContext } from "@/lib/variabelen";
 
 const inputCls =
@@ -53,8 +54,7 @@ export function MailOpstellen({
   const [editorSleutel, setEditorSleutel] = useState(0);
   const [ctx, setCtx] = useState<VariabeleContext>({});
   const [sjabloonId, setSjabloonId] = useState("");
-  const listId = useId();
-  const emailListId = useId();
+  const [klantZoek, setKlantZoek] = useState("");
 
   // Bekende e-mailadressen uit het klantenbestand (uniek, gesorteerd) — voor het
   // automatisch aanvullen van het Aan-veld.
@@ -121,38 +121,37 @@ export function MailOpstellen({
         </p>
       </div>
 
-      {/* Klant kiezen → vult e-mailadres én variabelen */}
+      {/* Klant kiezen → live suggesties; vult e-mailadres én variabelen */}
       {klanten.length > 0 && (
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <label className="text-sm font-medium text-navy">Klant:</label>
-          <input
-            list={listId}
+        <div className="mb-3">
+          <label className="mb-1 block text-sm font-medium text-navy">Klant</label>
+          <ZoekKies
+            value={klantZoek}
+            onChange={setKlantZoek}
+            onKies={(o) => kiesKlant(o.waarde)}
+            opties={klanten.map((k) => ({ waarde: k.bedrijf, sub: k.email ?? undefined }))}
             placeholder="Klant zoeken → vult e-mail + variabelen…"
-            onChange={(e) => kiesKlant(e.target.value)}
-            autoComplete="off"
-            className="rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
+            className={`${inputCls}`}
           />
-          <datalist id={listId}>
-            {klanten.map((k) => (
-              <option key={k.id} value={k.bedrijf} />
-            ))}
-          </datalist>
         </div>
       )}
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="flex min-w-0 items-center gap-2">
-          <input
-            name="naar"
-            type="email"
-            required
-            list={emailListId}
-            autoComplete="off"
-            placeholder="Aan (ontvanger) *"
-            value={naar}
-            onChange={(e) => setNaar(e.target.value)}
-            className={`${inputCls} min-w-0 flex-1`}
-          />
+        <div className="flex min-w-0 items-start gap-2">
+          {/* Aan-veld met live e-mailsuggesties uit het klantenbestand */}
+          <div className="min-w-0 flex-1">
+            <ZoekKies
+              name="naar"
+              type="email"
+              required
+              value={naar}
+              onChange={setNaar}
+              onKies={(o) => setNaar(o.waarde)}
+              opties={bekendeAdressen.map((a) => ({ waarde: a.email, sub: a.bedrijf }))}
+              placeholder="Aan (ontvanger) *"
+              className={inputCls}
+            />
+          </div>
           {!toonCcBcc && (
             <button
               type="button"
@@ -165,14 +164,6 @@ export function MailOpstellen({
         </div>
         <input name="antwoord_naar" type="email" placeholder="Antwoord naar (optioneel)" className={inputCls} />
       </div>
-      {/* Onthouden e-mailadressen uit het klantenbestand voor het Aan-veld. */}
-      <datalist id={emailListId}>
-        {bekendeAdressen.map((a) => (
-          <option key={a.email} value={a.email}>
-            {a.bedrijf}
-          </option>
-        ))}
-      </datalist>
 
       {toonCcBcc && (
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
