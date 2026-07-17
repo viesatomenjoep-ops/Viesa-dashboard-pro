@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Building2, FileText, ListTodo, Receipt, Users } from "lucide-react";
+import { Building2, FileText, ListTodo, ReceiptEuro, Users } from "lucide-react";
 import { euro } from "@/lib/format";
 
 /**
@@ -27,7 +27,7 @@ export function InfoWidgets({
   const kaarten = [
     { label: "Te doen", waarde: String(openTaken), icoon: ListTodo, kleur: "bg-blue-500", href: "/taken" },
     { label: "Leads", waarde: String(leads), icoon: Users, kleur: "bg-emerald-500", href: "/leads" },
-    { label: "Openstaand", waarde: euro(openstaand), icoon: Receipt, kleur: "bg-amber-500", href: "/facturen" },
+    { label: "Openstaand", waarde: euro(openstaand), icoon: ReceiptEuro, kleur: "bg-amber-500", href: "/facturen" },
     { label: "Offertes", waarde: String(offertes), icoon: FileText, kleur: "bg-purple-500", href: "/offertes" },
     { label: "Klanten", waarde: String(klanten), icoon: Building2, kleur: "bg-violet-500", href: "/klanten" },
   ];

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { WidgetLauncher } from "@/components/WidgetLauncher";
-import { InfoWidgets } from "@/components/InfoWidgets";
+import { InfoCarousel } from "@/components/InfoCarousel";
 import { Logo } from "@/components/ui/Logo";
 import { navSecties } from "@/lib/navigatie";
 
@@ -76,7 +76,7 @@ export function Zijbalk({
         variant="donker"
         kolommen={4}
         compact
-        bovenGrid={info ? <InfoWidgets {...info} compact donker /> : undefined}
+        bovenGrid={info ? <InfoCarousel {...info} /> : undefined}
         onNavigate={onNavigate}
       />
     </div>
