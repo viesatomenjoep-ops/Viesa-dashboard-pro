@@ -1,14 +1,12 @@
-import Link from "next/link";
 import { CalendarClock, CalendarDays, CalendarRange } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { StatKaart } from "@/components/ui/StatKaart";
-import { Kaart } from "@/components/ui/Kaart";
-import { LegeStaat } from "@/components/ui/LegeStaat";
 import { createClient } from "@/lib/supabase/server";
 import { icalEvents } from "@/lib/ical";
 import type { AgendaItem } from "@/lib/google";
 import { leesFout } from "@/lib/fout";
 import { VolScherm } from "@/components/ui/VolScherm";
+import { MaandAgenda } from "@/components/MaandAgenda";
 import { maakHerinnering, verwijderHerinnering } from "./acties";
 
 export const dynamic = "force-dynamic";
@@ -26,24 +24,6 @@ const TZ = "Europe/Amsterdam";
 /** Stabiele dag-sleutel (YYYY-MM-DD) in NL-tijdzone, voor groeperen per dag. */
 function dagSleutel(iso: string): string {
   return new Date(iso).toLocaleDateString("sv-SE", { timeZone: TZ });
-}
-
-function dagKop(iso: string): string {
-  return new Date(iso).toLocaleDateString("nl-NL", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    timeZone: TZ,
-  });
-}
-
-function tijd(item: AgendaItem): string {
-  if (item.heleDag) return "Hele dag";
-  const opt: Intl.DateTimeFormatOptions = { hour: "2-digit", minute: "2-digit", timeZone: TZ };
-  const s = new Date(item.start).toLocaleTimeString("nl-NL", opt);
-  if (!item.eind) return s;
-  const e = new Date(item.eind).toLocaleTimeString("nl-NL", opt);
-  return `${s} – ${e}`;
 }
 
 function isVandaag(iso: string): boolean {
@@ -98,13 +78,19 @@ export default async function AgendaPagina({
     /* herinneringen-tabel nog niet aanwezig */
   }
 
+  // Venster voor de maandkalender: vanaf het begin van deze maand, ~3 maanden
+  // vooruit, zodat het huidige maandrooster (incl. eerdere dagen) gevuld is.
+  const nu = new Date();
+  const maandStart = new Date(nu.getFullYear(), nu.getMonth(), 1);
+  const vensterEind = maandStart.getTime() + 92 * 24 * 60 * 60 * 1000;
+
   // iCal-afspraken ophalen + samenvoegen; fouten per bron verzamelen.
   const items: Toon[] = [];
   const bronFouten: string[] = [];
   await Promise.all(
     bronnen.map(async (b) => {
       try {
-        const evs = await icalEvents(b.ical_url, { dagen: 30 });
+        const evs = await icalEvents(b.ical_url, { vanaf: maandStart, dagen: 92 });
         items.push(...evs);
       } catch (e) {
         bronFouten.push(`${b.naam}: ${leesFout(e)}`);
@@ -112,9 +98,10 @@ export default async function AgendaPagina({
     }),
   );
 
-  // Eigen herinneringen (komende 30 dagen) als agenda-items meenemen.
+  // Eigen herinneringen binnen hetzelfde venster als agenda-items meenemen.
   for (const h of herinneringen) {
-    if (!binnenDagen(h.wanneer, 30)) continue;
+    const t = new Date(h.wanneer).getTime();
+    if (t < maandStart.getTime() || t > vensterEind) continue;
     items.push({
       id: `herinnering-${h.id}`,
       herinneringId: h.id,
@@ -129,15 +116,10 @@ export default async function AgendaPagina({
 
   items.sort((a, b) => a.start.localeCompare(b.start));
 
-  const perDag = new Map<string, Toon[]>();
-  for (const it of items) {
-    const sleutel = dagSleutel(it.start);
-    if (!perDag.has(sleutel)) perDag.set(sleutel, []);
-    perDag.get(sleutel)!.push(it);
-  }
-
   const vandaag = items.filter((i) => isVandaag(i.start)).length;
   const week = items.filter((i) => binnenDagen(i.start, 7)).length;
+  const komend = items.filter((i) => binnenDagen(i.start, 30)).length;
+  const vandaagSleutel = dagSleutel(nu.toISOString());
   const embed = embedUrl(bronnen);
 
   return (
@@ -167,7 +149,7 @@ export default async function AgendaPagina({
           mobielGeenIcoon
         />
         <StatKaart label="Deze week" waarde={String(week)} icoon={CalendarDays} toon="blauw" mobielGeenIcoon />
-        <StatKaart label="Komende 30 dagen" waarde={String(items.length)} icoon={CalendarRange} toon="paars" mobielGeenIcoon />
+        <StatKaart label="Komende 30 dagen" waarde={String(komend)} icoon={CalendarRange} toon="paars" mobielGeenIcoon />
       </section>
 
       {searchParams.fout && (
@@ -215,69 +197,11 @@ export default async function AgendaPagina({
             </div>
           )}
 
-          {items.length === 0 ? (
-            <LegeStaat
-              titel="Geen afspraken of herinneringen"
-              omschrijving="Koppel je Google-agenda via Koppelingen, of voeg hierboven een herinnering toe."
-            />
-          ) : (
-            <div className="space-y-6">
-              {Array.from(perDag.entries()).map(([sleutel, dagItems]) => (
-                <div key={sleutel}>
-                  <p className="mb-2 text-sm font-semibold capitalize text-navy">
-                    {dagKop(dagItems[0].start)}
-                  </p>
-                  <Kaart className="p-0">
-                    <ul>
-                      {dagItems.map((it, i) => {
-                        const Inner = (
-                          <>
-                            <span className="w-24 shrink-0 text-xs font-medium text-navy/50 sm:w-28">
-                              {tijd(it)}
-                            </span>
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium text-navy">{it.titel}</p>
-                              {it.locatie && (
-                                <p className="truncate text-xs text-navy/50">{it.locatie}</p>
-                              )}
-                            </div>
-                          </>
-                        );
-                        return (
-                          <li
-                            key={it.id}
-                            className={`flex items-center gap-3 px-5 py-3 ${
-                              i > 0 ? "border-t border-navy/10" : ""
-                            }`}
-                          >
-                            {it.link ? (
-                              <a
-                                href={it.link}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="flex min-w-0 flex-1 items-center gap-4 hover:opacity-80"
-                              >
-                                {Inner}
-                              </a>
-                            ) : (
-                              <div className="flex min-w-0 flex-1 items-center gap-4">{Inner}</div>
-                            )}
-                            {it.herinneringId ? (
-                              <form action={verwijderHerinnering.bind(null, it.herinneringId)}>
-                                <button type="submit" className="shrink-0 text-navy/30 hover:text-red-500">×</button>
-                              </form>
-                            ) : (
-                              it.link && <span className="shrink-0 text-navy/30">›</span>
-                            )}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </Kaart>
-                </div>
-              ))}
-            </div>
-          )}
+          <MaandAgenda
+            items={items}
+            vandaagSleutel={vandaagSleutel}
+            verwijderHerinnering={verwijderHerinnering}
+          />
         </>
       )}
     </>

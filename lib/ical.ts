@@ -9,7 +9,7 @@ import type { AgendaItem } from "@/lib/google";
  */
 export async function icalEvents(
   url: string,
-  opts?: { dagen?: number },
+  opts?: { dagen?: number; vanaf?: Date },
 ): Promise<AgendaItem[]> {
   const dagen = opts?.dagen ?? 30;
   const res = await fetch(url, { cache: "no-store" });
@@ -17,7 +17,9 @@ export async function icalEvents(
   const tekst = await res.text();
 
   const data = ical.sync.parseICS(tekst);
-  const nu = new Date();
+  // Ondergrens van het venster: standaard 'nu', maar voor de maandkalender geven
+  // we het begin van de maand mee zodat ook afspraken eerder deze maand meekomen.
+  const nu = opts?.vanaf ?? new Date();
   const tot = new Date(nu.getTime() + dagen * 24 * 60 * 60 * 1000);
   const items: AgendaItem[] = [];
 
