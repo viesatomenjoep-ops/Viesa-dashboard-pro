@@ -17,18 +17,17 @@ const KLEUR: Record<string, string> = {
   "/taken": "bg-teal-600",
   "/agenda": "bg-blue-500",
   "/mail": "bg-sky-500",
-  "/notificaties": "bg-amber-500",
   "/klanten": "bg-violet-500",
   "/leads": "bg-emerald-500",
   "/audits": "bg-rose-500",
   "/offertes": "bg-cyan-600",
   "/facturen": "bg-indigo-500",
   "/sjablonen": "bg-red-500",
-  "/rapportage": "bg-navy",
   "/projecten": "bg-orange-500",
   "/whiteboard": "bg-fuchsia-500",
+  "/portfolio": "bg-amber-500",
   "/bestanden": "bg-amber-600",
-  "/koppelingen": "bg-purple-600",
+  "/overig": "bg-navy",
 };
 
 export function WidgetLauncher({

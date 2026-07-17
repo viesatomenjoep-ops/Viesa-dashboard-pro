@@ -3,7 +3,7 @@
 import { WidgetLauncher } from "@/components/WidgetLauncher";
 import { InfoWidgets } from "@/components/InfoWidgets";
 
-type Info = { openTaken: number; leads: number; openstaand: number; offertes: number };
+type Info = { openTaken: number; leads: number; openstaand: number; offertes: number; klanten: number };
 
 /**
  * Navigatie-inhoud (donkerblauw). Twee varianten:
@@ -34,7 +34,7 @@ export function Zijbalk({
         variant="donker"
         kolommen={4}
         compact
-        bovenGrid={info ? <InfoWidgets {...info} /> : undefined}
+        bovenGrid={info ? <InfoWidgets {...info} compact donker /> : undefined}
         onNavigate={onNavigate}
       />
     </div>

@@ -5,6 +5,7 @@ import { Kaart } from "@/components/ui/Kaart";
 import { LegeStaat } from "@/components/ui/LegeStaat";
 import { VolScherm } from "@/components/ui/VolScherm";
 import { OpslagMelding } from "@/components/OpslagMelding";
+import { SjabloonRij } from "@/components/SjabloonRij";
 import { GroteEditor } from "@/components/GroteEditor";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -184,22 +185,15 @@ export default async function SjablonenPagina({
             <Kaart className="p-0">
               <ul>
                 {sjablonen.map((s, i) => (
-                  <li
-                    key={s.id}
-                    className={`flex items-center justify-between gap-3 px-4 py-3 sm:px-5 ${
-                      i > 0 ? "border-t border-navy/10" : ""
-                    }`}
-                  >
-                    <Link
+                  <li key={s.id} className={i > 0 ? "border-t border-navy/10" : ""}>
+                    <SjabloonRij
+                      id={s.id}
+                      naam={s.naam}
+                      onderwerp={s.onderwerp}
+                      type={type}
                       href={`/sjablonen?type=${type}&id=${s.id}`}
-                      className="min-w-0 flex-1 truncate text-sm font-medium text-navy hover:underline"
-                    >
-                      {s.naam}
-                      {s.onderwerp && (
-                        <span className="ml-2 truncate font-normal text-navy/40">{s.onderwerp}</span>
-                      )}
-                    </Link>
-                    <VerwijderKnop id={s.id} type={type} />
+                      verwijderActie={verwijderSjabloon}
+                    />
                   </li>
                 ))}
               </ul>

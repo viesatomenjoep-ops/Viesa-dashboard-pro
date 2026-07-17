@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronLeft, ChevronRight, MapPin, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { CalendarClock, ChevronLeft, ChevronRight, MapPin, Trash2, X } from "lucide-react";
+import { SwipeRij } from "@/components/ui/SwipeRij";
 import type { AgendaItem } from "@/lib/google";
 
 type Item = AgendaItem & { herinneringId?: string; activiteitId?: string };
@@ -61,6 +63,28 @@ export function MaandAgenda({
   const [jaar, setJaar] = useState(() => Number(vandaagSleutel.slice(0, 4)));
   const [maand0, setMaand0] = useState(() => Number(vandaagSleutel.slice(5, 7)) - 1);
   const [gekozen, setGekozen] = useState(vandaagSleutel);
+  const [detail, setDetail] = useState<Item | null>(null);
+  const [gemonteerd, setGemonteerd] = useState(false);
+
+  useEffect(() => setGemonteerd(true), []);
+  useEffect(() => {
+    if (!detail) return;
+    const h = (e: KeyboardEvent) => e.key === "Escape" && setDetail(null);
+    document.documentElement.style.overflow = "hidden";
+    window.addEventListener("keydown", h);
+    return () => {
+      document.documentElement.style.overflow = "";
+      window.removeEventListener("keydown", h);
+    };
+  }, [detail]);
+
+  async function verwijder(it: Item) {
+    if (!window.confirm("Weet u zeker dat u dit wilt verwijderen?")) return;
+    if (it.herinneringId) await verwijderHerinnering(it.herinneringId);
+    else if (it.activiteitId && verwijderActiviteit) await verwijderActiviteit(it.activiteitId);
+    setDetail(null);
+  }
+  const teVerwijderen = (it: Item) => Boolean(it.herinneringId || (it.activiteitId && verwijderActiviteit));
 
   // Items groeperen per dag-sleutel.
   const perDag = new Map<string, Item[]>();
@@ -181,63 +205,106 @@ export function MaandAgenda({
           <p className="text-sm text-navy/40">Geen activiteiten op deze dag.</p>
         ) : (
           <ul className="space-y-2">
-            {gekozenItems.map((it) => (
-              <li
-                key={it.id}
-                className="flex items-start gap-3 rounded-xl border border-navy/10 bg-achtergrond p-3"
-              >
-                <span className={`mt-0.5 h-10 w-1 shrink-0 rounded-full ${itemKleur(it)}`} />
-                <div className="min-w-0 flex-1">
-                  {it.link ? (
-                    <a
-                      href={it.link}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="block truncate text-sm font-medium text-navy hover:underline"
-                    >
-                      {it.titel}
-                    </a>
-                  ) : (
+            {gekozenItems.map((it) => {
+              const rij = (
+                <button
+                  type="button"
+                  onClick={() => setDetail(it)}
+                  className="flex w-full items-start gap-3 bg-achtergrond p-3 text-left"
+                >
+                  <span className={`mt-0.5 h-10 w-1 shrink-0 rounded-full ${itemKleur(it)}`} />
+                  <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-navy">{it.titel}</p>
-                  )}
-                  {it.locatie && (
-                    <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-navy/50">
-                      <MapPin size={12} className="shrink-0" /> {it.locatie}
-                    </p>
-                  )}
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <span className="whitespace-nowrap text-xs font-medium text-navy/60">
+                    {it.locatie && (
+                      <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-navy/50">
+                        <MapPin size={12} className="shrink-0" /> {it.locatie}
+                      </p>
+                    )}
+                  </div>
+                  <span className="shrink-0 whitespace-nowrap text-xs font-medium text-navy/60">
                     {tijdLabel(it)}
                   </span>
-                  {it.herinneringId && (
-                    <form action={verwijderHerinnering.bind(null, it.herinneringId)}>
-                      <button
-                        type="submit"
-                        aria-label="Herinnering verwijderen"
-                        className="text-navy/30 hover:text-red-500"
-                      >
-                        <X size={15} />
-                      </button>
-                    </form>
+                </button>
+              );
+              return (
+                <li key={it.id} className="rounded-xl border border-navy/10">
+                  {teVerwijderen(it) ? (
+                    <SwipeRij onVerwijder={() => verwijder(it)}>{rij}</SwipeRij>
+                  ) : (
+                    rij
                   )}
-                  {it.activiteitId && verwijderActiviteit && (
-                    <form action={verwijderActiviteit.bind(null, it.activiteitId)}>
-                      <button
-                        type="submit"
-                        aria-label="Activiteit verwijderen"
-                        className="text-navy/30 hover:text-red-500"
-                      >
-                        <X size={15} />
-                      </button>
-                    </form>
-                  )}
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
+
+      {/* Detail van een activiteit/herinnering — vol scherm met kruisje. */}
+      {detail &&
+        gemonteerd &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex flex-col bg-achtergrond">
+            <div className="flex items-center justify-between border-b border-navy/10 bg-white px-4 py-3 sm:px-6">
+              <h2 className="truncate text-lg font-semibold text-navy">
+                {detail.herinneringId ? "Herinnering" : "Activiteit"}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setDetail(null)}
+                aria-label="Sluiten"
+                className="rounded-lg border border-navy/20 p-2 text-navy hover:bg-navy/5"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+              <div className="mx-auto max-w-xl space-y-4">
+                <div className="flex items-start gap-3">
+                  <span className={`mt-1 h-12 w-1.5 shrink-0 rounded-full ${itemKleur(detail)}`} />
+                  <h1 className="text-xl font-semibold text-navy">{detail.titel}</h1>
+                </div>
+                <div className="space-y-2 rounded-xl border border-navy/10 bg-white p-4 text-sm">
+                  <p className="flex items-center gap-2 text-navy">
+                    <CalendarClock size={16} className="shrink-0 text-navy/50" />
+                    {new Date(detail.start).toLocaleDateString("nl-NL", {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                      timeZone: TZ,
+                    })}{" "}
+                    · {tijdLabel(detail)}
+                  </p>
+                  {detail.locatie && (
+                    <p className="flex items-center gap-2 text-navy">
+                      <MapPin size={16} className="shrink-0 text-navy/50" /> {detail.locatie}
+                    </p>
+                  )}
+                  {detail.link && (
+                    <a
+                      href={detail.link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-block font-medium text-oranje hover:underline"
+                    >
+                      Openen ↗
+                    </a>
+                  )}
+                </div>
+                {teVerwijderen(detail) && (
+                  <button
+                    type="button"
+                    onClick={() => verwijder(detail)}
+                    className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                  >
+                    <Trash2 size={15} /> Verwijderen
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

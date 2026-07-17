@@ -248,10 +248,10 @@ export default async function MailPagina({
           {foutmelding && <p className="mt-2 font-mono text-xs text-navy/50">Details: {foutmelding}</p>}
         </div>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-[200px_minmax(300px,340px)_1fr]">
-          {/* Kolom 1 — mappen */}
-          <aside className="space-y-1">
-            <div className="flex flex-wrap gap-1 lg:flex-col">
+        <div className="mx-auto max-w-2xl space-y-4">
+          {/* Mappen — horizontale rij op alle schermen */}
+          <aside>
+            <div className="flex flex-wrap gap-1">
               {MAPPEN.map((m) => {
                 const actief = m.key === actieveMap;
                 const MapIcoon = m.icoon;
@@ -276,8 +276,8 @@ export default async function MailPagina({
             </div>
           </aside>
 
-          {/* Kolom 2 — berichtenlijst */}
-          <div className="lg:max-h-[calc(100vh-230px)] lg:overflow-y-auto">
+          {/* Berichtenlijst — compact en passend, klik opent vol scherm */}
+          <div>
             {zichtbaar.length === 0 ? (
               <Kaart>
                 <p className="text-sm text-navy/50">
@@ -340,19 +340,14 @@ export default async function MailPagina({
             )}
           </div>
 
-          {/* Kolom 3 — leesvenster (mobiel als volledig overlay, desktop inline) */}
-          <div className="lg:max-h-[calc(100vh-230px)] lg:overflow-y-auto">
-            {sel ? (
-              <MailLeesPaneel sluitHref={actieveMap === "inbox" ? "/mail" : `/mail?box=${actieveMap}`}>
-                <Leesvenster e={sel} bijlagen={bijlagen} />
-              </MailLeesPaneel>
-            ) : (
-              <Kaart className="hidden min-h-[300px] items-center justify-center lg:flex">
-                <p className="text-sm text-navy/40">Selecteer een bericht om te lezen.</p>
-              </Kaart>
-            )}
-          </div>
         </div>
+      )}
+
+      {/* Leesvenster als volledig overlay-scherm (alle apparaten) */}
+      {!schemaOntbreekt && sel && (
+        <MailLeesPaneel sluitHref={actieveMap === "inbox" ? "/mail" : `/mail?box=${actieveMap}`}>
+          <Leesvenster e={sel} bijlagen={bijlagen} />
+        </MailLeesPaneel>
       )}
     </>
   );

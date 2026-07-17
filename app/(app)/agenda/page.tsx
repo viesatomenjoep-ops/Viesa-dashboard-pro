@@ -1,6 +1,5 @@
-import { CalendarClock, CalendarDays, CalendarRange, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
-import { StatKaart } from "@/components/ui/StatKaart";
 import { createClient } from "@/lib/supabase/server";
 import { icalEvents } from "@/lib/ical";
 import type { AgendaItem } from "@/lib/google";
@@ -32,16 +31,6 @@ const TZ = "Europe/Amsterdam";
 /** Stabiele dag-sleutel (YYYY-MM-DD) in NL-tijdzone, voor groeperen per dag. */
 function dagSleutel(iso: string): string {
   return new Date(iso).toLocaleDateString("sv-SE", { timeZone: TZ });
-}
-
-function isVandaag(iso: string): boolean {
-  return dagSleutel(iso) === dagSleutel(new Date().toISOString());
-}
-
-function binnenDagen(iso: string, dagen: number): boolean {
-  const d = new Date(iso).getTime();
-  const n = Date.now();
-  return d >= n && d <= n + dagen * 24 * 60 * 60 * 1000;
 }
 
 /** Leidt de Google-embed-URL af uit de iCal-links (agenda-id na /ical/). */
@@ -150,9 +139,6 @@ export default async function AgendaPagina({
 
   items.sort((a, b) => a.start.localeCompare(b.start));
 
-  const vandaag = items.filter((i) => isVandaag(i.start)).length;
-  const week = items.filter((i) => binnenDagen(i.start, 7)).length;
-  const komend = items.filter((i) => binnenDagen(i.start, 30)).length;
   const vandaagSleutel = dagSleutel(nu.toISOString());
   const embed = embedUrl(bronnen);
 
@@ -161,18 +147,16 @@ export default async function AgendaPagina({
       <PaginaKop
         titel="Agenda"
         actie={
-          <div className="flex flex-wrap gap-2">
-            <VolScherm
-              label="Toevoegen"
-              titel="Nieuw"
-              breed="3xl"
-              icoon={<Plus size={16} />}
-              standaardOpen={Boolean(searchParams.fout)}
-            >
-              <AgendaToevoegen maakActie={maakAgendaItem} vandaag={vandaagSleutel} />
-            </VolScherm>
+          <div className="flex items-center gap-2">
             {embed && (
-              <VolScherm label="Google-weergave" titel="Google Agenda" breed="vol" toon="navy" vullend>
+              <VolScherm
+                label="Google"
+                titel="Google Agenda"
+                breed="vol"
+                toon="navy"
+                vullend
+                knopKlasse="inline-flex items-center gap-1.5 rounded-lg border border-navy/20 px-3 py-2 text-sm font-medium text-navy hover:bg-navy/5"
+              >
                 <iframe
                   src={embed}
                   title="Google Agenda"
@@ -181,23 +165,21 @@ export default async function AgendaPagina({
                 />
               </VolScherm>
             )}
+            <VolScherm
+              label=""
+              titel="Nieuw"
+              breed="3xl"
+              icoon={<Plus size={22} />}
+              standaardOpen={Boolean(searchParams.fout)}
+              knopKlasse="inline-flex h-11 w-11 items-center justify-center rounded-full bg-oranje text-white shadow-sm hover:bg-oranje/90"
+            >
+              <AgendaToevoegen maakActie={maakAgendaItem} vandaag={vandaagSleutel} />
+            </VolScherm>
           </div>
         }
       />
 
       <OpslagMelding toon={Boolean(searchParams.opgeslagen)} tekst="Toegevoegd aan agenda" />
-
-      <section className="mb-8 grid grid-cols-3 gap-4">
-        <StatKaart
-          label="Vandaag"
-          waarde={String(vandaag)}
-          icoon={CalendarClock}
-          toon={vandaag > 0 ? "teal" : "grijs"}
-          mobielGeenIcoon
-        />
-        <StatKaart label="Deze week" waarde={String(week)} icoon={CalendarDays} toon="blauw" mobielGeenIcoon />
-        <StatKaart label="Komende 30 dagen" waarde={String(komend)} icoon={CalendarRange} toon="paars" mobielGeenIcoon />
-      </section>
 
       {searchParams.fout && (
         <p className="mb-4 rounded-lg bg-oranje/10 px-3 py-2 text-sm text-oranje">

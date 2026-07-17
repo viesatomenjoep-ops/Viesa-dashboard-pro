@@ -26,7 +26,7 @@ export function AppShell({
   userEmail?: string;
   meldingen?: Notificatie[];
   ongelezen?: number;
-  info?: { openTaken: number; leads: number; openstaand: number; offertes: number };
+  info?: { openTaken: number; leads: number; openstaand: number; offertes: number; klanten: number };
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);

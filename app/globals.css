@@ -78,6 +78,14 @@ body {
 }
 
 /* Eenvoudige markdown-opmaak (design-context: rustig, navy) */
+/* Eén vast lettertype overal in de editors en de opgemaakte output (mail,
+   offerte, audit, sjabloon). !important overschrijft geplakte inline-fonts,
+   zodat er nooit verschillende lettertypes door elkaar staan. */
+.prose-viesa,
+.prose-viesa * {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif !important;
+}
 .prose-viesa h1,
 .prose-viesa h2,
 .prose-viesa h3 {

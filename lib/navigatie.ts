@@ -1,7 +1,6 @@
 /** Gesecteerde navigatie voor de zijbalk. */
 import {
-  BarChart3,
-  Bell,
+  Briefcase,
   Calendar,
   ClipboardCheck,
   FileText,
@@ -10,7 +9,7 @@ import {
   FolderOpen,
   KanbanSquare,
   LayoutDashboard,
-  Link2,
+  LayoutGrid,
   Mail,
   Receipt,
   StickyNote,
@@ -30,7 +29,6 @@ export const navSecties: NavSectie[] = [
       { label: "Taken", href: "/taken", icoon: KanbanSquare },
       { label: "Agenda", href: "/agenda", icoon: Calendar },
       { label: "E-mail", href: "/mail", icoon: Mail },
-      { label: "Notificaties", href: "/notificaties", icoon: Bell },
     ],
   },
   {
@@ -42,7 +40,6 @@ export const navSecties: NavSectie[] = [
       { label: "Offertes", href: "/offertes", icoon: FileText },
       { label: "Facturen", href: "/facturen", icoon: Receipt },
       { label: "Sjablonen", href: "/sjablonen", icoon: FileType },
-      { label: "Rapportage", href: "/rapportage", icoon: BarChart3 },
     ],
   },
   {
@@ -50,13 +47,14 @@ export const navSecties: NavSectie[] = [
     items: [
       { label: "Projecten & notities", href: "/projecten", icoon: FolderOpen },
       { label: "Ideeën-whiteboard", href: "/whiteboard", icoon: StickyNote },
+      { label: "Portfolio", href: "/portfolio", icoon: Briefcase },
     ],
   },
   {
     titel: "Bibliotheek",
     items: [
       { label: "Bestanden", href: "/bestanden", icoon: Files },
-      { label: "Koppelingen", href: "/koppelingen", icoon: Link2 },
+      { label: "Overig", href: "/overig", icoon: LayoutGrid },
     ],
   },
 ];

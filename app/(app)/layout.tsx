@@ -24,7 +24,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   // Cijfers voor de info-balk in het mobiele hamburgermenu (dezelfde als op het
   // startscherm). Best-effort — tabellen kunnen vóór migratie ontbreken.
-  const [openTaken, leads, openstaand, offertes] = await Promise.all([
+  const [openTaken, leads, openstaand, offertes, klanten] = await Promise.all([
     veilig(async () => {
       const { count } = await supabase
         .from("taken")
@@ -50,6 +50,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         .in("status", ["concept", "verzonden", "opvolgen"]);
       return count ?? 0;
     }, 0),
+    veilig(async () => {
+      const { count } = await supabase.from("klanten").select("*", { count: "exact", head: true });
+      return count ?? 0;
+    }, 0),
   ]);
 
   // Laatste meldingen + ongelezen-teller voor de bel in de topbalk (best-effort:
@@ -72,7 +76,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       userEmail={user?.email ?? undefined}
       meldingen={meldingen}
       ongelezen={ongelezen}
-      info={{ openTaken, leads, openstaand, offertes }}
+      info={{ openTaken, leads, openstaand, offertes, klanten }}
     >
       {children}
     </AppShell>

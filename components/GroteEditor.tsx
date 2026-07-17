@@ -74,6 +74,41 @@ export function GroteEditor({
     sync();
   }
 
+  // Bij plakken: verwijder alle lettertype-/kleur-opmaak zodat alles in één
+  // vast lettertype terechtkomt (structuur zoals vet/lijsten blijft behouden).
+  function schoonPlak(html: string): string {
+    const div = document.createElement("div");
+    div.innerHTML = html;
+    div.querySelectorAll<HTMLElement>("*").forEach((el) => {
+      el.style.removeProperty("font-family");
+      el.style.removeProperty("font-size");
+      el.style.removeProperty("color");
+      el.style.removeProperty("background");
+      el.style.removeProperty("background-color");
+      el.removeAttribute("face");
+      el.removeAttribute("color");
+      if (!el.getAttribute("style")) el.removeAttribute("style");
+      if (el.tagName === "FONT") {
+        const parent = el.parentNode;
+        while (el.firstChild) parent?.insertBefore(el.firstChild, el);
+        parent?.removeChild(el);
+      }
+    });
+    return div.innerHTML;
+  }
+
+  function onPaste(e: React.ClipboardEvent<HTMLDivElement>) {
+    e.preventDefault();
+    const html = e.clipboardData.getData("text/html");
+    const tekst = e.clipboardData.getData("text/plain");
+    if (html) {
+      document.execCommand("insertHTML", false, schoonPlak(html));
+    } else {
+      document.execCommand("insertText", false, tekst);
+    }
+    sync();
+  }
+
   function voegLinkToe() {
     const url = window.prompt("Link naar welke URL?");
     if (url) opdracht("createLink", /^https?:\/\//i.test(url) ? url : `https://${url}`);
@@ -95,6 +130,7 @@ export function GroteEditor({
         contentEditable
         suppressContentEditableWarning
         onInput={sync}
+        onPaste={onPaste}
         role="textbox"
         aria-multiline="true"
         aria-label="Inhoud"

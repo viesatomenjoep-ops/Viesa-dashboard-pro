@@ -20,7 +20,7 @@ async function veilig<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
 export default async function HomePagina() {
   const supabase = createClient();
 
-  const [openTaken, leads, openstaand, offertes] = await Promise.all([
+  const [openTaken, leads, openstaand, offertes, klanten] = await Promise.all([
     veilig(async () => {
       const { count } = await supabase
         .from("taken")
@@ -46,6 +46,10 @@ export default async function HomePagina() {
         .in("status", ["concept", "verzonden", "opvolgen"]);
       return count ?? 0;
     }, 0),
+    veilig(async () => {
+      const { count } = await supabase.from("klanten").select("*", { count: "exact", head: true });
+      return count ?? 0;
+    }, 0),
   ]);
 
   return (
@@ -59,6 +63,7 @@ export default async function HomePagina() {
             leads={leads}
             openstaand={openstaand}
             offertes={offertes}
+            klanten={klanten}
           />
         }
       />
