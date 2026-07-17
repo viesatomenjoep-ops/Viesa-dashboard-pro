@@ -91,8 +91,9 @@ export default async function BestandenPagina({
         .order("naam"),
     ]);
     if (l.error) throw l.error;
-    links = (l.data ?? []) as DriveLink[];
-    bewaard = (c.data ?? []).map((x) => x.naam as string);
+    // Portfolio-items (categorie 'Portfolio') horen op /portfolio, niet hier.
+    links = ((l.data ?? []) as DriveLink[]).filter((x) => x.categorie !== "Portfolio");
+    bewaard = (c.data ?? []).map((x) => x.naam as string).filter((n) => n !== "Portfolio");
   } catch (e) {
     schemaOntbreekt = true;
     foutmelding = leesFout(e);
