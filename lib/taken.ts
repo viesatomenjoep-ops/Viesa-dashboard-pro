@@ -49,7 +49,7 @@ export function prioriteitLabel(p: TaakPrioriteit): string {
 
 export const TAAK_PERSONEN: { key: TaakWie; label: string }[] = [
   { key: "tom", label: "Tom" },
-  { key: "joep", label: "Huub" },
+  { key: "joep", label: "Joep" },
   { key: "algemeen", label: "Team Viesa" },
 ];
 

@@ -21,7 +21,7 @@ const STATUS_STIJL: Record<TaakStatus, { icoon: LucideIcon; vlak: string }> = {
 };
 
 /**
- * Taken-overzicht: bovenaan een sticky persoonsfilter (Iedereen/Tom/Huub/Team
+ * Taken-overzicht: bovenaan een sticky persoonsfilter (Iedereen/Tom/Joep/Team
  * Viesa) en daaronder de vier status-tegels. Elke tegel toont de top 3 taken van
  * die kolom (voor de gekozen persoon) en opent bij klikken de volledige lijst.
  */
