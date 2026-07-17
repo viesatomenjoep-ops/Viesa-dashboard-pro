@@ -183,16 +183,60 @@ export default async function DashboardPagina({
         </div>
       </section>
 
-      {/* To-do lijst — direct onder de welkomstbanner */}
-      <section className="mt-6">
-        <TakenLijst
-          taken={taken}
-          klanten={klantOpties}
-          maakActie={maakTaak}
-          wisselActie={wisselTaakKlaar}
-          verwijderActie={verwijderTaak}
-          terug="/dashboard"
-        />
+      {/* Command center — to-do's en de pipeline naast elkaar in de volle breedte */}
+      <section className="mt-6 grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <TakenLijst
+            taken={taken}
+            klanten={klantOpties}
+            maakActie={maakTaak}
+            wisselActie={wisselTaakKlaar}
+            verwijderActie={verwijderTaak}
+            terug="/dashboard"
+          />
+        </div>
+
+        {/* Pipeline-paneel: waarde in één oogopslag + de recente leads */}
+        <Kaart className="flex flex-col">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-medium text-navy">Leads &amp; pipeline</h2>
+            <Link href="/leads" className="text-xs text-oranje hover:underline">
+              Naar pipeline →
+            </Link>
+          </div>
+          <div className="mb-4 grid grid-cols-2 gap-2">
+            <div className="rounded-xl border border-navy/10 bg-achtergrond p-3">
+              <div className="text-lg font-bold leading-tight text-navy">{euro(data.pipelineWaarde)}</div>
+              <div className="text-xs text-navy/50">Pipeline-waarde</div>
+            </div>
+            <div className="rounded-xl border border-navy/10 bg-achtergrond p-3">
+              <div className="text-lg font-bold leading-tight text-navy">{euro(data.prognoseOmzet)}</div>
+              <div className="text-xs text-navy/50">Prognose</div>
+            </div>
+          </div>
+          {data.recenteLeads.length === 0 ? (
+            <p className="text-sm text-navy/50">Nog geen leads.</p>
+          ) : (
+            <ul className="-mx-1 flex-1 space-y-1">
+              {data.recenteLeads.slice(0, 6).map((l) => (
+                <li key={l.id}>
+                  <Link
+                    href={`/leads/${l.id}`}
+                    className="flex items-center gap-2 rounded-lg px-1 py-1.5 hover:bg-navy/[0.03]"
+                  >
+                    <span
+                      className={`h-2.5 w-2.5 shrink-0 rounded-full ${
+                        l.score >= 70 ? "bg-emerald-500" : l.score >= 40 ? "bg-amber-500" : "bg-navy/25"
+                      }`}
+                    />
+                    <span className="min-w-0 flex-1 truncate text-sm text-navy">{l.bedrijf}</span>
+                    <Badge toon={scoreToon(l.score)}>{l.score}</Badge>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Kaart>
       </section>
 
       {/* Follow-ups + Agenda vandaag — 2 per rij, ook op mobiel */}
@@ -289,70 +333,35 @@ export default async function DashboardPagina({
         />
       </section>
 
-      {/* Recente leads + activiteitenlog */}
-      <section className="mt-8 grid gap-6 lg:grid-cols-2">
-        <div>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-medium text-navy">Recente leads</h2>
-            <Link href="/leads" className="text-sm text-oranje hover:underline">
-              Alle leads →
-            </Link>
-          </div>
-          {data.recenteLeads.length === 0 ? (
-            <LegeStaat titel="Nog geen leads" />
-          ) : (
-            <Kaart className="p-0">
-              <ul>
-                {data.recenteLeads.map((l, i) => (
-                  <li key={l.id} className={i > 0 ? "border-t border-navy/10" : ""}>
-                    <Link
-                      href={`/leads/${l.id}`}
-                      className="flex items-center justify-between px-5 py-3 hover:bg-navy/[0.02]"
-                    >
-                      <div>
-                        <span className="text-sm font-medium text-navy">{l.bedrijf}</span>
-                        {l.plaats && (
-                          <span className="block text-xs text-navy/50">{l.plaats}</span>
-                        )}
-                      </div>
-                      <Badge toon={scoreToon(l.score)}>{l.score}</Badge>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </Kaart>
-          )}
-        </div>
-
-        <div>
-          <h2 className="mb-3 text-lg font-medium text-navy">Activiteitenlog</h2>
-          {data.recenteActiviteiten.length === 0 ? (
-            <LegeStaat titel="Nog geen activiteiten" />
-          ) : (
-            <Kaart className="p-0">
-              <ul>
-                {data.recenteActiviteiten.map((a, i) => (
-                  <li
-                    key={a.id}
-                    className={`flex items-center justify-between gap-3 px-5 py-3 ${
-                      i > 0 ? "border-t border-navy/10" : ""
-                    }`}
-                  >
-                    <div className="flex min-w-0 items-center gap-2">
-                      <Badge toon={activiteitToon(a.type)}>{activiteitTypeLabel(a.type)}</Badge>
-                      <span className="truncate text-sm text-navy">
-                        {a.titel ?? a.bedrijf ?? "—"}
-                      </span>
-                    </div>
-                    <span className="shrink-0 text-xs text-navy/40">
-                      {datumKort(a.created_at)}
+      {/* Activiteitenlog */}
+      <section className="mt-8">
+        <h2 className="mb-3 text-lg font-medium text-navy">Activiteitenlog</h2>
+        {data.recenteActiviteiten.length === 0 ? (
+          <LegeStaat titel="Nog geen activiteiten" />
+        ) : (
+          <Kaart className="p-0">
+            <ul>
+              {data.recenteActiviteiten.map((a, i) => (
+                <li
+                  key={a.id}
+                  className={`flex items-center justify-between gap-3 px-5 py-3 ${
+                    i > 0 ? "border-t border-navy/10" : ""
+                  }`}
+                >
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Badge toon={activiteitToon(a.type)}>{activiteitTypeLabel(a.type)}</Badge>
+                    <span className="truncate text-sm text-navy">
+                      {a.titel ?? a.bedrijf ?? "—"}
                     </span>
-                  </li>
-                ))}
-              </ul>
-            </Kaart>
-          )}
-        </div>
+                  </div>
+                  <span className="shrink-0 text-xs text-navy/40">
+                    {datumKort(a.created_at)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Kaart>
+        )}
       </section>
 
       {/* Omzet per maand */}
