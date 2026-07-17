@@ -248,35 +248,40 @@ export default async function MailPagina({
           {foutmelding && <p className="mt-2 font-mono text-xs text-navy/50">Details: {foutmelding}</p>}
         </div>
       ) : (
-        <div className="mx-auto max-w-2xl space-y-4">
-          {/* Mappen — horizontale rij op alle schermen */}
-          <aside>
-            <div className="flex flex-wrap gap-1">
-              {MAPPEN.map((m) => {
-                const actief = m.key === actieveMap;
-                const MapIcoon = m.icoon;
-                return (
-                  <Link
-                    key={m.key}
-                    href={m.key === "inbox" ? "/mail" : `/mail?box=${m.key}`}
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${
-                      actief ? "bg-navy text-white" : "text-navy hover:bg-navy/5"
-                    }`}
-                  >
-                    <MapIcoon size={16} className="shrink-0" />
-                    <span className="flex-1">{m.label}</span>
-                    {aantalPerMap[m.key] > 0 && (
-                      <span className={`text-xs ${actief ? "text-white/70" : "text-navy/40"}`}>
-                        {aantalPerMap[m.key]}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
-          </aside>
+        <div className="space-y-4">
+          {/* Mappen-tabbalk met een doorlopende onderlijn; actieve map krijgt een
+              accent-onderstreping — één geïntegreerd geheel over de volle breedte. */}
+          <div className="-mx-1 flex gap-1 overflow-x-auto border-b border-navy/10 px-1">
+            {MAPPEN.map((m) => {
+              const actief = m.key === actieveMap;
+              const MapIcoon = m.icoon;
+              return (
+                <Link
+                  key={m.key}
+                  href={m.key === "inbox" ? "/mail" : `/mail?box=${m.key}`}
+                  className={`-mb-px flex shrink-0 items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors sm:px-4 ${
+                    actief
+                      ? "border-oranje text-navy"
+                      : "border-transparent text-navy/55 hover:text-navy"
+                  }`}
+                >
+                  <MapIcoon size={16} className="shrink-0" />
+                  <span>{m.label}</span>
+                  {aantalPerMap[m.key] > 0 && (
+                    <span
+                      className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold ${
+                        actief ? "bg-oranje/10 text-oranje" : "bg-navy/5 text-navy/50"
+                      }`}
+                    >
+                      {aantalPerMap[m.key]}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
 
-          {/* Berichtenlijst — compact en passend, klik opent vol scherm */}
+          {/* Berichtenlijst — volle breedte, klik opent vol scherm */}
           <div>
             {zichtbaar.length === 0 ? (
               <Kaart>

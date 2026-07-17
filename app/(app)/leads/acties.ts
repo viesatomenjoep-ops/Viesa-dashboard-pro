@@ -147,6 +147,17 @@ export async function verwijderLead(id: string) {
   redirect("/leads");
 }
 
+/** Werkt alleen de score van een lead bij (inline autosave). */
+export async function werkLeadScore(id: string, score: number) {
+  const veilig = Math.max(0, Math.min(100, Math.round(score)));
+  const supabase = createClient();
+  const { error } = await supabase.from("leads").update({ score: veilig }).eq("id", id);
+  if (error) return { ok: false, fout: error.message };
+  revalidatePath("/leads");
+  revalidatePath(`/leads/${id}`);
+  return { ok: true };
+}
+
 /** Maakt een activiteit bij een lead. */
 export async function maakActiviteit(leadId: string, formData: FormData) {
   const supabase = createClient();

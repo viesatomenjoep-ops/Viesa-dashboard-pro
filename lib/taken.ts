@@ -49,8 +49,8 @@ export function prioriteitLabel(p: TaakPrioriteit): string {
 
 export const TAAK_PERSONEN: { key: TaakWie; label: string }[] = [
   { key: "tom", label: "Tom" },
-  { key: "joep", label: "Joep" },
-  { key: "algemeen", label: "Algemeen" },
+  { key: "joep", label: "Huub" },
+  { key: "algemeen", label: "Team Viesa" },
 ];
 
 export const TAAK_PERIODES: { key: TaakPeriode; label: string }[] = [

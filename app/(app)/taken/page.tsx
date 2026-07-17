@@ -1,19 +1,15 @@
-import { CheckCircle2, Clock, KanbanSquare, ListTodo, Loader, Plus } from "lucide-react";
+import { KanbanSquare, Plus } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
-import { StatKaart } from "@/components/ui/StatKaart";
-import { TegelSheet } from "@/components/ui/TegelSheet";
 import { VolScherm } from "@/components/ui/VolScherm";
 import { LegeStaat } from "@/components/ui/LegeStaat";
 import { OpslagMelding } from "@/components/OpslagMelding";
-import { TakenKolomLijst } from "@/components/TakenKolomLijst";
+import { TakenOverzicht } from "@/components/TakenOverzicht";
 import { createClient } from "@/lib/supabase/server";
 import {
   TAAK_PERSONEN,
   TAAK_PERIODES,
   TAAK_PRIORITEITEN,
-  TAAK_STATUSSEN,
   type Taak,
-  type TaakStatus,
 } from "@/lib/taken";
 import { maakTaak, bewerkTaak, verwijderTaak } from "./acties";
 import { TakenKanban } from "./TakenKanban";
@@ -54,14 +50,9 @@ export default async function TakenPagina({
     /* klanten-tabel nog niet aanwezig */
   }
 
-  const tel = (s: Taak["status"]) => taken.filter((t) => t.status === s).length;
-
   return (
     <>
-      <PaginaKop
-        titel="Taken"
-        omschrijving="Sleep taken tussen de kolommen om de status bij te werken."
-      />
+      <PaginaKop titel="Taken" />
 
       <OpslagMelding toon={Boolean(searchParams.taak)} tekst="Taak opgeslagen" />
       {searchParams.taakfout && (
@@ -70,30 +61,12 @@ export default async function TakenPagina({
         </p>
       )}
 
-      {/* Vier tegels — klikken opent een vol scherm met die taken (bewerken +
-          verwijderen), sluit met X. */}
-      <section className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {(
-          [
-            { status: "todo", label: "Te doen", icoon: ListTodo, toon: "blauw" },
-            { status: "bezig", label: "Bezig", icoon: Loader, toon: "amber" },
-            { status: "review", label: "Review", icoon: Clock, toon: "paars" },
-            { status: "klaar", label: "Klaar", icoon: CheckCircle2, toon: "groen" },
-          ] as { status: TaakStatus; label: string; icoon: typeof ListTodo; toon: "blauw" | "amber" | "paars" | "groen" }[]
-        ).map((k) => (
-          <TegelSheet
-            key={k.status}
-            titel={TAAK_STATUSSEN.find((s) => s.key === k.status)?.label ?? k.label}
-            tegel={<StatKaart label={k.label} waarde={String(tel(k.status))} icoon={k.icoon} toon={k.toon} />}
-          >
-            <TakenKolomLijst
-              taken={taken.filter((t) => t.status === k.status)}
-              bewerkActie={bewerkTaak}
-              verwijderActie={verwijderTaak}
-            />
-          </TegelSheet>
-        ))}
-      </section>
+      {/* Persoonsfilter + vier status-tegels met een mini top-3. */}
+      {!schemaOntbreekt && (
+        <div className="mb-8">
+          <TakenOverzicht taken={taken} bewerkActie={bewerkTaak} verwijderActie={verwijderTaak} />
+        </div>
+      )}
 
       {schemaOntbreekt ? (
         <div className="rounded-xl border border-oranje/40 bg-oranje/5 p-4 text-sm text-navy">

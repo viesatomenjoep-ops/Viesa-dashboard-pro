@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { LEAD_BRONNEN, LEAD_STATUSSEN, scoreToon, type Lead } from "@/lib/leads";
+import { LEAD_BRONNEN, LEAD_STATUSSEN, type Lead } from "@/lib/leads";
 import { haalCategorieen } from "@/lib/categorieen";
 import {
   activiteitTypeLabel,
@@ -10,6 +10,7 @@ import {
 } from "@/lib/activiteiten";
 import { Kaart } from "@/components/ui/Kaart";
 import { Badge } from "@/components/ui/Badge";
+import { ScoreVeld } from "@/components/ScoreVeld";
 import { LandRegio } from "@/components/LandRegio";
 import { WebsiteVeld } from "@/components/WebsiteVeld";
 import { datumKort } from "@/lib/format";
@@ -25,6 +26,7 @@ import {
   rondActiviteitAf,
   maakLeadNotitie,
   verwijderLeadNotitie,
+  werkLeadScore,
 } from "../acties";
 
 export default async function LeadDetail({
@@ -65,15 +67,16 @@ export default async function LeadDetail({
         <div>
           <Link
             href="/leads"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-navy/20 px-4 py-2 text-base font-semibold text-navy hover:bg-navy/5"
+            className="inline-flex items-center gap-1 rounded-lg border border-navy/20 px-3 py-1.5 text-sm font-medium text-navy hover:bg-navy/5"
           >
             ← Terug naar pipeline
           </Link>
-          <h1 className="mt-1 flex items-center gap-2 text-2xl font-semibold text-navy">
-            {lead.bedrijf}
-            <Badge toon={scoreToon(lead.score)}>score {lead.score}</Badge>
-          </h1>
-          {lead.plaats && <p className="text-sm text-navy/50">{lead.plaats}</p>}
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
+            <h1 className="text-2xl font-semibold text-navy">{lead.bedrijf}</h1>
+            {lead.plaats && <span className="text-sm text-navy/50">{lead.plaats}</span>}
+            {/* Score naast bedrijf/plaats — direct aanpasbaar met autosave */}
+            <ScoreVeld id={lead.id} score={lead.score} opslaanActie={werkLeadScore} />
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {lead.klant_id ? (
