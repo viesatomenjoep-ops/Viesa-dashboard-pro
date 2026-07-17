@@ -1,6 +1,8 @@
 import { AlertTriangle, CalendarClock, CheckCircle2, FileClock } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { StatKaart } from "@/components/ui/StatKaart";
+import { TegelSheet } from "@/components/ui/TegelSheet";
+import { FacturenLijst } from "@/components/FacturenLijst";
 import { Kaart } from "@/components/ui/Kaart";
 import { Badge } from "@/components/ui/Badge";
 import { LegeStaat } from "@/components/ui/LegeStaat";
@@ -47,15 +49,14 @@ export default async function FacturenPagina({
   const vervallen = facturen.filter((f) => f.status === "vervallen");
 
   const nu = new Date();
-  const betaaldMaand = facturen
-    .filter(
-      (f) =>
-        f.status === "betaald" &&
-        f.betaald_op &&
-        new Date(f.betaald_op).getMonth() === nu.getMonth() &&
-        new Date(f.betaald_op).getFullYear() === nu.getFullYear(),
-    )
-    .reduce((s, f) => s + Number(f.bedrag || 0), 0);
+  const betaaldMaandLijst = facturen.filter(
+    (f) =>
+      f.status === "betaald" &&
+      f.betaald_op &&
+      new Date(f.betaald_op).getMonth() === nu.getMonth() &&
+      new Date(f.betaald_op).getFullYear() === nu.getFullYear(),
+  );
+  const betaaldMaand = betaaldMaandLijst.reduce((s, f) => s + Number(f.bedrag || 0), 0);
 
   const termijnen = facturen
     .map(betaaltermijnDagen)
@@ -73,33 +74,55 @@ export default async function FacturenPagina({
         actie={<Logo size={48} />}
       />
 
+      {/* Vier tegels — klikken opent een vol scherm met de bijbehorende facturen (X sluit). */}
       <section className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatKaart
-          label="Open"
-          waarde={euro(open.reduce((s, f) => s + Number(f.bedrag || 0), 0))}
-          subtekst={`${open.length} facturen`}
-          icoon={FileClock}
-          toon="blauw"
-        />
-        <StatKaart
-          label="Vervallen"
-          waarde={euro(vervallen.reduce((s, f) => s + Number(f.bedrag || 0), 0))}
-          subtekst={`${vervallen.length} facturen`}
-          icoon={AlertTriangle}
-          toon={vervallen.length > 0 ? "rood" : "amber"}
-        />
-        <StatKaart
-          label="Betaald deze maand"
-          waarde={euro(betaaldMaand)}
-          icoon={CheckCircle2}
-          toon="groen"
-        />
-        <StatKaart
-          label="Gem. betaaltermijn"
-          waarde={gemTermijn === null ? "—" : `${gemTermijn} dgn`}
-          icoon={CalendarClock}
-          toon="paars"
-        />
+        <TegelSheet
+          titel="Openstaande facturen"
+          tegel={
+            <StatKaart
+              label="Open"
+              waarde={euro(open.reduce((s, f) => s + Number(f.bedrag || 0), 0))}
+              subtekst={`${open.length} facturen`}
+              icoon={FileClock}
+              toon="blauw"
+            />
+          }
+        >
+          <FacturenLijst facturen={open} />
+        </TegelSheet>
+        <TegelSheet
+          titel="Vervallen facturen"
+          tegel={
+            <StatKaart
+              label="Vervallen"
+              waarde={euro(vervallen.reduce((s, f) => s + Number(f.bedrag || 0), 0))}
+              subtekst={`${vervallen.length} facturen`}
+              icoon={AlertTriangle}
+              toon={vervallen.length > 0 ? "rood" : "amber"}
+            />
+          }
+        >
+          <FacturenLijst facturen={vervallen} />
+        </TegelSheet>
+        <TegelSheet
+          titel="Betaald deze maand"
+          tegel={<StatKaart label="Betaald deze maand" waarde={euro(betaaldMaand)} icoon={CheckCircle2} toon="groen" />}
+        >
+          <FacturenLijst facturen={betaaldMaandLijst} />
+        </TegelSheet>
+        <TegelSheet
+          titel="Alle facturen"
+          tegel={
+            <StatKaart
+              label="Gem. betaaltermijn"
+              waarde={gemTermijn === null ? "—" : `${gemTermijn} dgn`}
+              icoon={CalendarClock}
+              toon="paars"
+            />
+          }
+        >
+          <FacturenLijst facturen={facturen} />
+        </TegelSheet>
       </section>
 
       {searchParams.fout && (

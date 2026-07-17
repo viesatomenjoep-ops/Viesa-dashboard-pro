@@ -1,4 +1,4 @@
-import { CalendarClock, CalendarDays, CalendarRange } from "lucide-react";
+import { CalendarClock, CalendarDays, CalendarRange, Plus } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { StatKaart } from "@/components/ui/StatKaart";
 import { createClient } from "@/lib/supabase/server";
@@ -7,19 +7,27 @@ import type { AgendaItem } from "@/lib/google";
 import { leesFout } from "@/lib/fout";
 import { VolScherm } from "@/components/ui/VolScherm";
 import { MaandAgenda } from "@/components/MaandAgenda";
-import { maakHerinnering, verwijderHerinnering } from "./acties";
+import { OpslagMelding } from "@/components/OpslagMelding";
+import { AgendaToevoegen } from "@/components/AgendaToevoegen";
+import { maakAgendaItem, verwijderHerinnering, verwijderActiviteit } from "./acties";
 
 export const dynamic = "force-dynamic";
 
 type Bron = { id: string; naam: string; ical_url: string };
 type Herinnering = { id: string; titel: string; wanneer: string };
-type Toon = AgendaItem & { herinneringId?: string };
+type Activiteit = {
+  id: string;
+  titel: string;
+  locatie: string | null;
+  begin_ts: string;
+  eind_ts: string | null;
+  hele_dag: boolean;
+};
+type Toon = AgendaItem & { herinneringId?: string; activiteitId?: string };
 
-const inputCls =
-  "rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy";
-
-// Server draait in UTC; agenda-tijden altijd tonen in de Nederlandse tijdzone.
+// Agenda-tijden altijd tonen in de Nederlandse tijdzone.
 const TZ = "Europe/Amsterdam";
+// (geen los formulier meer; toevoegen gebeurt via AgendaToevoegen)
 
 /** Stabiele dag-sleutel (YYYY-MM-DD) in NL-tijdzone, voor groeperen per dag. */
 function dagSleutel(iso: string): string {
@@ -49,12 +57,13 @@ function embedUrl(bronnen: Bron[]): string | null {
 export default async function AgendaPagina({
   searchParams,
 }: {
-  searchParams: { fout?: string };
+  searchParams: { fout?: string; opgeslagen?: string };
 }) {
   const supabase = createClient();
 
   let bronnen: Bron[] = [];
   let herinneringen: Herinnering[] = [];
+  let activiteiten: Activiteit[] = [];
   let schemaOntbreekt = false;
   let foutmelding = "";
   try {
@@ -76,6 +85,15 @@ export default async function AgendaPagina({
     herinneringen = (data ?? []) as Herinnering[];
   } catch {
     /* herinneringen-tabel nog niet aanwezig */
+  }
+  try {
+    const { data } = await supabase
+      .from("agenda_activiteiten")
+      .select("id, titel, locatie, begin_ts, eind_ts, hele_dag")
+      .order("begin_ts");
+    activiteiten = (data ?? []) as Activiteit[];
+  } catch {
+    /* agenda_activiteiten-tabel nog niet aanwezig (migratie 0036) */
   }
 
   // Venster voor de maandkalender: vanaf het begin van deze maand, ~3 maanden
@@ -114,6 +132,22 @@ export default async function AgendaPagina({
     });
   }
 
+  // Eigen agenda-activiteiten (onze eigen agenda) binnen het venster meenemen.
+  for (const a of activiteiten) {
+    const t = new Date(a.begin_ts).getTime();
+    if (t < maandStart.getTime() || t > vensterEind) continue;
+    items.push({
+      id: `activiteit-${a.id}`,
+      activiteitId: a.id,
+      titel: a.titel,
+      start: a.begin_ts,
+      eind: a.eind_ts,
+      heleDag: a.hele_dag,
+      locatie: a.locatie,
+      link: null,
+    });
+  }
+
   items.sort((a, b) => a.start.localeCompare(b.start));
 
   const vandaag = items.filter((i) => isVandaag(i.start)).length;
@@ -127,18 +161,31 @@ export default async function AgendaPagina({
       <PaginaKop
         titel="Agenda"
         actie={
-          embed ? (
-            <VolScherm label="Google-weergave" titel="Google Agenda" breed="vol" toon="navy" vullend>
-              <iframe
-                src={embed}
-                title="Google Agenda"
-                className="h-full w-full"
-                style={{ border: 0 }}
-              />
+          <div className="flex flex-wrap gap-2">
+            <VolScherm
+              label="Toevoegen"
+              titel="Nieuw"
+              breed="3xl"
+              icoon={<Plus size={16} />}
+              standaardOpen={Boolean(searchParams.fout)}
+            >
+              <AgendaToevoegen maakActie={maakAgendaItem} vandaag={vandaagSleutel} />
             </VolScherm>
-          ) : undefined
+            {embed && (
+              <VolScherm label="Google-weergave" titel="Google Agenda" breed="vol" toon="navy" vullend>
+                <iframe
+                  src={embed}
+                  title="Google Agenda"
+                  className="h-full w-full"
+                  style={{ border: 0 }}
+                />
+              </VolScherm>
+            )}
+          </div>
         }
       />
+
+      <OpslagMelding toon={Boolean(searchParams.opgeslagen)} tekst="Toegevoegd aan agenda" />
 
       <section className="mb-8 grid grid-cols-3 gap-4">
         <StatKaart
@@ -168,27 +215,6 @@ export default async function AgendaPagina({
         </div>
       ) : (
         <>
-          {/* Eigen herinnering toevoegen — één knop die volledig openklapt */}
-          <div className="mb-6">
-            <VolScherm label="Herinnering +" titel="Nieuwe herinnering">
-              <form action={maakHerinnering} className="space-y-3">
-                <input
-                  name="titel"
-                  required
-                  placeholder="Waar wil je aan denken? *"
-                  className={`${inputCls} w-full`}
-                />
-                <input name="wanneer" type="datetime-local" required className={`${inputCls} w-full`} />
-                <button
-                  type="submit"
-                  className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"
-                >
-                  Herinnering opslaan
-                </button>
-              </form>
-            </VolScherm>
-          </div>
-
           {bronFouten.length > 0 && (
             <div className="mb-6 rounded-xl border border-oranje/40 bg-oranje/5 p-3 text-xs text-navy/70">
               {bronFouten.map((f, i) => (
@@ -201,6 +227,7 @@ export default async function AgendaPagina({
             items={items}
             vandaagSleutel={vandaagSleutel}
             verwijderHerinnering={verwijderHerinnering}
+            verwijderActiviteit={verwijderActiviteit}
           />
         </>
       )}

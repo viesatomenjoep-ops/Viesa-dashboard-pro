@@ -98,25 +98,27 @@ export function MailOpstellen({
         }
       }}
     >
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <label className="text-sm font-medium text-navy">Sjabloon:</label>
-        <select
-          value={sjabloonId}
-          onChange={(e) => kiesSjabloon(e.target.value)}
-          className="rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
-        >
-          <option value="">Leeg bericht</option>
-          {sjablonen.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.naam}
-            </option>
-          ))}
-        </select>
-        <span className="text-xs text-navy/40">
+      <div className="mb-3">
+        <div className="flex items-center gap-2">
+          <label className="shrink-0 text-sm font-medium text-navy">Sjabloon:</label>
+          <select
+            value={sjabloonId}
+            onChange={(e) => kiesSjabloon(e.target.value)}
+            className="min-w-0 flex-1 rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
+          >
+            <option value="">Leeg bericht</option>
+            {sjablonen.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.naam}
+              </option>
+            ))}
+          </select>
+        </div>
+        <p className="mt-1 text-xs text-navy/40">
           {sjablonen.length === 0
             ? "Nog geen sjablonen — maak ze bij Sjablonen."
             : "Vult onderwerp + bericht; kies ook een klant om variabelen in te vullen."}
-        </span>
+        </p>
       </div>
 
       {/* Klant kiezen → vult e-mailadres én variabelen */}

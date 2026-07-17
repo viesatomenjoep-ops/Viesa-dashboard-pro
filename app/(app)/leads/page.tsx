@@ -1,6 +1,8 @@
 import { Coins, Maximize2, Plus, Trophy, Upload, Users, Waypoints } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { StatKaart } from "@/components/ui/StatKaart";
+import { TegelSheet } from "@/components/ui/TegelSheet";
+import { LeadsLijst } from "@/components/LeadsLijst";
 import { VolScherm } from "@/components/ui/VolScherm";
 import { createClient } from "@/lib/supabase/server";
 import { type Lead } from "@/lib/leads";
@@ -59,17 +61,40 @@ export default async function LeadsPagina({
         omschrijving="Sleep leads tussen de kolommen om de status bij te werken."
       />
 
+      {/* Vier tegels — klikken opent een vol scherm met de bijbehorende leads (X sluit). */}
       <section className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatKaart label="Totaal leads" waarde={String(leads.length)} icoon={Users} toon="teal" />
-        <StatKaart label="Actief in pipeline" waarde={String(actief.length)} icoon={Waypoints} toon="blauw" />
-        <StatKaart label="Pipeline-waarde" waarde={euro(pipelineWaarde)} icoon={Coins} toon="amber" />
-        <StatKaart
-          label="Gewonnen"
-          waarde={String(gewonnen)}
-          subtekst={`gem. score ${gemScore}`}
-          icoon={Trophy}
-          toon="groen"
-        />
+        <TegelSheet
+          titel="Alle leads"
+          tegel={<StatKaart label="Totaal leads" waarde={String(leads.length)} icoon={Users} toon="teal" />}
+        >
+          <LeadsLijst leads={leads} />
+        </TegelSheet>
+        <TegelSheet
+          titel="Actief in pipeline"
+          tegel={<StatKaart label="Actief in pipeline" waarde={String(actief.length)} icoon={Waypoints} toon="blauw" />}
+        >
+          <LeadsLijst leads={actief} />
+        </TegelSheet>
+        <TegelSheet
+          titel="Pipeline-waarde"
+          tegel={<StatKaart label="Pipeline-waarde" waarde={euro(pipelineWaarde)} icoon={Coins} toon="amber" />}
+        >
+          <LeadsLijst leads={actief} />
+        </TegelSheet>
+        <TegelSheet
+          titel="Gewonnen leads"
+          tegel={
+            <StatKaart
+              label="Gewonnen"
+              waarde={String(gewonnen)}
+              subtekst={`gem. score ${gemScore}`}
+              icoon={Trophy}
+              toon="groen"
+            />
+          }
+        >
+          <LeadsLijst leads={leads.filter((l) => l.status === "gewonnen")} />
+        </TegelSheet>
       </section>
 
       {searchParams.fout && (

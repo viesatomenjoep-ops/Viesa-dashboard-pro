@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { Maximize2, X } from "lucide-react";
 import {
   DndContext,
   PointerSensor,
@@ -113,8 +115,19 @@ function NoteKaart({
 }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: note.id });
   const [bewerk, setBewerk] = useState(false);
+  const [vol, setVol] = useState(false);
+  const [tekst, setTekst] = useState(note.tekst);
+  const [gemonteerd, setGemonteerd] = useState(false);
   const dx = transform?.x ?? 0;
   const dy = transform?.y ?? 0;
+
+  useEffect(() => setGemonteerd(true), []);
+
+  function sluitVol() {
+    werkNoteTekst(note.id, tekst);
+    onTekst(tekst);
+    setVol(false);
+  }
 
   return (
     <div
@@ -148,23 +161,35 @@ function NoteKaart({
             />
           ))}
         </div>
-        <button
-          onClick={() => {
-            onVerwijder();
-            verwijderNote(note.id);
-          }}
-          className="text-black/40 hover:text-black/70"
-          aria-label="verwijderen"
-        >
-          ×
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setVol(true)}
+            className="text-black/40 hover:text-black/70"
+            aria-label="Vergroten"
+          >
+            <Maximize2 size={13} />
+          </button>
+          <button
+            onClick={() => {
+              onVerwijder();
+              verwijderNote(note.id);
+            }}
+            className="text-black/40 hover:text-black/70"
+            aria-label="verwijderen"
+          >
+            ×
+          </button>
+        </div>
       </div>
 
       {bewerk ? (
         <textarea
           autoFocus
-          defaultValue={note.tekst}
-          onChange={(e) => onTekst(e.target.value)}
+          defaultValue={tekst}
+          onChange={(e) => {
+            setTekst(e.target.value);
+            onTekst(e.target.value);
+          }}
           onBlur={(e) => {
             werkNoteTekst(note.id, e.target.value);
             setBewerk(false);
@@ -172,13 +197,54 @@ function NoteKaart({
           className="flex-1 resize-none rounded-b-md bg-transparent p-2 text-sm text-navy outline-none"
         />
       ) : (
+        // Eén klik op het gele vlak opent het vol scherm; dubbelklik bewerkt inline.
         <div
+          onClick={() => setVol(true)}
           onDoubleClick={() => setBewerk(true)}
-          className="flex-1 whitespace-pre-wrap p-2 text-sm text-navy"
+          className="flex-1 cursor-pointer whitespace-pre-wrap p-2 text-sm text-navy"
         >
-          {note.tekst || <span className="text-navy/30">Dubbelklik om te typen…</span>}
+          {tekst || <span className="text-navy/30">Klik om te typen…</span>}
         </div>
       )}
+
+      {/* Vol scherm om de sticky note comfortabel te bewerken. */}
+      {vol &&
+        gemonteerd &&
+        createPortal(
+          <div className="fixed inset-0 z-[60] flex flex-col" style={{ backgroundColor: note.kleur }}>
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex gap-1.5">
+                {KLEUREN.map((k) => (
+                  <button
+                    key={k}
+                    onClick={() => {
+                      onKleur(k);
+                      werkNoteKleur(note.id, k);
+                    }}
+                    style={{ backgroundColor: k }}
+                    className="h-6 w-6 rounded-full border border-black/10"
+                    aria-label="kleur"
+                  />
+                ))}
+              </div>
+              <button
+                onClick={sluitVol}
+                aria-label="Sluiten"
+                className="rounded-lg border border-black/15 bg-white/50 p-2 text-black/60 hover:bg-white/70"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <textarea
+              autoFocus
+              value={tekst}
+              onChange={(e) => setTekst(e.target.value)}
+              placeholder="Typ je idee…"
+              className="flex-1 resize-none bg-transparent px-5 pb-6 text-lg text-navy outline-none"
+            />
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

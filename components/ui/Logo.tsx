@@ -38,11 +38,11 @@ export function Logo({
       </span>
     );
   }
-  // Navy tegel op donkere achtergrond: dezelfde blauwtint als de zijbalk met een
-  // fijne witte rand, zodat het logo groot en met minimale rand toch afgebakend blijft.
+  // Navy tegel op donkere achtergrond: dezelfde blauwtint als de zijbalk, geen wit
+  // meer om het logo. Een héél fijne, subtiele rand houdt de tegel afgebakend.
   if (variant === "navytegel") {
     return (
-      <span className="inline-flex items-center justify-center rounded-xl bg-navy p-1 ring-1 ring-white/25">
+      <span className="inline-flex items-center justify-center rounded-xl bg-navy p-1 ring-1 ring-white/10">
         {img}
       </span>
     );

@@ -31,6 +31,7 @@ const TABELLEN = [
   "design_docs", "whiteboards", "stickies", "drive_links", "prospector_runs",
   "integraties", "ms_tokens", "klanten", "audits", "bestand_categorieen",
   "emails", "notificaties", "chat_berichten", "sjablonen", "administratie",
+  "agenda_activiteiten",
 ];
 
 let geslaagd = true;

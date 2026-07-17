@@ -26,7 +26,8 @@ import { factuurStatusLabel, factuurStatusToon, type FactuurStatus } from "@/lib
 import { euro, datumKort } from "@/lib/format";
 import { leesFout } from "@/lib/fout";
 import { CategorieChips } from "@/components/CategorieChips";
-import { CategorieKiezer } from "@/components/CategorieKiezer";
+import { CategorieVolScherm } from "@/components/CategorieVolScherm";
+import { OpslagMelding } from "@/components/OpslagMelding";
 import {
   voegBestandToe,
   verwijderBestand,
@@ -64,6 +65,7 @@ export default async function BestandenPagina({
     categorie?: string;
     fout?: string;
     scan?: string;
+    geup?: string;
     atype?: string;
     dag?: string;
     maand?: string;
@@ -190,6 +192,7 @@ export default async function BestandenPagina({
         omschrijving="Upload bestanden naar Drive of bewaar links — geordend in categorieën."
       />
 
+      <OpslagMelding toon={Boolean(searchParams.geup || searchParams.scan)} tekst="Opgeslagen" />
       {searchParams.fout && (
         <p className="mb-4 rounded-lg bg-oranje/10 px-3 py-2 text-sm text-oranje">
           {searchParams.fout}
@@ -495,10 +498,17 @@ export default async function BestandenPagina({
       </div>
 
       <div className="order-2">
-      {/* Categorie-filter als één uitklapknop */}
-      {!schemaOntbreekt && (
+      {/* Categorie-chips: tik een categorie → bestanden openen in vol scherm (X sluit) */}
+      {!schemaOntbreekt && categorieen.length > 0 && (
         <div className="mb-3">
-          <CategorieKiezer categorieen={categorieen} actief={filter} />
+          <p className="mb-2 text-sm font-medium text-navy">Open een categorie</p>
+          <CategorieVolScherm
+            categorieen={categorieen}
+            links={links}
+            categorieenLijstId="categorieen-lijst"
+            bewerkActie={bewerkBestand}
+            verwijderActie={verwijderBestand}
+          />
         </div>
       )}
       {schemaOntbreekt ? (

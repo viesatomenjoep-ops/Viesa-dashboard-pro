@@ -59,30 +59,30 @@ export function AppShell({
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 border-b border-navy/10 bg-white px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-2">
+        <header className="sticky top-0 z-30 border-b border-navy/10 bg-white px-4 py-4 sm:px-6">
+          <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setOpen(true)}
               aria-label="Menu openen"
-              className="rounded-lg border border-navy/20 p-2.5 text-navy md:hidden"
+              className="rounded-xl border border-navy/20 p-3 text-navy md:hidden"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="3" y1="6" x2="21" y2="6" />
                 <line x1="3" y1="12" x2="21" y2="12" />
                 <line x1="3" y1="18" x2="21" y2="18" />
               </svg>
             </button>
 
-            {/* Merk — logo + naam (klein), tussen hamburger en de rest. Alleen op
+            {/* Merk — logo + naam, tussen hamburger en de rest. Alleen op
                 mobiel; op desktop staat het merk al in de zijbalk. Klikt naar home. */}
-            <Link href="/" className="flex min-w-0 flex-1 items-center gap-2 md:hidden">
-              <Logo size={28} />
+            <Link href="/" className="flex min-w-0 flex-1 items-center gap-2.5 md:hidden">
+              <Logo size={38} />
               <span className="min-w-0 leading-tight">
-                <span className="block truncate font-merk text-sm font-semibold text-navy">
+                <span className="block truncate font-merk text-base font-semibold text-navy">
                   Viesa Automations
                 </span>
-                <span className="block text-[10px] font-medium text-navy/50">Dashboard</span>
+                <span className="block text-xs font-medium text-navy/50">Dashboard</span>
               </span>
             </Link>
 

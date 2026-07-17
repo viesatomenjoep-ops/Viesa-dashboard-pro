@@ -40,9 +40,9 @@ export function MeldingenDropdown({
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-label="Notificaties"
-        className="relative rounded-lg border border-navy/20 p-2 text-navy hover:bg-navy/5"
+        className="relative rounded-xl border border-navy/20 p-2.5 text-navy hover:bg-navy/5"
       >
-        <Bell size={18} />
+        <Bell size={23} />
         {ongelezen > 0 && (
           <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-oranje px-1 text-[10px] font-semibold text-white">
             {ongelezen > 9 ? "9+" : ongelezen}

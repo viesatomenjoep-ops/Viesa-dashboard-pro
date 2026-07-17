@@ -59,3 +59,20 @@ export async function verwijderTaak(id: string) {
   revalidatePath("/");
   revalidatePath("/taken");
 }
+
+/** Werkt titel, status en prioriteit van een taak bij (bewerken in het vol scherm). */
+export async function bewerkTaak(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  const titel = String(formData.get("titel") ?? "").trim();
+  const status = (String(formData.get("status") ?? "todo") || "todo") as TaakStatus;
+  const prioriteit = (String(formData.get("prioriteit") ?? "normaal") ||
+    "normaal") as TaakPrioriteit;
+  if (!id || !titel) return;
+  const supabase = createClient();
+  await supabase
+    .from("taken")
+    .update({ titel, status, prioriteit, klaar: status === "klaar" })
+    .eq("id", id);
+  revalidatePath("/");
+  revalidatePath("/taken");
+}

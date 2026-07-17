@@ -3,6 +3,8 @@ import { Plus, Trash2, Download } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { Kaart } from "@/components/ui/Kaart";
 import { LegeStaat } from "@/components/ui/LegeStaat";
+import { VolScherm } from "@/components/ui/VolScherm";
+import { OpslagMelding } from "@/components/OpslagMelding";
 import { GroteEditor } from "@/components/GroteEditor";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -88,9 +90,7 @@ export default async function SjablonenPagina({
         ))}
       </div>
 
-      {searchParams.opgeslagen && (
-        <p className="mb-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">Sjabloon opgeslagen.</p>
-      )}
+      <OpslagMelding toon={Boolean(searchParams.opgeslagen)} tekst="Sjabloon opgeslagen" />
       {searchParams.geimporteerd && (
         <p className="mb-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
           {searchParams.geimporteerd} standaardsjablonen geïmporteerd.
@@ -106,35 +106,32 @@ export default async function SjablonenPagina({
           <p className="mt-1 text-navy/70">Voer 0032_sjablonen.sql uit in de Supabase SQL Editor.</p>
           {foutmelding && <p className="mt-2 font-mono text-xs text-navy/50">Details: {foutmelding}</p>}
         </div>
-      ) : bewerken || nieuw ? (
-        // ---- Bewerk-/nieuw-formulier ----
-        <form
-          action={bewerken ? werkSjabloonBij.bind(null, bewerken.id, type) : maakSjabloon}
-          className="space-y-3"
-        >
+      ) : bewerken ? (
+        // ---- Bewerk-formulier (bestaand sjabloon) ----
+        <form action={werkSjabloonBij.bind(null, bewerken.id, type)} className="space-y-3">
           <input type="hidden" name="type" value={type} />
           <div className="flex items-center justify-between">
             <Link href={`/sjablonen?type=${type}`} className="text-sm text-navy/60 hover:underline">
               ← Terug naar {sjabloonTypeLabel(type).toLowerCase()}-sjablonen
             </Link>
-            {bewerken && <VerwijderKnop id={bewerken.id} type={type} />}
+            <VerwijderKnop id={bewerken.id} type={type} />
           </div>
           <input
             name="naam"
             required
-            defaultValue={bewerken?.naam ?? ""}
+            defaultValue={bewerken.naam ?? ""}
             placeholder="Naam van het sjabloon *"
             className={inputCls}
           />
           {isEmail && (
             <input
               name="onderwerp"
-              defaultValue={bewerken?.onderwerp ?? ""}
+              defaultValue={bewerken.onderwerp ?? ""}
               placeholder="Onderwerp (mag {{bedrijf}} bevatten)"
               className={inputCls}
             />
           )}
-          <GroteEditor naamHtml="inhoud_html" beginHtml={bewerken?.inhoud_html ?? ""} minHoogte={360} />
+          <GroteEditor naamHtml="inhoud_html" beginHtml={bewerken.inhoud_html ?? ""} minHoogte={360} />
           <button
             type="submit"
             className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"
@@ -143,15 +140,40 @@ export default async function SjablonenPagina({
           </button>
         </form>
       ) : (
-        // ---- Lijst ----
+        // ---- Lijst + "nieuw" opent de editor in vol scherm ----
         <>
           <div className="mb-4">
-            <Link
-              href={`/sjablonen?type=${type}&nieuw=1`}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"
+            <VolScherm
+              label={`Nieuw ${sjabloonTypeLabel(type).toLowerCase()}-sjabloon`}
+              titel={`Nieuw ${sjabloonTypeLabel(type).toLowerCase()}-sjabloon`}
+              breed="vol"
+              standaardOpen={nieuw}
+              icoon={<Plus size={16} />}
             >
-              <Plus size={16} /> Nieuw {sjabloonTypeLabel(type).toLowerCase()}-sjabloon
-            </Link>
+              <form action={maakSjabloon} className="space-y-3">
+                <input type="hidden" name="type" value={type} />
+                <input
+                  name="naam"
+                  required
+                  placeholder="Naam van het sjabloon *"
+                  className={inputCls}
+                />
+                {isEmail && (
+                  <input
+                    name="onderwerp"
+                    placeholder="Onderwerp (mag {{bedrijf}} bevatten)"
+                    className={inputCls}
+                  />
+                )}
+                <GroteEditor naamHtml="inhoud_html" minHoogte={360} />
+                <button
+                  type="submit"
+                  className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"
+                >
+                  Opslaan
+                </button>
+              </form>
+            </VolScherm>
           </div>
           {sjablonen.length === 0 ? (
             <LegeStaat

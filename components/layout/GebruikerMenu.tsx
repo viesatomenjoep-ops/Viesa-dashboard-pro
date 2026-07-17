@@ -31,11 +31,11 @@ export function GebruikerMenu({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 rounded-lg border border-navy/20 py-1 pl-1 pr-2 hover:bg-navy/5"
+        className="flex items-center gap-2 rounded-xl border border-navy/20 py-1.5 pl-1.5 pr-2.5 hover:bg-navy/5"
       >
-        <Logo size={28} />
+        <Logo size={36} />
         {email && <span className="hidden max-w-[160px] truncate text-sm text-navy/70 sm:inline">{email}</span>}
-        <ChevronDown size={15} className="text-navy/50" />
+        <ChevronDown size={18} className="text-navy/50" />
       </button>
 
       {open && (

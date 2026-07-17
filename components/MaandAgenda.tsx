@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight, MapPin, X } from "lucide-react";
 import type { AgendaItem } from "@/lib/google";
 
-type Item = AgendaItem & { herinneringId?: string };
+type Item = AgendaItem & { herinneringId?: string; activiteitId?: string };
 
 const TZ = "Europe/Amsterdam";
 const WEEKDAGEN = ["M", "D", "W", "D", "V", "Z", "Z"];
@@ -51,10 +51,12 @@ export function MaandAgenda({
   items,
   vandaagSleutel,
   verwijderHerinnering,
+  verwijderActiviteit,
 }: {
   items: Item[];
   vandaagSleutel: string;
   verwijderHerinnering: (id: string) => Promise<void>;
+  verwijderActiviteit?: (id: string) => Promise<void>;
 }) {
   const [jaar, setJaar] = useState(() => Number(vandaagSleutel.slice(0, 4)));
   const [maand0, setMaand0] = useState(() => Number(vandaagSleutel.slice(5, 7)) - 1);
@@ -213,6 +215,17 @@ export function MaandAgenda({
                       <button
                         type="submit"
                         aria-label="Herinnering verwijderen"
+                        className="text-navy/30 hover:text-red-500"
+                      >
+                        <X size={15} />
+                      </button>
+                    </form>
+                  )}
+                  {it.activiteitId && verwijderActiviteit && (
+                    <form action={verwijderActiviteit.bind(null, it.activiteitId)}>
+                      <button
+                        type="submit"
+                        aria-label="Activiteit verwijderen"
                         className="text-navy/30 hover:text-red-500"
                       >
                         <X size={15} />
