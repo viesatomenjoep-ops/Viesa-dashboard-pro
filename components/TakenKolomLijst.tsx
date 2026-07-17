@@ -11,6 +11,8 @@ import {
   TAAK_PRIORITEITEN,
   prioriteitToon,
   prioriteitLabel,
+  persoonLabel,
+  persoonKleur,
   type Taak,
 } from "@/lib/taken";
 
@@ -72,6 +74,11 @@ export function TakenKolomLijst({
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-navy">{t.titel}</p>
                     <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${persoonKleur(t.wie).zacht}`}
+                      >
+                        {persoonLabel(t.wie)}
+                      </span>
                       <Badge toon={prioriteitToon(t.prioriteit)}>{prioriteitLabel(t.prioriteit)}</Badge>
                       {t.klant_naam && <span className="text-xs text-navy/50">{t.klant_naam}</span>}
                     </div>

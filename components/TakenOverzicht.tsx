@@ -8,6 +8,7 @@ import {
   TAAK_STATUSSEN,
   TAAK_PERSONEN,
   persoonLabel,
+  persoonKleur,
   type Taak,
   type TaakStatus,
   type TaakWie,
@@ -39,16 +40,21 @@ export function TakenOverzicht({
 
   return (
     <>
-      {/* Persoonsfilter — blijft vaststaan tot je een andere kiest */}
-      <div className="mb-4 flex flex-wrap gap-2">
+      {/* Persoonsfilter — blijft vaststaan tot je een andere kiest. Elke knop
+          heeft de kleur van die persoon zodat de bolletjes in de tegels kloppen. */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <FilterKnop actief={persoon === "alle"} onClick={() => setPersoon("alle")}>
           Iedereen
         </FilterKnop>
-        {TAAK_PERSONEN.map((p) => (
-          <FilterKnop key={p.key} actief={persoon === p.key} onClick={() => setPersoon(p.key)}>
-            {p.label}
-          </FilterKnop>
-        ))}
+        {TAAK_PERSONEN.map((p) => {
+          const kl = persoonKleur(p.key);
+          return (
+            <FilterKnop key={p.key} actief={persoon === p.key} onClick={() => setPersoon(p.key)}>
+              <span className={`inline-block h-2 w-2 rounded-full ${kl.stip}`} />
+              {p.label}
+            </FilterKnop>
+          );
+        })}
       </div>
 
       {/* Vier status-tegels met een mini top-3 */}
@@ -79,7 +85,7 @@ function FilterKnop({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+      className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
         actief ? "bg-navy text-white" : "border border-navy/20 text-navy hover:bg-navy/5"
       }`}
     >
@@ -100,13 +106,16 @@ function Tegel({ status, label, taken }: { status: TaakStatus; label: string; ta
       </div>
       <div className="mt-1 text-2xl font-semibold text-navy">{taken.length}</div>
       <ul className="mt-2 space-y-1">
-        {taken.slice(0, 3).map((t) => (
-          <li key={t.id} className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-navy/30" />
-            <span className="min-w-0 flex-1 truncate text-xs text-navy/70">{t.titel}</span>
-            <span className="shrink-0 text-[10px] font-medium text-navy/40">{persoonLabel(t.wie)}</span>
-          </li>
-        ))}
+        {taken.slice(0, 3).map((t) => {
+          const kl = persoonKleur(t.wie);
+          return (
+            <li key={t.id} className="flex items-center gap-1.5">
+              <span className={`h-2 w-2 shrink-0 rounded-full ${kl.stip}`} title={persoonLabel(t.wie)} />
+              <span className="min-w-0 flex-1 truncate text-xs text-navy/70">{t.titel}</span>
+              <span className={`shrink-0 text-[10px] font-semibold ${kl.tekst}`}>{persoonLabel(t.wie)}</span>
+            </li>
+          );
+        })}
         {taken.length === 0 && <li className="text-xs text-navy/35">Niets open</li>}
         {taken.length > 3 && (
           <li className="pt-0.5 text-[11px] font-medium text-oranje">+{taken.length - 3} meer</li>

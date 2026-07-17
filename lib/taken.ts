@@ -62,3 +62,24 @@ export const TAAK_PERIODES: { key: TaakPeriode; label: string }[] = [
 export function persoonLabel(w: TaakWie): string {
   return TAAK_PERSONEN.find((p) => p.key === w)?.label ?? w;
 }
+
+/**
+ * Vaste kleur per persoon, zodat je in één oogopslag ziet van wie een taak is:
+ * Tom = blauw, Joep = oranje, Team Viesa = rood. `stip` voor een bolletje,
+ * `tekst` voor het label, `zacht` voor een gekleurde pil, `rand` voor een randje.
+ */
+export function persoonKleur(w: TaakWie): {
+  stip: string;
+  tekst: string;
+  zacht: string;
+  rand: string;
+} {
+  switch (w) {
+    case "tom":
+      return { stip: "bg-blue-500", tekst: "text-blue-600", zacht: "bg-blue-100 text-blue-700", rand: "border-blue-500" };
+    case "joep":
+      return { stip: "bg-orange-500", tekst: "text-orange-600", zacht: "bg-orange-100 text-orange-700", rand: "border-orange-500" };
+    default:
+      return { stip: "bg-red-500", tekst: "text-red-600", zacht: "bg-red-100 text-red-700", rand: "border-red-500" };
+  }
+}

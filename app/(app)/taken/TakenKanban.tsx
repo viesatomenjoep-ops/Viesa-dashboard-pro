@@ -17,6 +17,7 @@ import {
   prioriteitToon,
   prioriteitLabel,
   persoonLabel,
+  persoonKleur,
   type Taak,
   type TaakStatus,
 } from "@/lib/taken";
@@ -164,9 +165,11 @@ function SleepbaarKaartje({ taak, onVolgende }: { taak: Taak; onVolgende: (taak:
 }
 
 function Kaartje({ taak, sleep = false }: { taak: Taak; sleep?: boolean }) {
+  // Gekleurd linkrandje per persoon (Tom=blauw, Joep=oranje, Team Viesa=rood).
+  const kl = persoonKleur(taak.wie);
   return (
     <div
-      className={`rounded-xl border border-navy/10 bg-white p-3 shadow-sm ${
+      className={`rounded-xl border border-l-4 border-navy/10 bg-white p-3 shadow-sm ${kl.rand} ${
         sleep ? "rotate-1 shadow-md" : ""
       }`}
     >
@@ -185,7 +188,7 @@ function Kaartje({ taak, sleep = false }: { taak: Taak; sleep?: boolean }) {
       {taak.klant_naam && <p className="mt-1 text-xs text-navy/50">{taak.klant_naam}</p>}
       <div className="mt-2 flex items-center gap-2">
         <Avatar naam={persoonLabel(taak.wie)} size={22} />
-        <span className="text-xs text-navy/50">{persoonLabel(taak.wie)}</span>
+        <span className={`text-xs font-semibold ${kl.tekst}`}>{persoonLabel(taak.wie)}</span>
         {taak.deadline && (
           <span className="ml-auto text-xs text-navy/40">{datumKort(taak.deadline)}</span>
         )}
