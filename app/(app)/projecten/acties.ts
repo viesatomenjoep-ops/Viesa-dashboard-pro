@@ -5,6 +5,19 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { ProjectStatus } from "@/lib/projecten";
 import type { DriveLinkType } from "@/lib/drivelinks";
+import { vatProjectSamen, genereerContent, type ContentSoort } from "@/lib/ai/project";
+
+/** Project-agent #8: samenvatting + status-signaal + klant-update. */
+export async function vatProjectSamenAgent(projectId: string) {
+  const supabase = createClient();
+  return vatProjectSamen(supabase, projectId);
+}
+
+/** Project-agent #10: content (case-study / social / portfolio) uit het project. */
+export async function genereerProjectContent(projectId: string, soort: ContentSoort) {
+  const supabase = createClient();
+  return genereerContent(supabase, projectId, soort);
+}
 
 export async function maakProject(formData: FormData) {
   const naam = String(formData.get("naam") ?? "").trim();

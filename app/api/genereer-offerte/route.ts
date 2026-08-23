@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { claudeBericht } from "@/lib/claude";
+import { draaiAgent } from "@/lib/ai/agent";
 
 /**
  * Genereert offerte-inhoud met de Claude API op basis van:
@@ -75,15 +75,21 @@ export async function POST(request: Request) {
     .filter(Boolean)
     .join("\n\n");
 
-  let inhoud: string;
-  try {
-    inhoud = await claudeBericht({ system, prompt, maxTokens: 1800 });
-  } catch (e) {
+  const uitkomst = await draaiAgent<string>({
+    supabase,
+    agent: "offerte",
+    system,
+    prompt,
+    maxTokens: 1800,
+    invoer: { offerte: offerte.nummer ?? offerte.id, bedrijf: lead?.bedrijf ?? offerte.klant },
+  });
+  if (!uitkomst.ok) {
     return NextResponse.json(
-      { fout: e instanceof Error ? e.message : "Generatie mislukt." },
+      { fout: uitkomst.fout ?? "Generatie mislukt." },
       { status: 500 },
     );
   }
+  const inhoud = uitkomst.tekst;
 
   await supabase
     .from("offertes")

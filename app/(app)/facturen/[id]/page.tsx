@@ -19,6 +19,7 @@ import {
   heropenFactuur,
   verwijderFactuur,
 } from "../acties";
+import { HerinneringOpsteller } from "./HerinneringOpsteller";
 
 export default async function FactuurDetail({
   params,
@@ -153,6 +154,11 @@ export default async function FactuurDetail({
               </div>
             )}
           </Kaart>
+
+          {/* AI-betalingsherinnering — alleen zinvol bij openstaande/vervallen facturen */}
+          {(f.status === "open" || f.status === "vervallen") && (
+            <HerinneringOpsteller factuurId={f.id} />
+          )}
 
           {/* Bewerken */}
           <form action={werkFactuurBij.bind(null, f.id)}>

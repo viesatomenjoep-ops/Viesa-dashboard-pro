@@ -4,6 +4,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { genereerHerinnering } from "@/lib/ai/debiteuren";
+
+/** Laat de debiteuren-agent (#5) een concept-betalingsherinnering schrijven. */
+export async function stelHerinneringOp(factuurId: string) {
+  const supabase = createClient();
+  return genereerHerinnering(supabase, factuurId);
+}
 
 /** Genereert een factuurnummer VF-JJJJ-NNN, oplopend per jaar. */
 async function volgendNummer(supabase: SupabaseClient): Promise<string> {

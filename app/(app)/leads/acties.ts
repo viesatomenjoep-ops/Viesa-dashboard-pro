@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import type { LeadBron, LeadStatus } from "@/lib/leads";
 import type { ActiviteitType } from "@/lib/activiteiten";
 import { bewaarCategorieWaarden } from "@/lib/categorieen";
+import { zoekLeadsViaGoogleMaps } from "@/lib/apify";
+import { verrijkLead } from "@/lib/ai/verrijking";
 
 /** Snel een lead toevoegen — alleen bedrijf is verplicht. */
 export async function maakLead(formData: FormData) {
@@ -147,6 +149,47 @@ export async function verwijderLead(id: string) {
   redirect("/leads");
 }
 
+/** Zet een lead op/af de bellijst (leads die we gaan bellen). */
+export async function zetOpBellijst(id: string, aan: boolean) {
+  const supabase = createClient();
+  const { error } = await supabase.from("leads").update({ bellen: aan }).eq("id", id);
+  if (error) return { ok: false, fout: error.message };
+  revalidatePath("/bellen");
+  revalidatePath("/leads");
+  revalidatePath(`/leads/${id}`);
+  return { ok: true };
+}
+
+/** Toggle voor de bellijst als form-actie (geeft niets terug). */
+export async function wisselBellijst(id: string, aan: boolean): Promise<void> {
+  const supabase = createClient();
+  await supabase.from("leads").update({ bellen: aan }).eq("id", id);
+  revalidatePath("/bellen");
+  revalidatePath("/leads");
+  revalidatePath(`/leads/${id}`);
+}
+
+/** Markeert een lead als gebeld (legt het tijdstip vast, haalt 'm van de lijst). */
+export async function markeerGebeld(id: string) {
+  const supabase = createClient();
+  await supabase
+    .from("leads")
+    .update({ bellen: false, laatst_gebeld: new Date().toISOString() })
+    .eq("id", id);
+  revalidatePath("/bellen");
+  revalidatePath("/leads");
+  revalidatePath(`/leads/${id}`);
+}
+
+/** Bewaart de bel-notitie bij een lead. */
+export async function bewaarBelNotitie(id: string, formData: FormData) {
+  const notitie = String(formData.get("bel_notitie") ?? "").trim() || null;
+  const supabase = createClient();
+  await supabase.from("leads").update({ bel_notitie: notitie }).eq("id", id);
+  revalidatePath("/bellen");
+  revalidatePath(`/leads/${id}`);
+}
+
 /** Werkt alleen de score van een lead bij (inline autosave). */
 export async function werkLeadScore(id: string, score: number) {
   const veilig = Math.max(0, Math.min(100, Math.round(score)));
@@ -155,6 +198,45 @@ export async function werkLeadScore(id: string, score: number) {
   if (error) return { ok: false, fout: error.message };
   revalidatePath("/leads");
   revalidatePath(`/leads/${id}`);
+  return { ok: true };
+}
+
+/** Laat de verrijkings-agent (#2) een score + kwalificatie voorstellen. */
+export async function stelVerrijkingVoor(leadId: string) {
+  const supabase = createClient();
+  return verrijkLead(supabase, leadId);
+}
+
+/** Past gekozen verrijkingsvelden toe op de lead (bevestigingsstap). */
+export async function pasVerrijkingToe(
+  leadId: string,
+  velden: {
+    score?: number;
+    branche?: string | null;
+    bedrijfsgrootte?: string | null;
+    it_aanbod?: string | null;
+    openingszin?: string | null;
+  },
+): Promise<{ ok: boolean; fout?: string }> {
+  const supabase = createClient();
+  const update: Record<string, unknown> = {};
+  if (typeof velden.score === "number")
+    update.score = Math.max(0, Math.min(100, Math.round(velden.score)));
+  if (velden.branche !== undefined) update.branche = velden.branche;
+  if (velden.bedrijfsgrootte !== undefined) update.bedrijfsgrootte = velden.bedrijfsgrootte;
+  if (velden.it_aanbod !== undefined) update.it_aanbod = velden.it_aanbod;
+  if (velden.openingszin !== undefined) update.openingszin = velden.openingszin;
+  if (Object.keys(update).length === 0) return { ok: true };
+
+  const { error } = await supabase.from("leads").update(update).eq("id", leadId);
+  if (error) return { ok: false, fout: error.message };
+  await bewaarCategorieWaarden(supabase, [
+    { soort: "it_aanbod", waarde: velden.it_aanbod ?? null },
+    { soort: "branche", waarde: velden.branche ?? null },
+    { soort: "bedrijfsgrootte", waarde: velden.bedrijfsgrootte ?? null },
+  ]);
+  revalidatePath(`/leads/${leadId}`);
+  revalidatePath("/leads");
   return { ok: true };
 }
 
@@ -270,6 +352,73 @@ export async function importeerLeads(
   ]);
   revalidatePath("/leads");
   return { aantal: schoon.length };
+}
+
+/** Zoekt bedrijven via Google Maps (Apify) en slaat nieuwe als lead op. Bestaande place_id's slaat hij over. */
+export async function zoekLeadsGoogleMaps(formData: FormData): Promise<{ aantal: number; overgeslagen: number; fout?: string }> {
+  const zoekterm = String(formData.get("zoekterm") ?? "").trim();
+  const locatie = String(formData.get("locatie") ?? "").trim();
+  const maxResultaten = Number(formData.get("max_resultaten") ?? 20);
+  const metContactverrijking = formData.get("met_contactverrijking") === "on";
+
+  if (!zoekterm || !locatie) {
+    return { aantal: 0, overgeslagen: 0, fout: "Zoekterm en locatie zijn verplicht." };
+  }
+
+  const supabase = createClient();
+  let gevonden;
+  try {
+    gevonden = await zoekLeadsViaGoogleMaps({
+      zoekterm,
+      locatie,
+      maxResultaten: Number.isFinite(maxResultaten) ? maxResultaten : 20,
+      metContactverrijking,
+    });
+  } catch (e) {
+    return { aantal: 0, overgeslagen: 0, fout: e instanceof Error ? e.message : "Apify-zoekopdracht mislukt." };
+  }
+
+  const placeIds = gevonden.map((g) => g.place_id).filter((id): id is string => Boolean(id));
+  const { data: bestaande } = placeIds.length
+    ? await supabase.from("leads").select("place_id").in("place_id", placeIds)
+    : { data: [] as { place_id: string | null }[] };
+  const bekend = new Set((bestaande ?? []).map((b) => b.place_id));
+
+  const nieuw = gevonden.filter((g) => !g.place_id || !bekend.has(g.place_id));
+  const overgeslagen = gevonden.length - nieuw.length;
+
+  if (nieuw.length === 0) {
+    await supabase.from("prospector_runs").insert({
+      bron: "google-maps",
+      status: gevonden.length === 0 ? "mislukt" : "klaar",
+      aantal_leads: 0,
+      voltooid_op: new Date().toISOString(),
+      details: { zoekterm, locatie, gevonden: gevonden.length, overgeslagen },
+    });
+    revalidatePath("/leads");
+    return { aantal: 0, overgeslagen };
+  }
+
+  const { error } = await supabase.from("leads").insert(
+    nieuw.map((l) => ({
+      ...l,
+      status: "nieuw" as const,
+      bron: "prospector" as const,
+    })),
+  );
+
+  await supabase.from("prospector_runs").insert({
+    bron: "google-maps",
+    status: error ? "mislukt" : "klaar",
+    aantal_leads: error ? 0 : nieuw.length,
+    voltooid_op: new Date().toISOString(),
+    details: { zoekterm, locatie, gevonden: gevonden.length, overgeslagen, fout: error?.message },
+  });
+
+  if (error) return { aantal: 0, overgeslagen, fout: error.message };
+
+  revalidatePath("/leads");
+  return { aantal: nieuw.length, overgeslagen };
 }
 
 function leeg(v: FormDataEntryValue | null): string | null {

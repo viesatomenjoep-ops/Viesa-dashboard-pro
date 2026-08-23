@@ -8,6 +8,7 @@ import { PROJECT_STATUSSEN, type Project, type Notitie } from "@/lib/projecten";
 import { KlantZoeker } from "@/components/KlantZoeker";
 import { DRIVE_LINK_TYPES, driveTypeLabel, type DriveLink } from "@/lib/drivelinks";
 import { datumKort } from "@/lib/format";
+import { ProjectAI } from "./ProjectAI";
 import {
   werkProjectBij,
   verwijderProject,
@@ -72,6 +73,11 @@ export default async function ProjectDetail({
           Opgeslagen.
         </p>
       )}
+
+      {/* Project-AI: samenvatting, signaal en content uit de notities */}
+      <div className="mb-6">
+        <ProjectAI projectId={project.id} />
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">

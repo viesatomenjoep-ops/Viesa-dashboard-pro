@@ -21,6 +21,7 @@ import { leesFout } from "@/lib/fout";
 import { MailOpstellen, type KlantOptie } from "@/components/MailOpstellen";
 import { VerzondenMelding } from "@/components/VerzondenMelding";
 import { MailLeesPaneel } from "@/components/MailLeesPaneel";
+import { MailTriage } from "./MailTriage";
 import { VolScherm } from "@/components/ui/VolScherm";
 import {
   verstuurBericht,
@@ -352,6 +353,11 @@ export default async function MailPagina({
       {!schemaOntbreekt && sel && (
         <MailLeesPaneel sluitHref={actieveMap === "inbox" ? "/mail" : `/mail?box=${actieveMap}`}>
           <Leesvenster e={sel} bijlagen={bijlagen} />
+          {sel.richting === "inkomend" && (
+            <div className="mx-auto max-w-3xl">
+              <MailTriage emailId={sel.id} van={sel.van} onderwerp={sel.onderwerp} />
+            </div>
+          )}
         </MailLeesPaneel>
       )}
     </>

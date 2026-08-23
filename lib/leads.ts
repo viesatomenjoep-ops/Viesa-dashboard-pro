@@ -49,6 +49,10 @@ export type Lead = {
   branche: string | null;
   bedrijfsgrootte: string | null;
   aantal_medewerkers: number | null;
+  // 0037: bellijst
+  bellen: boolean;
+  bel_notitie: string | null;
+  laatst_gebeld: string | null;
   created_at: string;
   updated_at: string;
 };

@@ -3,6 +3,7 @@ import { PaginaKop } from "@/components/ui/PaginaKop";
 import { Kaart } from "@/components/ui/Kaart";
 import { LegeStaat } from "@/components/ui/LegeStaat";
 import { createClient } from "@/lib/supabase/server";
+import { AiAntwoord } from "./AiAntwoord";
 
 type Treffer = { href: string; titel: string; sub: string };
 
@@ -108,6 +109,7 @@ export default async function ZoekPagina({
   return (
     <>
       <PaginaKop titel="Zoeken" omschrijving={q ? `Resultaten voor "${q}"` : "Typ een zoekterm in de balk bovenaan."} />
+      {q && <AiAntwoord vraag={q} />}
       {q && totaal === 0 ? (
         <LegeStaat titel="Niets gevonden" omschrijving={`Geen resultaten voor "${q}".`} />
       ) : (

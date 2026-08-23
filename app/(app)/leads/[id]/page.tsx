@@ -27,7 +27,10 @@ import {
   maakLeadNotitie,
   verwijderLeadNotitie,
   werkLeadScore,
+  wisselBellijst,
 } from "../acties";
+import { Phone } from "lucide-react";
+import { LeadVerrijking } from "./LeadVerrijking";
 
 export default async function LeadDetail({
   params,
@@ -79,6 +82,18 @@ export default async function LeadDetail({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <form action={wisselBellijst.bind(null, lead.id, !lead.bellen)}>
+            <button
+              type="submit"
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium ${
+                lead.bellen
+                  ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                  : "border border-navy/20 text-navy hover:bg-navy/5"
+              }`}
+            >
+              <Phone size={15} /> {lead.bellen ? "Op bellijst" : "Zet op bellijst"}
+            </button>
+          </form>
           {lead.klant_id ? (
             <Link
               href={`/klanten/${lead.klant_id}`}
@@ -115,6 +130,9 @@ export default async function LeadDetail({
           {searchParams.fout}
         </p>
       )}
+
+      {/* AI-verrijking & score — stelt voor, jij past toe */}
+      <LeadVerrijking leadId={lead.id} />
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Bewerken */}

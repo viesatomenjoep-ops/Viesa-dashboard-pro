@@ -1,4 +1,4 @@
-import { Coins, Maximize2, Plus, Trophy, Upload, Users, Waypoints } from "lucide-react";
+import { Coins, Download, Maximize2, MapPin, Plus, Trophy, Upload, Users, Waypoints } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { StatKaart } from "@/components/ui/StatKaart";
 import { TegelSheet } from "@/components/ui/TegelSheet";
@@ -9,6 +9,7 @@ import { type Lead } from "@/lib/leads";
 import { euro } from "@/lib/format";
 import { MassaImport } from "@/components/MassaImport";
 import { SnelToevoegen } from "./SnelToevoegen";
+import { GoogleMapsZoeken } from "./GoogleMapsZoeken";
 import { KanbanBord } from "./KanbanBord";
 import { importeerLeads } from "./acties";
 
@@ -132,6 +133,9 @@ export default async function LeadsPagina({
         <VolScherm label="Nieuwe lead toevoegen" titel="Nieuwe lead" toon="blauw" icoon={<Plus size={16} />}>
           <SnelToevoegen />
         </VolScherm>
+        <VolScherm label="Zoeken via Google Maps" titel="Leads zoeken via Google Maps" toon="oranje" icoon={<MapPin size={16} />}>
+          <GoogleMapsZoeken />
+        </VolScherm>
         <VolScherm label="Lijst importeren" titel="Leadlijst importeren" toon="navy" icoon={<Upload size={16} />}>
           <MassaImport
             titel="Lijst importeren uit Excel"
@@ -167,6 +171,20 @@ export default async function LeadsPagina({
             ]}
           />
         </VolScherm>
+        <a
+          href="/api/export?type=leads-contact"
+          className="inline-flex items-center gap-2 rounded-lg border border-navy/20 px-4 py-2 text-sm font-medium text-navy hover:bg-navy/5"
+        >
+          <Download size={16} />
+          Contactlijst (.xlsx)
+        </a>
+        <a
+          href="/api/export?type=leads"
+          className="inline-flex items-center gap-2 rounded-lg border border-navy/20 px-4 py-2 text-sm font-medium text-navy hover:bg-navy/5"
+        >
+          <Download size={16} />
+          Alles (.xlsx)
+        </a>
       </div>
 
       {schemaOntbreekt ? (

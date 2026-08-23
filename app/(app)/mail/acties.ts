@@ -5,8 +5,32 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { verstuurMail, mailHtml, mailHtmlRijk, saniteerHtml } from "@/lib/resend";
 import { BEDRIJF } from "@/lib/bedrijf";
+import { triageMail } from "@/lib/ai/mailtriage";
 
 type MailMap = "inbox" | "verzonden" | "concepten" | "prullenbak" | "archief";
+
+/** Mail-triage-agent (#4): classificeert + vat samen + schrijft concept-antwoord. */
+export async function triageMailAgent(emailId: string) {
+  const supabase = createClient();
+  return triageMail(supabase, emailId);
+}
+
+/** Maakt een taak (to-do) op basis van een mail — vervolgactie vastleggen. */
+export async function maakTaakVanMail(
+  titel: string,
+): Promise<{ ok: boolean; fout?: string }> {
+  const supabase = createClient();
+  const { error } = await supabase.from("taken").insert({
+    titel: (titel || "Mail opvolgen").slice(0, 200),
+    wie: "algemeen",
+    status: "todo",
+    periode: "week",
+    prioriteit: "normaal",
+  });
+  if (error) return { ok: false, fout: error.message };
+  revalidatePath("/taken");
+  return { ok: true };
+}
 
 /** Verstuurt een e-mail via Resend (met optionele CC/BCC) en logt 'm. */
 export async function verstuurBericht(formData: FormData) {
