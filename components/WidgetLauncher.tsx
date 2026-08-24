@@ -30,6 +30,7 @@ const KLEUR: Record<string, string> = {
   "/portfolio": "bg-amber-500",
   "/bestanden": "bg-amber-600",
   "/overig": "bg-navy",
+  "/brand-factory": "bg-pink-600",
 };
 
 export function WidgetLauncher({

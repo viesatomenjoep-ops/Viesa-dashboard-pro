@@ -63,10 +63,15 @@ De middleware (`middleware.ts`) beschermt alle routes.
 - `/zoeken` — globale zoekbalk over leads/projecten/notities/offertes
 - `/design` — markdown-editor voor design_docs met GitHub-sync
   (**bewust niet in de navigatie**; alleen via directe URL)
+- `/brand-factory` — **Brand Factory dashboard**: overzicht van merken,
+  concepten, renders en batches. Data komt binnen via `POST /api/brand-factory/sync`
+  vanuit het lokale Brand Factory-project op de Mac (na elke batch-render).
 
 API-routes: `POST /api/prospector` (prospector-ingest), `GET /api/cron/facturen`
 (dagelijkse vervallen-bewaking), `POST /api/genereer-offerte` (Claude),
-`GET /api/google/oauth/{start,callback}` (Gmail). Cron-config: `vercel.json`.
+`GET /api/google/oauth/{start,callback}` (Gmail), `GET /api/brand-factory`
+(merken-stats), `POST /api/brand-factory/sync` (batch-sync vanuit lokale Mac,
+auth via `BRAND_FACTORY_SECRET`). Cron-config: `vercel.json`.
 
 ## 7. Datamodel & beveiliging
 
@@ -120,3 +125,16 @@ Na elke grote bouwronde: draai de **code-reviewer-subagent**
 (`.claude/agents/code-reviewer.md`). Die beoordeelt de wijzigingen objectief op
 huisstijl (navy/teal, geen zebra, KPI's bovenaan), RLS (elke tabel een policy) en
 Nederlandse UI-teksten.
+
+## 10. Brand Factory — dashboard-integratie
+
+De Brand Factory draait lokaal op de Mac (aparte repo). Het dashboard is een
+read-only weergave: data komt binnen via `POST /api/brand-factory/sync`
+(auth: `BRAND_FACTORY_SECRET`), aangeroepen door een post-render hook in het
+Brand Factory-project na elke render.
+
+Database: `merken`, `merk_producten`, `ad_concepten`, `ad_renders` +
+view `brand_factory_stats` (migratie 0039).
+
+Env-variabelen toe te voegen aan `.env.local` en Vercel:
+- `BRAND_FACTORY_SECRET` — gedeeld geheim voor de sync-API

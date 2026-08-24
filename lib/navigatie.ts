@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   LayoutGrid,
   Mail,
+  Palette,
   Phone,
   ReceiptEuro,
   ScrollText,
@@ -59,6 +60,12 @@ export const navSecties: NavSectie[] = [
     items: [
       { label: "Bestanden", href: "/bestanden", icoon: Files },
       { label: "Overig", href: "/overig", icoon: LayoutGrid },
+    ],
+  },
+  {
+    titel: "AI & Content",
+    items: [
+      { label: "Brand Factory", href: "/brand-factory", icoon: Palette },
     ],
   },
 ];
