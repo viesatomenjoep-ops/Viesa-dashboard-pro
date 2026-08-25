@@ -1,5 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { schoonSleutel } from "@/lib/geheimen";
 
 /**
  * Centrale agent-runner voor het Viesa Command Center.
@@ -39,7 +40,12 @@ export async function draaiAgent<T = string>(opts: {
   /** Context die we bij de run loggen (invoer). */
   invoer?: unknown;
 }): Promise<AgentUitkomst<T>> {
-  const key = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
+  // De sleutel gaat als HTTP-header mee en moet dus header-veilig zijn. Een
+  // meegekopieerd teken als `←` of `•` liet `fetch` anders omvallen op een
+  // onbegrijpelijke ByteString-melding (zie lib/geheimen.ts).
+  const { sleutel: key, verwijderd } = schoonSleutel(
+    process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY,
+  );
   const model = process.env.CLAUDE_MODEL || "claude-sonnet-5";
   const start = Date.now();
 
@@ -53,6 +59,12 @@ export async function draaiAgent<T = string>(opts: {
       tokensUit: 0,
       duurMs: 0,
     };
+  }
+
+  if (verwijderd.length > 0) {
+    console.warn(
+      `[agent] ANTHROPIC_API_KEY bevatte ongeldige tekens die zijn genegeerd: ${verwijderd.join(", ")}`,
+    );
   }
 
   let tekst = "";
