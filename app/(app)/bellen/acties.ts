@@ -2,18 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { genereerBellijst, type BelSuggestie } from "@/lib/ai/bellijst";
+import {
+  genereerBellijst,
+  type BellijstUitkomst,
+} from "@/lib/ai/bellijst";
 import { BEL_UITKOMSTEN, type BelUitkomst } from "@/lib/activiteiten";
 
 /**
  * Laat de bel-lijst-agent (#1) voorstellen wie we vandaag moeten bellen.
  * Schrijft niets — de gebruiker zet suggesties zelf op de lijst.
  */
-export async function stelBellijstSamen(): Promise<{
-  ok: boolean;
-  suggesties: BelSuggestie[];
-  fout?: string;
-}> {
+export async function stelBellijstSamen(): Promise<BellijstUitkomst> {
   const supabase = createClient();
   return genereerBellijst(supabase, 8);
 }
