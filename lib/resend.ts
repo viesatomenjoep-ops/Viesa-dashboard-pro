@@ -60,20 +60,24 @@ export async function verstuurMail(m: MailInvoer): Promise<{ id: string }> {
 }
 
 /**
- * Briefhoofd bovenaan elke uitgaande e-mail: logo links, bedrijfsnaam en website
- * ernaast, afgesloten met een navy lijn. Tabel-opmaak (geen flexbox) omdat
- * Outlook geen moderne layout ondersteunt.
+ * Briefhoofd bovenaan elke uitgaande e-mail: het logo met daarnaast
+ * "Viesa Automations", allebei klikbaar naar de website. Bewust géén
+ * zichtbare URL — het adres en de contactgegevens staan onderaan.
+ *
+ * Tabel-opmaak (geen flexbox) omdat Outlook geen moderne layout ondersteunt.
+ * De <a> zit óm het logo én om de naam, zodat de hele kop doorverwijst.
  */
 export function mailBriefhoofd(): string {
   return `
   <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 20px;">
     <tr>
       <td style="vertical-align:middle; padding:0 12px 14px 0; width:48px;">
-        <img src="${logoAbsoluut()}" alt="${BEDRIJF.naam}" width="44" height="49" style="display:block; border:0;" />
+        <a href="${BEDRIJF.websiteUrl}" style="text-decoration:none; border:0;">
+          <img src="${logoAbsoluut()}" alt="${BEDRIJF.naam}" width="44" height="49" style="display:block; border:0;" />
+        </a>
       </td>
       <td style="vertical-align:middle; padding:0 0 14px;">
-        <div style="font-size:17px; font-weight:bold; color:#19445B; letter-spacing:0.01em;">${BEDRIJF.naam}</div>
-        <div style="font-size:12px; color:#7A8B99; padding-top:2px;">${BEDRIJF.website}</div>
+        <a href="${BEDRIJF.websiteUrl}" style="font-size:17px; font-weight:bold; color:#19445B; letter-spacing:0.01em; text-decoration:none;">${BEDRIJF.naam}</a>
       </td>
     </tr>
     <tr>
@@ -82,30 +86,34 @@ export function mailBriefhoofd(): string {
   </table>`;
 }
 
-/** Huisstijl-handtekening (naam + website + contact) voor onder e-mails. */
-export function mailHandtekening(): string {
+/**
+ * Alles wat onderaan de mail hoort: logo, bedrijfsnaam, adres, contactgegevens
+ * en btw-nummer. Logo en naam verwijzen door naar de website, net als bovenaan.
+ */
+export function mailVoettekst(): string {
   return `
-  <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:8px;">
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:24px; border-top:1px solid #e2e8f0;">
     <tr>
-      <td style="vertical-align:middle; line-height:1.5;">
-        <div style="font-weight:bold; color:#19445B; font-size:14px;">${BEDRIJF.naam}</div>
-        <div style="color:#64748b; font-size:12px;">
-          <a href="${BEDRIJF.websiteUrl}" style="color:#19445B; text-decoration:none;">${BEDRIJF.website}</a>
-          &nbsp;·&nbsp; <a href="mailto:${BEDRIJF.email}" style="color:#64748b; text-decoration:none;">${BEDRIJF.email}</a>
+      <td style="vertical-align:top; padding:16px 12px 0 0; width:48px;">
+        <a href="${BEDRIJF.websiteUrl}" style="text-decoration:none; border:0;">
+          <img src="${logoAbsoluut()}" alt="${BEDRIJF.naam}" width="40" height="45" style="display:block; border:0;" />
+        </a>
+      </td>
+      <td style="vertical-align:top; padding:16px 0 0; line-height:1.6;">
+        <div>
+          <a href="${BEDRIJF.websiteUrl}" style="font-weight:bold; color:#19445B; font-size:14px; text-decoration:none;">${BEDRIJF.naam}</a>
         </div>
-        <div style="color:#94a3b8; font-size:12px;">${BEDRIJF.telefoon}</div>
+        <div style="color:#64748b; font-size:12px;">${adresRegel()}</div>
+        <div style="color:#64748b; font-size:12px;">
+          <a href="mailto:${BEDRIJF.email}" style="color:#64748b; text-decoration:none;">${BEDRIJF.email}</a>
+          &nbsp;·&nbsp; ${BEDRIJF.telefoon}
+        </div>
+        <div style="color:#94a3b8; font-size:11px; padding-top:4px;">
+          btw ${BEDRIJF.btw} · ${BEDRIJF.contactpersonen.join(" · ")}
+        </div>
       </td>
     </tr>
   </table>`;
-}
-
-/** Kleine voettekst met NAW en btw-nummer — hoort bij zakelijke correspondentie. */
-export function mailVoettekst(): string {
-  return `
-  <div style="margin-top:20px; padding-top:14px; border-top:1px solid #e2e8f0; font-size:11px; line-height:1.6; color:#94a3b8;">
-    ${BEDRIJF.naam} · ${adresRegel()} · btw ${BEDRIJF.btw}<br />
-    ${BEDRIJF.contactpersonen.join(" · ")}
-  </div>`;
 }
 
 /**
@@ -146,8 +154,6 @@ export function mailHtmlRijk(
     ${mailBriefhoofd()}
     <h1 style="color:#19445B; font-size:22px; font-weight:bold; margin:0 0 16px;">${titel}</h1>
     <div style="color:#1e293b; line-height:1.6; font-size:15px;">${bodyHtml}</div>
-    <hr style="margin:28px 0; border:none; border-top:1px solid #e2e8f0;" />
-    ${mailHandtekening()}
     ${mailVoettekst()}
   </div>`;
 }
