@@ -2,6 +2,8 @@
 import { MAIL_TEMPLATES } from "@/lib/mailtemplates";
 import { OUTREACH_TEMPLATES } from "@/lib/mailtemplates-outreach";
 import { BELSCRIPTS } from "@/lib/belscripts";
+import { OFFERTE_SJABLONEN } from "@/lib/offertesjablonen";
+import { AUDIT_SJABLONEN } from "@/lib/auditsjablonen";
 import { STANDAARD_LETTERTYPE } from "@/lib/lettertypes";
 
 export type SjabloonType = "email" | "offerte" | "audit" | "belscript";
@@ -120,20 +122,39 @@ export function standaardSjablonen(): {
     lettertype: null,
   }));
 
+  const offertes = OFFERTE_SJABLONEN.map((o) => ({
+    type: "offerte" as const,
+    naam: o.naam,
+    onderwerp: null,
+    inhoud_html: o.inhoud_html,
+    lettertype: null,
+  }));
+
+  const audits = AUDIT_SJABLONEN.map((a) => ({
+    type: "audit" as const,
+    naam: a.naam,
+    onderwerp: null,
+    inhoud_html: a.inhoud_html,
+    lettertype: null,
+  }));
+
   return [
     ...email,
     ...outreach,
     ...belscripts,
+    ...offertes,
+    ...audits,
+    // De kale startsjablonen blijven staan als leeg canvas om zelf mee te beginnen.
     {
       type: "audit",
-      naam: "Standaard auditverslag",
+      naam: "Leeg auditverslag",
       onderwerp: null,
       inhoud_html: AUDIT_START_HTML,
       lettertype: null,
     },
     {
       type: "offerte",
-      naam: "Standaard offerte",
+      naam: "Lege offerte",
       onderwerp: null,
       inhoud_html: OFFERTE_START_HTML,
       lettertype: null,

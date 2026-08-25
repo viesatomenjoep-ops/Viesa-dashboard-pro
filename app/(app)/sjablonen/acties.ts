@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { standaardSjablonen, type SjabloonType } from "@/lib/sjablonen";
+import { SJABLOON_TYPES, standaardSjablonen, type SjabloonType } from "@/lib/sjablonen";
 
 function veld(fd: FormData, key: string): string | null {
   const s = String(fd.get(key) ?? "").trim();
@@ -90,15 +90,37 @@ export async function importeerStandaard() {
   const { data: bestaand } = await supabase.from("sjablonen").select("type, naam");
   const set = new Set((bestaand ?? []).map((r) => `${r.type}::${r.naam}`));
   const nieuw = standaardSjablonen().filter((s) => !set.has(`${s.type}::${s.naam}`));
-  if (nieuw.length) {
-    const { error } = await supabase.from("sjablonen").insert(nieuw);
-    // Migratie 0041 nog niet gedraaid: importeer dan zonder het lettertype.
+
+  // Per type invoegen, niet alles in één keer. Weigert de database één soort —
+  // bijvoorbeeld 'belscript' omdat migratie 0040 nog niet gedraaid is — dan
+  // komen de andere soorten er wél in, in plaats van dat de hele import stilvalt.
+  let toegevoegd = 0;
+  const fouten: string[] = [];
+
+  for (const { key: type } of SJABLOON_TYPES) {
+    const rijen = nieuw.filter((s) => s.type === type);
+    if (!rijen.length) continue;
+
+    let { error } = await supabase.from("sjablonen").insert(rijen);
+    // Migratie 0041 nog niet gedraaid: opnieuw proberen zonder het lettertype.
     if (kolomOntbreekt(error)) {
-      await supabase
+      ({ error } = await supabase
         .from("sjablonen")
-        .insert(nieuw.map(({ lettertype: _lettertype, ...rest }) => rest));
+        .insert(rijen.map(({ lettertype: _lettertype, ...rest }) => rest)));
     }
+
+    if (error) fouten.push(`${type}: ${error.message}`);
+    else toegevoegd += rijen.length;
   }
+
   revalidatePath("/sjablonen");
-  redirect(`/sjablonen?geimporteerd=${nieuw.length}`);
+  // Het aantal dat er écht in ging melden, en een fout nooit stilzwijgend
+  // inslikken — anders lijkt een mislukte import op een geslaagde.
+  if (fouten.length) {
+    redirect(
+      `/sjablonen?geimporteerd=${toegevoegd}&fout=` +
+        encodeURIComponent(fouten.join(" · ")),
+    );
+  }
+  redirect(`/sjablonen?geimporteerd=${toegevoegd}`);
 }

@@ -35,8 +35,12 @@ export type Lettertype = {
   googleFont?: string;
 };
 
-/** Zakelijke standaard: een schreefletter die op elk apparaat aanwezig is. */
-export const STANDAARD_LETTERTYPE = "georgia";
+/**
+ * Zakelijke standaard: Times New Roman — de klassieke zakenbriefletter, en hij
+ * staat op élk apparaat. Georgia blijft als alternatief beschikbaar (iets
+ * ruimer van vorm, prettiger op scherm).
+ */
+export const STANDAARD_LETTERTYPE = "times";
 
 export const LETTERTYPES: Lettertype[] = [
   // ---- Groep A: werkt overal ------------------------------------------------
