@@ -10,6 +10,20 @@ function veld(fd: FormData, key: string): string | null {
   return s.length ? s : null;
 }
 
+/**
+ * Herkent de fout die Supabase geeft wanneer migratie 0041 (sjablonen.lettertype)
+ * nog niet is gedraaid. We laten het opslaan dan gewoon doorgaan zonder dat veld,
+ * in plaats van de gebruiker met een onbegrijpelijke fout op te zadelen.
+ */
+function kolomOntbreekt(fout: { code?: string; message?: string } | null): boolean {
+  if (!fout) return false;
+  return (
+    fout.code === "PGRST204" ||
+    /lettertype/i.test(fout.message ?? "") ||
+    /column .* does not exist/i.test(fout.message ?? "")
+  );
+}
+
 /** Maakt een nieuw sjabloon. */
 export async function maakSjabloon(formData: FormData) {
   const naam = String(formData.get("naam") ?? "").trim();
@@ -18,16 +32,20 @@ export async function maakSjabloon(formData: FormData) {
     redirect(`/sjablonen?type=${type}&nieuw=1&fout=` + encodeURIComponent("Naam is verplicht."));
   }
   const supabase = createClient();
-  const { data, error } = await supabase
+  const basis = {
+    type,
+    naam,
+    onderwerp: veld(formData, "onderwerp"),
+    inhoud_html: String(formData.get("inhoud_html") ?? ""),
+  };
+  let { data, error } = await supabase
     .from("sjablonen")
-    .insert({
-      type,
-      naam,
-      onderwerp: veld(formData, "onderwerp"),
-      inhoud_html: String(formData.get("inhoud_html") ?? ""),
-    })
+    .insert({ ...basis, lettertype: veld(formData, "lettertype") })
     .select("id")
     .single();
+  if (kolomOntbreekt(error)) {
+    ({ data, error } = await supabase.from("sjablonen").insert(basis).select("id").single());
+  }
   if (error || !data) {
     redirect(`/sjablonen?type=${type}&nieuw=1&fout=` + encodeURIComponent(error?.message ?? "Mislukt."));
   }
@@ -38,15 +56,19 @@ export async function maakSjabloon(formData: FormData) {
 /** Werkt een bestaand sjabloon bij. */
 export async function werkSjabloonBij(id: string, type: SjabloonType, formData: FormData) {
   const supabase = createClient();
-  const { error } = await supabase
+  const basis = {
+    naam: String(formData.get("naam") ?? "").trim() || "Naamloos",
+    onderwerp: veld(formData, "onderwerp"),
+    inhoud_html: String(formData.get("inhoud_html") ?? ""),
+    updated_at: new Date().toISOString(),
+  };
+  let { error } = await supabase
     .from("sjablonen")
-    .update({
-      naam: String(formData.get("naam") ?? "").trim() || "Naamloos",
-      onderwerp: veld(formData, "onderwerp"),
-      inhoud_html: String(formData.get("inhoud_html") ?? ""),
-      updated_at: new Date().toISOString(),
-    })
+    .update({ ...basis, lettertype: veld(formData, "lettertype") })
     .eq("id", id);
+  if (kolomOntbreekt(error)) {
+    ({ error } = await supabase.from("sjablonen").update(basis).eq("id", id));
+  }
   if (error) {
     redirect(`/sjablonen?type=${type}&id=${id}&fout=` + encodeURIComponent(error.message));
   }
@@ -68,7 +90,15 @@ export async function importeerStandaard() {
   const { data: bestaand } = await supabase.from("sjablonen").select("type, naam");
   const set = new Set((bestaand ?? []).map((r) => `${r.type}::${r.naam}`));
   const nieuw = standaardSjablonen().filter((s) => !set.has(`${s.type}::${s.naam}`));
-  if (nieuw.length) await supabase.from("sjablonen").insert(nieuw);
+  if (nieuw.length) {
+    const { error } = await supabase.from("sjablonen").insert(nieuw);
+    // Migratie 0041 nog niet gedraaid: importeer dan zonder het lettertype.
+    if (kolomOntbreekt(error)) {
+      await supabase
+        .from("sjablonen")
+        .insert(nieuw.map(({ lettertype: _lettertype, ...rest }) => rest));
+    }
+  }
   revalidatePath("/sjablonen");
   redirect(`/sjablonen?geimporteerd=${nieuw.length}`);
 }

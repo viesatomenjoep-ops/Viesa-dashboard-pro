@@ -14,6 +14,7 @@ import {
   type Sjabloon,
   type SjabloonType,
 } from "@/lib/sjablonen";
+import { STANDAARD_LETTERTYPE } from "@/lib/lettertypes";
 import { leesFout } from "@/lib/fout";
 import { maakSjabloon, werkSjabloonBij, verwijderSjabloon, importeerStandaard } from "./acties";
 
@@ -61,6 +62,13 @@ export default async function SjablonenPagina({
     : null;
   const nieuw = searchParams.nieuw === "1";
   const isEmail = type === "email";
+  const isBelscript = type === "belscript";
+  // E-mail gebruikt `onderwerp` als onderwerpregel; een belscript hergebruikt
+  // datzelfde veld voor het doel van het gesprek.
+  const toonOnderwerp = isEmail || isBelscript;
+  const onderwerpPlaceholder = isBelscript
+    ? "Doel van het gesprek (bv. afspraak inplannen)"
+    : "Onderwerp (mag {{bedrijf}} bevatten)";
 
   return (
     <>
@@ -124,15 +132,21 @@ export default async function SjablonenPagina({
             placeholder="Naam van het sjabloon *"
             className={inputCls}
           />
-          {isEmail && (
+          {toonOnderwerp && (
             <input
               name="onderwerp"
               defaultValue={bewerken.onderwerp ?? ""}
-              placeholder="Onderwerp (mag {{bedrijf}} bevatten)"
+              placeholder={onderwerpPlaceholder}
               className={inputCls}
             />
           )}
-          <GroteEditor naamHtml="inhoud_html" beginHtml={bewerken.inhoud_html ?? ""} minHoogte={360} />
+          <GroteEditor
+            naamHtml="inhoud_html"
+            beginHtml={bewerken.inhoud_html ?? ""}
+            beginLettertype={bewerken.lettertype || STANDAARD_LETTERTYPE}
+            lettertypeKiezer={isEmail}
+            minHoogte={360}
+          />
           <button
             type="submit"
             className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"
@@ -159,14 +173,18 @@ export default async function SjablonenPagina({
                   placeholder="Naam van het sjabloon *"
                   className={inputCls}
                 />
-                {isEmail && (
+                {toonOnderwerp && (
                   <input
                     name="onderwerp"
-                    placeholder="Onderwerp (mag {{bedrijf}} bevatten)"
+                    placeholder={onderwerpPlaceholder}
                     className={inputCls}
                   />
                 )}
-                <GroteEditor naamHtml="inhoud_html" minHoogte={360} />
+                <GroteEditor
+                  naamHtml="inhoud_html"
+                  lettertypeKiezer={isEmail}
+                  minHoogte={360}
+                />
                 <button
                   type="submit"
                   className="rounded-lg bg-oranje px-4 py-2 text-sm font-medium text-white hover:bg-oranje/90"

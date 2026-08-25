@@ -59,7 +59,14 @@ De middleware (`middleware.ts`) beschermt alle routes.
 - `/projecten` (+ `/[id]`) — projecten, markdown-notities, Drive-links
 - `/bestanden` — centrale Drive-links (nooit bestanden zelf)
 - `/whiteboard` — meerdere borden met sleepbare sticky notes
-- `/koppelingen` — status van diensten (o.a. Gmail-OAuth)
+- `/bellen` — bellijst met AI-suggesties, terugbelagenda (openstaande follow-ups
+  t/m vandaag), Fonio-democonsole en per lead een **gespreksvenster**: belscript
+  meelezen, uitkomst kiezen, notitie en follow-up in één handeling vastleggen
+  (`legGesprekVast` → activiteit `call` + activiteit `follow_up`)
+- `/sjablonen` — sjablonen-machine voor `email`, `belscript`, `offerte`, `audit`.
+  Standaardset importeren vult o.a. 25 outreach-mails (`lib/mailtemplates-outreach.ts`)
+  en 25 belscripts (`lib/belscripts.ts`)
+- `/koppelingen` — status van diensten (o.a. Gmail-OAuth) + Fonio-demo-instellingen
 - `/zoeken` — globale zoekbalk over leads/projecten/notities/offertes
 - `/design` — markdown-editor voor design_docs met GitHub-sync
   (**bewust niet in de navigatie**; alleen via directe URL)
@@ -79,6 +86,10 @@ auth via `BRAND_FACTORY_SECRET`). Cron-config: `vercel.json`.
   (tabellen: leads, activiteiten, offertes, facturen, projecten, notities,
   design_docs, whiteboards, stickies, drive_links, prospector_runs, integraties;
   + view `omzet_per_maand`). Voorbeelddata: `supabase/seed.sql`.
+- **Migratie 0040** (belgesprekken): `activiteiten.uitkomst` (bereikt, voicemail,
+  niet_opgenomen, terugbellen, afspraak, geen_interesse), `leads.belpogingen`, en
+  `sjablonen.type` uitgebreid met `'belscript'`.
+  **Migratie 0041**: `sjablonen.lettertype`. Beide erven de RLS van hun tabel.
 - **Auth**: alleen e-mail/wachtwoord-login, single-/gedeelde gebruiker, **registratie
   uitgeschakeld** (Supabase → Authentication → Sign In / Providers: signups uit).
   Geen publieke signup, geen rollenbeheer.
@@ -113,6 +124,21 @@ Bij elke gemelde fout die niet nog eens mag gebeuren: hier bijwerken.
   zodat React het bij het diffen overslaat (zie `components/RijkeEditor.tsx`).
   Opmaakknoppen boven zo'n editor krijgen `onMouseDown={preventDefault}` zodat
   ze de tekstselectie niet stelen.
+- **Webfonts werken niet in e-mail**: Gmail en Outlook.com strippen `<link>` en
+  `@font-face` (en `saniteerHtml()` haalt ze er zelf al uit). Een lettertypekiezer
+  voor mail moet dus **font-stacks met een veilige terugval** aanbieden — zie
+  `lib/lettertypes.ts`, groep `veilig` (staat op elk apparaat) versus `webfont`
+  (alleen echt zichtbaar in het dashboard-voorbeeld). Standaard is Georgia.
+- **CSS-variabele op de buitenste laag, niet op het gememoizeerde veld**: het
+  contentEditable in `GroteEditor` is met `useMemo` bevroren. Zet je het gekozen
+  lettertype in zijn inline `style`, dan hoort het bij de deps, wordt het veld bij
+  elke fontwissel opnieuw gemonteerd en ben je je getypte tekst kwijt. Oplossing:
+  `--mail-font` op de omhullende `<div>` zetten; als custom property erft hij
+  gewoon naar binnen door (`.prose-viesa` in `app/globals.css` leest hem).
+- **Follow-ups filteren met `lte`, nooit met `eq`**: filterde het dashboard op
+  `follow_up_datum = vandaag`, dan verdween alles wat gisteren was blijven liggen
+  stilletjes uit beeld. Gebruik `.lte(...)` en label oudere items als
+  "achterstallig" (`app/(app)/kpi.ts`, `app/(app)/bellen/page.tsx`).
 - **Geen functies van server- naar client-component doorgeven**: een
   `'use client'`-component (bv. `AreaGrafiek`) mag géén functie-prop krijgen
   vanuit een server-component ("Functions cannot be passed directly to Client
@@ -138,3 +164,27 @@ view `brand_factory_stats` (migratie 0039).
 
 Env-variabelen toe te voegen aan `.env.local` en Vercel:
 - `BRAND_FACTORY_SECRET` — gedeeld geheim voor de sync-API
+
+## 11. Fonio — AI-telefonie (resellerprogramma)
+
+Viesa wordt reseller van Fonio. Om tijdens een verkoopgesprek live te kunnen
+demonstreren staat er een **democonsole op `/bellen`**. Alles is configuratie in
+plaats van vastgezet in code, omdat nog niet vaststaat wat het partnerprogramma
+technisch biedt.
+
+Instellen: **Koppelingen → Fonio-demo** (demonummer, demo-link, partnerportaal,
+en een schakelaar om de demo in te sluiten). De config staat als JSON in de
+bestaande `integraties`-rij onder dienst `fonio` — geen nieuwe tabel nodig
+(`dienst` heeft geen CHECK-constraint). De console blijft onzichtbaar zolang er
+geen nummer of link is ingevuld: zie `app/(app)/bellen/fonio.ts`.
+
+Drie varianten, oplopend in kracht — nu is **A** gebouwd:
+- **A · Demoknop** — bellen naar het demonummer + link openen. Werkt altijd.
+- **B · Ingesloten console** — de demo in een `<iframe>`. Alleen mogelijk als
+  Fonio insluiten toestaat (veel SaaS blokkeert dat met `X-Frame-Options`);
+  daarom staat dit achter een schakelaar en niet standaard aan.
+- **C · Demo per prospect** — via de partner-API een demo-agent aanmaken die
+  gevoed is met de website van de lead. Vereist API-toegang.
+
+Env-variabele (alleen nodig voor variant C):
+- `FONIO_API_KEY` — server-only, nooit met `NEXT_PUBLIC_`-prefix

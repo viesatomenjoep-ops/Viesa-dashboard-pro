@@ -42,16 +42,18 @@ export async function verstuurBericht(formData: FormData) {
   const rijkeHtml = String(formData.get("html") ?? "").trim();
   const antwoordNaar = String(formData.get("antwoord_naar") ?? "").trim() || undefined;
   const klantId = String(formData.get("klant_id") ?? "").trim() || null;
+  const lettertype = String(formData.get("lettertype") ?? "").trim() || null;
 
   if (!naar || !onderwerp || (!tekst && !rijkeHtml)) {
     redirect("/mail?fout=" + encodeURIComponent("Vul ontvanger, onderwerp en bericht in."));
   }
 
   // Opgemaakte HTML uit de rich-editor gebruiken indien aanwezig (gesaniteerd);
-  // anders de platte tekst in de huisstijl-wikkel.
+  // anders de platte tekst in de huisstijl-wikkel. Het in de editor gekozen
+  // lettertype gaat mee, zodat de ontvanger ziet wat jij zag.
   const html = rijkeHtml
-    ? mailHtmlRijk(onderwerp, saniteerHtml(rijkeHtml))
-    : mailHtml(onderwerp, tekst);
+    ? mailHtmlRijk(onderwerp, saniteerHtml(rijkeHtml), lettertype)
+    : mailHtml(onderwerp, tekst, lettertype);
   const supabase = createClient();
 
   try {

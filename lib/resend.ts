@@ -1,5 +1,6 @@
 import "server-only";
-import { BEDRIJF, logoAbsoluut } from "@/lib/bedrijf";
+import { BEDRIJF, adresRegel, logoAbsoluut } from "@/lib/bedrijf";
+import { lettertypeStack } from "@/lib/lettertypes";
 
 /**
  * Resend-e-mail (server-only). Verstuurt namens contact@viesa-automations.nl.
@@ -58,24 +59,53 @@ export async function verstuurMail(m: MailInvoer): Promise<{ id: string }> {
   return (await res.json()) as { id: string };
 }
 
-/** Huisstijl-handtekening (logo + naam + website + contact) voor onder e-mails. */
+/**
+ * Briefhoofd bovenaan elke uitgaande e-mail: logo links, bedrijfsnaam en website
+ * ernaast, afgesloten met een navy lijn. Tabel-opmaak (geen flexbox) omdat
+ * Outlook geen moderne layout ondersteunt.
+ */
+export function mailBriefhoofd(): string {
+  return `
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 20px;">
+    <tr>
+      <td style="vertical-align:middle; padding:0 12px 14px 0; width:48px;">
+        <img src="${logoAbsoluut()}" alt="${BEDRIJF.naam}" width="44" height="49" style="display:block; border:0;" />
+      </td>
+      <td style="vertical-align:middle; padding:0 0 14px;">
+        <div style="font-size:17px; font-weight:bold; color:#19445B; letter-spacing:0.01em;">${BEDRIJF.naam}</div>
+        <div style="font-size:12px; color:#7A8B99; padding-top:2px;">${BEDRIJF.website}</div>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" style="border-top:2px solid #19445B; font-size:0; line-height:0;">&nbsp;</td>
+    </tr>
+  </table>`;
+}
+
+/** Huisstijl-handtekening (naam + website + contact) voor onder e-mails. */
 export function mailHandtekening(): string {
   return `
   <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:8px;">
     <tr>
-      <td style="vertical-align:middle; padding-right:12px;">
-        <img src="${logoAbsoluut()}" alt="${BEDRIJF.naam}" width="44" height="49" style="display:block;" />
-      </td>
-      <td style="vertical-align:middle; font-family:sans-serif; line-height:1.4;">
+      <td style="vertical-align:middle; line-height:1.5;">
         <div style="font-weight:bold; color:#19445B; font-size:14px;">${BEDRIJF.naam}</div>
         <div style="color:#64748b; font-size:12px;">
-          <a href="${BEDRIJF.websiteUrl}" style="color:#1E9E93; text-decoration:none;">${BEDRIJF.website}</a>
+          <a href="${BEDRIJF.websiteUrl}" style="color:#19445B; text-decoration:none;">${BEDRIJF.website}</a>
           &nbsp;·&nbsp; <a href="mailto:${BEDRIJF.email}" style="color:#64748b; text-decoration:none;">${BEDRIJF.email}</a>
         </div>
         <div style="color:#94a3b8; font-size:12px;">${BEDRIJF.telefoon}</div>
       </td>
     </tr>
   </table>`;
+}
+
+/** Kleine voettekst met NAW en btw-nummer — hoort bij zakelijke correspondentie. */
+export function mailVoettekst(): string {
+  return `
+  <div style="margin-top:20px; padding-top:14px; border-top:1px solid #e2e8f0; font-size:11px; line-height:1.6; color:#94a3b8;">
+    ${BEDRIJF.naam} · ${adresRegel()} · btw ${BEDRIJF.btw}<br />
+    ${BEDRIJF.contactpersonen.join(" · ")}
+  </div>`;
 }
 
 /**
@@ -97,18 +127,36 @@ export function saniteerHtml(html: string): string {
     .replace(/(href|src)\s*=\s*("|')\s*javascript:[^"']*\2/gi, '$1="#"');
 }
 
-/** Huisstijl-conforme HTML-wikkel om een reeds-opgemaakte HTML-body. */
-export function mailHtmlRijk(titel: string, bodyHtml: string): string {
+/**
+ * Huisstijl-conforme HTML-wikkel om een reeds-opgemaakte HTML-body: briefhoofd
+ * met logo, titel, inhoud, handtekening en NAW-voettekst — alles in navy.
+ *
+ * `lettertype` is een sleutel uit `lib/lettertypes.ts`; de bijbehorende stack
+ * wordt inline op de buitenste container gezet zodat alles binnenin hem erft.
+ * Zonder waarde gebruiken we de zakelijke standaard (Georgia).
+ */
+export function mailHtmlRijk(
+  titel: string,
+  bodyHtml: string,
+  lettertype?: string | null,
+): string {
+  const font = lettertypeStack(lettertype);
   return `
-  <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px;">
-    <h1 style="color:#19445B; font-size:22px; font-weight:bold; margin:0 0 16px; border-bottom:2px solid #1E9E93; padding-bottom:10px;">${titel}</h1>
+  <div style="font-family: ${font}; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px;">
+    ${mailBriefhoofd()}
+    <h1 style="color:#19445B; font-size:22px; font-weight:bold; margin:0 0 16px;">${titel}</h1>
     <div style="color:#1e293b; line-height:1.6; font-size:15px;">${bodyHtml}</div>
     <hr style="margin:28px 0; border:none; border-top:1px solid #e2e8f0;" />
     ${mailHandtekening()}
+    ${mailVoettekst()}
   </div>`;
 }
 
 /** Eenvoudige, huisstijl-conforme HTML-wikkel voor een platte tekstboodschap. */
-export function mailHtml(titel: string, tekst: string): string {
-  return mailHtmlRijk(titel, tekst.replace(/\n/g, "<br/>"));
+export function mailHtml(
+  titel: string,
+  tekst: string,
+  lettertype?: string | null,
+): string {
+  return mailHtmlRijk(titel, tekst.replace(/\n/g, "<br/>"), lettertype);
 }

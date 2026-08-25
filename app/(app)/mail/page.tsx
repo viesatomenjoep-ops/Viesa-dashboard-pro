@@ -126,16 +126,33 @@ export default async function MailPagina({
     /* klanten-tabel nog niet aanwezig */
   }
   // E-mailsjablonen uit de sjablonen-machine (best effort — tabel kan ontbreken).
-  let mailSjablonen: { id: string; naam: string; onderwerp: string | null; inhoud_html: string }[] = [];
+  let mailSjablonen: {
+    id: string;
+    naam: string;
+    onderwerp: string | null;
+    inhoud_html: string;
+    lettertype?: string | null;
+  }[] = [];
   try {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("sjablonen")
-      .select("id, naam, onderwerp, inhoud_html")
+      .select("id, naam, onderwerp, inhoud_html, lettertype")
       .eq("type", "email")
       .order("naam");
+    if (error) throw error;
     mailSjablonen = data ?? [];
   } catch {
-    /* sjablonen-tabel nog niet aanwezig */
+    // Migratie 0041 (lettertype) nog niet gedraaid — dan zonder dat veld.
+    try {
+      const { data } = await supabase
+        .from("sjablonen")
+        .select("id, naam, onderwerp, inhoud_html")
+        .eq("type", "email")
+        .order("naam");
+      mailSjablonen = data ?? [];
+    } catch {
+      /* sjablonen-tabel nog niet aanwezig */
+    }
   }
 
   const inMap = (m: MailMap) => emails.filter((e) => (e.map ?? "inbox") === m);

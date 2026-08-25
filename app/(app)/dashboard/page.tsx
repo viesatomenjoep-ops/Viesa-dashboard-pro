@@ -259,7 +259,12 @@ export default async function DashboardPagina({
                     className="block rounded-lg border border-navy/10 px-3 py-2 text-sm hover:bg-navy/[0.02]"
                   >
                     <span className="block truncate font-medium text-navy">{f.bedrijf ?? "Lead"}</span>
-                    <span className="block truncate text-xs text-navy/50">{f.titel ?? "Follow-up"}</span>
+                    <span className="block truncate text-xs text-navy/50">
+                      {f.achterstallig && (
+                        <span className="mr-1 font-medium text-oranje">achterstallig ·</span>
+                      )}
+                      {f.titel ?? "Follow-up"}
+                    </span>
                   </Link>
                 </li>
               ))}
