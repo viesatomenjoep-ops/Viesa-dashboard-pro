@@ -1,5 +1,6 @@
 /** Gesecteerde navigatie voor de zijbalk. */
 import {
+  AlarmClock,
   Briefcase,
   Calendar,
   ClipboardCheck,
@@ -40,6 +41,7 @@ export const navSecties: NavSectie[] = [
       { label: "Klanten", href: "/klanten", icoon: Users },
       { label: "Leads & pipeline", href: "/leads", icoon: Waypoints },
       { label: "Bellen", href: "/bellen", icoon: Phone },
+      { label: "Follow-ups", href: "/followups", icoon: AlarmClock },
       { label: "Audits", href: "/audits", icoon: ClipboardCheck },
       { label: "Offertes", href: "/offertes", icoon: FileText },
       { label: "Facturen", href: "/facturen", icoon: ReceiptEuro },

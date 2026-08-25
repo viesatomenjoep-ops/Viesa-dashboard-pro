@@ -50,18 +50,23 @@ const WEGING = {
   strafPerPoging: 4, // wie steeds niet opneemt, zakt
 };
 
-/** Pipelinestatus → gewicht. Hoe dichter bij tekenen, hoe urgenter. */
+/**
+ * Pipelinestatus → gewicht. Hoe dichter bij tekenen, hoe urgenter.
+ *
+ * Uitsluitend de statussen die het datamodel kent (zie de CHECK-constraint in
+ * migratie 0004 en `LeadStatus` in lib/leads.ts). Verzin hier geen extra
+ * sleutels: die matchen nooit, waardoor élke lead op het standaardgewicht
+ * terugvalt en dit onderdeel stilletjes niets meer doet.
+ */
 const STATUS_GEWICHT: Record<string, number> = {
-  onderhandeling: 15,
-  offerte: 14,
-  offerte_verstuurd: 14,
-  gekwalificeerd: 11,
-  contact: 9,
-  nieuw: 7,
-  koud: 4,
-  verloren: 0,
-  gewonnen: 0,
+  audit_offerte: 15, // audit of offerte loopt — het dichtst bij tekenen
+  contact_gehad: 10, // er is al gesproken, de lijn is warm
+  nieuw: 7, // nog onbekend terrein
+  gewonnen: 0, // klaar; komt sowieso niet in de lijst
 };
+
+/** Gewicht voor een status die (nog) niet in het datamodel zit. */
+const STATUS_STANDAARD = 7;
 
 function dagenSinds(iso: string | null): number | null {
   if (!iso) return null;
@@ -113,7 +118,7 @@ function beoordeel(l: BelKandidaat): { punten: number; reden: string } {
   });
 
   const status = (l.status ?? "").toLowerCase();
-  const statusPunten = STATUS_GEWICHT[status] ?? 6;
+  const statusPunten = STATUS_GEWICHT[status] ?? STATUS_STANDAARD;
   onderdelen.push({
     punten: statusPunten,
     zin: status ? `staat op ${status.replace(/_/g, " ")}` : "",
