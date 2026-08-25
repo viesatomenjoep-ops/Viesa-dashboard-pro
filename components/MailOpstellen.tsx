@@ -105,26 +105,11 @@ export function MailOpstellen({
       }}
     >
       <div className="mb-3">
-        <div className="flex items-center gap-2">
-          <label className="shrink-0 text-sm font-medium text-navy">Sjabloon:</label>
-          <select
-            value={sjabloonId}
-            onChange={(e) => kiesSjabloon(e.target.value)}
-            className="min-w-0 flex-1 rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy"
-          >
-            <option value="">Leeg bericht</option>
-            {sjablonen.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.naam}
-              </option>
-            ))}
-          </select>
-        </div>
-        <p className="mt-1 text-xs text-navy/40">
-          {sjablonen.length === 0
-            ? "Nog geen sjablonen — maak ze bij Sjablonen."
-            : "Vult onderwerp + bericht; kies ook een klant om variabelen in te vullen."}
-        </p>
+        <SjabloonKiezer
+          sjablonen={sjablonen}
+          gekozenId={sjabloonId}
+          onKies={kiesSjabloon}
+        />
       </div>
 
       {/* Klant kiezen → live suggesties; vult e-mailadres én variabelen */}
@@ -202,5 +187,126 @@ export function MailOpstellen({
         </button>
       </div>
     </form>
+  );
+}
+
+/**
+ * Sjabloonkiezer voor het mailvenster.
+ *
+ * Bewust géén uitklaplijst: met tientallen sjablonen zie je in zo'n lijst alleen
+ * namen, en moet je gokken wat erin staat. Hier zoek je op naam én onderwerp, en
+ * zie je van elk sjabloon meteen de onderwerpregel eronder staan.
+ *
+ * De lijst staat dicht zodra er een sjabloon gekozen is — anders duwt hij het
+ * eigenlijke bericht van het scherm.
+ */
+function SjabloonKiezer({
+  sjablonen,
+  gekozenId,
+  onKies,
+}: {
+  sjablonen: MailSjabloon[];
+  gekozenId: string;
+  onKies: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [zoek, setZoek] = useState("");
+
+  const gekozen = sjablonen.find((s) => s.id === gekozenId) ?? null;
+  const term = zoek.toLowerCase().trim();
+  const gevonden = term
+    ? sjablonen.filter((s) =>
+        `${s.naam} ${s.onderwerp ?? ""}`.toLowerCase().includes(term),
+      )
+    : sjablonen;
+
+  if (sjablonen.length === 0) {
+    return (
+      <p className="text-xs text-navy/40">
+        Nog geen sjablonen — importeer ze bij Sjablonen met “Standaard importeren”.
+      </p>
+    );
+  }
+
+  function kies(id: string) {
+    onKies(id);
+    setOpen(false);
+    setZoek("");
+  }
+
+  return (
+    <div>
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="shrink-0 text-sm font-medium text-navy">Sjabloon:</label>
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="min-w-0 flex-1 truncate rounded-lg border border-navy/20 px-3 py-2 text-left text-sm text-navy hover:bg-navy/[0.02] focus:border-navy"
+        >
+          {gekozen ? gekozen.naam : "Leeg bericht — kies een sjabloon"}
+        </button>
+        {gekozen && (
+          <button
+            type="button"
+            onClick={() => kies("")}
+            className="rounded-lg border border-navy/15 px-2.5 py-2 text-xs text-navy/60 hover:bg-navy/5"
+          >
+            Wissen
+          </button>
+        )}
+      </div>
+
+      {open && (
+        <div className="mt-2 overflow-hidden rounded-lg border border-navy/15 bg-white">
+          <input
+            autoFocus
+            value={zoek}
+            onChange={(e) => setZoek(e.target.value)}
+            placeholder={`Zoek in ${sjablonen.length} sjablonen — op naam of onderwerp`}
+            className="w-full border-b border-navy/10 px-3 py-2 text-sm text-navy outline-none"
+          />
+          <ul className="max-h-80 overflow-y-auto">
+            <li>
+              <button
+                type="button"
+                onClick={() => kies("")}
+                className="block w-full px-3 py-2 text-left text-sm text-navy/60 hover:bg-navy/5"
+              >
+                Leeg bericht
+              </button>
+            </li>
+            {gevonden.map((s) => (
+              <li key={s.id} className="border-t border-navy/5">
+                <button
+                  type="button"
+                  onClick={() => kies(s.id)}
+                  className={`block w-full px-3 py-2 text-left hover:bg-navy/5 ${
+                    s.id === gekozenId ? "bg-navy/5" : ""
+                  }`}
+                >
+                  <span className="block truncate text-sm font-medium text-navy">
+                    {s.naam}
+                  </span>
+                  {s.onderwerp && (
+                    <span className="block truncate text-xs text-navy/50">
+                      {s.onderwerp}
+                    </span>
+                  )}
+                </button>
+              </li>
+            ))}
+            {gevonden.length === 0 && (
+              <li className="px-3 py-3 text-sm text-navy/40">
+                Niets gevonden voor “{zoek}”.
+              </li>
+            )}
+          </ul>
+        </div>
+      )}
+
+      <p className="mt-1 text-xs text-navy/40">
+        Vult onderwerp + bericht; kies ook een klant om de variabelen in te vullen.
+      </p>
+    </div>
   );
 }
