@@ -89,7 +89,13 @@ auth via `BRAND_FACTORY_SECRET`). Cron-config: `vercel.json`.
 - **Migratie 0040** (belgesprekken): `activiteiten.uitkomst` (bereikt, voicemail,
   niet_opgenomen, terugbellen, afspraak, geen_interesse), `leads.belpogingen`, en
   `sjablonen.type` uitgebreid met `'belscript'`.
-  **Migratie 0041**: `sjablonen.lettertype`. Beide erven de RLS van hun tabel.
+  **0041**: `sjablonen.lettertype`. **0042**: herstelt de type-constraint hard
+  (zoekt elke CHECK op `type` op ongeacht de naam). **0043**: `sjablonen.favoriet`
+  — favorieten staan bovenaan in het overzicht en in de sjabloonkiezer. Alle vier
+  erven de RLS van hun tabel.
+- **`supabase/seed-sjablonen.sql`** bevat alle 124 standaardsjablonen als één
+  idempotente INSERT, om ze buiten de app om te laden wanneer de importknop of
+  de deploy dwarsligt. Gegenereerd uit `standaardSjablonen()`.
 - **Auth**: alleen e-mail/wachtwoord-login, single-/gedeelde gebruiker, **registratie
   uitgeschakeld** (Supabase → Authentication → Sign In / Providers: signups uit).
   Geen publieke signup, geen rollenbeheer.
@@ -128,7 +134,7 @@ Bij elke gemelde fout die niet nog eens mag gebeuren: hier bijwerken.
   `@font-face` (en `saniteerHtml()` haalt ze er zelf al uit). Een lettertypekiezer
   voor mail moet dus **font-stacks met een veilige terugval** aanbieden — zie
   `lib/lettertypes.ts`, groep `veilig` (staat op elk apparaat) versus `webfont`
-  (alleen echt zichtbaar in het dashboard-voorbeeld). Standaard is Georgia.
+  (alleen echt zichtbaar in het dashboard-voorbeeld). Standaard is Times New Roman.
 - **CSS-variabele op de buitenste laag, niet op het gememoizeerde veld**: het
   contentEditable in `GroteEditor` is met `useMemo` bevroren. Zet je het gekozen
   lettertype in zijn inline `style`, dan hoort het bij de deps, wordt het veld bij
@@ -139,6 +145,18 @@ Bij elke gemelde fout die niet nog eens mag gebeuren: hier bijwerken.
   `follow_up_datum = vandaag`, dan verdween alles wat gisteren was blijven liggen
   stilletjes uit beeld. Gebruik `.lte(...)` en label oudere items als
   "achterstallig" (`app/(app)/kpi.ts`, `app/(app)/bellen/page.tsx`).
+- **Nooit een bulk-insert waarvan je de fout inslikt**: `importeerStandaard()`
+  voegde alle 124 sjablonen in één INSERT toe en ving alleen een ontbrekende
+  kolom af. Weigerde de database één rij (het type `belscript`), dan kwam er
+  níéts binnen — ook de e-mailsjablonen niet — en meldde de pagina alsnog
+  "geïmporteerd". Een mislukte import was zo niet te onderscheiden van een
+  geslaagde, en dat kostte uren zoeken. Regel: **per groep invoegen, het
+  werkelijk ingevoegde aantal melden, en een fout altijd tonen.**
+- **Een CHECK-constraint op naam droppen is niet betrouwbaar**: migratie 0040
+  deed `drop constraint if exists sjablonen_type_check`. Postgres kiest die naam
+  automatisch, maar bij een tweede check op dezelfde tabel wordt het
+  `..._check1` — en dan doet die drop niets, zónder foutmelding. Zoek de
+  constraint op via `pg_constraint` (zie migratie 0042) in plaats van te gokken.
 - **Geen functies van server- naar client-component doorgeven**: een
   `'use client'`-component (bv. `AreaGrafiek`) mag géén functie-prop krijgen
   vanuit een server-component ("Functions cannot be passed directly to Client

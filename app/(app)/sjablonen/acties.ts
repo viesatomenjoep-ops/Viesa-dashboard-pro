@@ -11,16 +11,19 @@ function veld(fd: FormData, key: string): string | null {
 }
 
 /**
- * Herkent de fout die Supabase geeft wanneer migratie 0041 (sjablonen.lettertype)
- * nog niet is gedraaid. We laten het opslaan dan gewoon doorgaan zonder dat veld,
- * in plaats van de gebruiker met een onbegrijpelijke fout op te zadelen.
+ * Herkent de fout die Supabase geeft wanneer een kolom nog niet bestaat, omdat
+ * de bijbehorende migratie nog niet gedraaid is — `lettertype` (0041) of
+ * `favoriet` (0043). We slaan dat veld dan over of melden het netjes, in plaats
+ * van de gebruiker met een onbegrijpelijke fout op te zadelen.
  */
 function kolomOntbreekt(fout: { code?: string; message?: string } | null): boolean {
   if (!fout) return false;
+  const bericht = fout.message ?? "";
   return (
     fout.code === "PGRST204" ||
-    /lettertype/i.test(fout.message ?? "") ||
-    /column .* does not exist/i.test(fout.message ?? "")
+    /\b(lettertype|favoriet)\b/i.test(bericht) ||
+    /column .* does not exist/i.test(bericht) ||
+    /could not find .* column/i.test(bericht)
   );
 }
 
@@ -74,6 +77,36 @@ export async function werkSjabloonBij(id: string, type: SjabloonType, formData: 
   }
   revalidatePath("/sjablonen");
   redirect(`/sjablonen?type=${type}&id=${id}&opgeslagen=1`);
+}
+
+/**
+ * Zet een sjabloon aan of uit als favoriet. Favorieten staan bovenaan in het
+ * overzicht én in de sjabloonkiezer van het mailvenster.
+ *
+ * Geeft een foutmelding terug in plaats van te redirecten, zodat dit ook vanuit
+ * het mailvenster aangeroepen kan worden zonder dat je je concept kwijtraakt.
+ * Migratie 0043 nog niet gedraaid? Dan zegt hij dat, in plaats van stil te falen.
+ */
+export async function wisselFavoriet(
+  id: string,
+  favoriet: boolean,
+): Promise<{ ok: boolean; fout?: string }> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("sjablonen")
+    .update({ favoriet, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) {
+    const fout = kolomOntbreekt(error)
+      ? "Favorieten werken pas na migratie 0043 (sjablonen.favoriet)."
+      : error.message;
+    return { ok: false, fout };
+  }
+
+  revalidatePath("/sjablonen");
+  revalidatePath("/mail");
+  return { ok: true };
 }
 
 /** Verwijdert een sjabloon. */

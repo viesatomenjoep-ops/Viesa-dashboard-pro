@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { Star } from "lucide-react";
 import { GroteEditor } from "@/components/GroteEditor";
 import { ZoekKies } from "@/components/ZoekKies";
 import { contextVanKlant, vulVariabelen, type VariabeleContext } from "@/lib/variabelen";
@@ -28,7 +29,14 @@ type MailSjabloon = {
   inhoud_html: string;
   /** Het lettertype dat bij dit sjabloon hoort (sleutel uit lib/lettertypes.ts). */
   lettertype?: string | null;
+  /** Favoriet: staat bovenaan in de kiezer (migratie 0043). */
+  favoriet?: boolean | null;
 };
+
+type FavorietActie = (
+  id: string,
+  favoriet: boolean,
+) => Promise<{ ok: boolean; fout?: string }>;
 
 /**
  * Opstelvenster voor een e-mail. Kies een sjabloon uit de sjablonen-machine
@@ -40,6 +48,7 @@ export function MailOpstellen({
   geconfigureerd,
   klanten = [],
   sjablonen = [],
+  favorietActie,
   initieelNaar = "",
   initieelOnderwerp = "",
 }: {
@@ -47,6 +56,7 @@ export function MailOpstellen({
   geconfigureerd: boolean;
   klanten?: KlantOptie[];
   sjablonen?: MailSjabloon[];
+  favorietActie?: FavorietActie;
   initieelNaar?: string;
   initieelOnderwerp?: string;
 }) {
@@ -109,6 +119,7 @@ export function MailOpstellen({
           sjablonen={sjablonen}
           gekozenId={sjabloonId}
           onKies={kiesSjabloon}
+          favorietActie={favorietActie}
         />
       </div>
 
@@ -193,32 +204,47 @@ export function MailOpstellen({
 /**
  * Sjabloonkiezer voor het mailvenster.
  *
- * Bewust géén uitklaplijst: met tientallen sjablonen zie je in zo'n lijst alleen
- * namen, en moet je gokken wat erin staat. Hier zoek je op naam én onderwerp, en
- * zie je van elk sjabloon meteen de onderwerpregel eronder staan.
+ * Bewust géén uitklaplijst: met ruim vijftig sjablonen zie je in zo'n lijst
+ * alleen namen, en moet je gokken wat erin staat. Hier zoek je op naam én
+ * onderwerp, en zie je van elk sjabloon meteen de onderwerpregel eronder.
  *
- * De lijst staat dicht zodra er een sjabloon gekozen is — anders duwt hij het
- * eigenlijke bericht van het scherm.
+ * Favorieten staan bovenaan in een eigen kopje, en je kunt ze hier ook meteen
+ * aan- en uitzetten — juist tijdens het schrijven merk je welk sjabloon werkt.
+ * De ster schakelt direct om en draait terug als de server het weigert.
  */
 function SjabloonKiezer({
   sjablonen,
   gekozenId,
   onKies,
+  favorietActie,
 }: {
   sjablonen: MailSjabloon[];
   gekozenId: string;
   onKies: (id: string) => void;
+  favorietActie?: FavorietActie;
 }) {
   const [open, setOpen] = useState(false);
   const [zoek, setZoek] = useState("");
+  const [alleenFavorieten, setAlleenFavorieten] = useState(false);
+  // Lokale overschrijving van de sterstatus, zodat een klik direct zichtbaar is
+  // zonder de hele pagina te herladen (en je concept dus intact blijft).
+  const [sterren, setSterren] = useState<Record<string, boolean>>({});
+  const [bezig, start] = useTransition();
+
+  const isFavoriet = (s: MailSjabloon) => sterren[s.id] ?? Boolean(s.favoriet);
 
   const gekozen = sjablonen.find((s) => s.id === gekozenId) ?? null;
   const term = zoek.toLowerCase().trim();
-  const gevonden = term
-    ? sjablonen.filter((s) =>
-        `${s.naam} ${s.onderwerp ?? ""}`.toLowerCase().includes(term),
-      )
-    : sjablonen;
+
+  const gevonden = sjablonen
+    .filter((s) => (alleenFavorieten ? isFavoriet(s) : true))
+    .filter((s) =>
+      term ? `${s.naam} ${s.onderwerp ?? ""}`.toLowerCase().includes(term) : true,
+    );
+
+  const favorieten = gevonden.filter(isFavoriet);
+  const overige = gevonden.filter((s) => !isFavoriet(s));
+  const aantalFavoriet = sjablonen.filter(isFavoriet).length;
 
   if (sjablonen.length === 0) {
     return (
@@ -234,6 +260,53 @@ function SjabloonKiezer({
     setZoek("");
   }
 
+  function wisselSter(s: MailSjabloon) {
+    if (!favorietActie) return;
+    const nieuw = !isFavoriet(s);
+    setSterren((v) => ({ ...v, [s.id]: nieuw }));
+    start(async () => {
+      const r = await favorietActie(s.id, nieuw);
+      if (!r.ok) {
+        setSterren((v) => ({ ...v, [s.id]: !nieuw }));
+        if (r.fout) window.alert(r.fout);
+      }
+    });
+  }
+
+  function rij(s: MailSjabloon) {
+    const ster = isFavoriet(s);
+    return (
+      <li key={s.id} className="flex items-center gap-1 border-t border-navy/5">
+        {favorietActie && (
+          <button
+            type="button"
+            onClick={() => wisselSter(s)}
+            disabled={bezig}
+            aria-label={ster ? "Uit favorieten halen" : "Als favoriet markeren"}
+            aria-pressed={ster}
+            className={`shrink-0 pl-3 ${
+              ster ? "text-amber-500" : "text-navy/20 hover:text-amber-500"
+            } disabled:opacity-50`}
+          >
+            <Star size={15} fill={ster ? "currentColor" : "none"} />
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => kies(s.id)}
+          className={`block min-w-0 flex-1 px-3 py-2 text-left hover:bg-navy/5 ${
+            s.id === gekozenId ? "bg-navy/5" : ""
+          }`}
+        >
+          <span className="block truncate text-sm font-medium text-navy">{s.naam}</span>
+          {s.onderwerp && (
+            <span className="block truncate text-xs text-navy/50">{s.onderwerp}</span>
+          )}
+        </button>
+      </li>
+    );
+  }
+
   return (
     <div>
       <div className="flex flex-wrap items-center gap-2">
@@ -241,9 +314,14 @@ function SjabloonKiezer({
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
-          className="min-w-0 flex-1 truncate rounded-lg border border-navy/20 px-3 py-2 text-left text-sm text-navy hover:bg-navy/[0.02] focus:border-navy"
+          className="flex min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-navy/20 px-3 py-2 text-left text-sm text-navy hover:bg-navy/[0.02] focus:border-navy"
         >
-          {gekozen ? gekozen.naam : "Leeg bericht — kies een sjabloon"}
+          {gekozen && isFavoriet(gekozen) && (
+            <Star size={14} className="shrink-0 text-amber-500" fill="currentColor" />
+          )}
+          <span className="truncate">
+            {gekozen ? gekozen.naam : "Leeg bericht — kies een sjabloon"}
+          </span>
         </button>
         {gekozen && (
           <button
@@ -258,13 +336,32 @@ function SjabloonKiezer({
 
       {open && (
         <div className="mt-2 overflow-hidden rounded-lg border border-navy/15 bg-white">
-          <input
-            autoFocus
-            value={zoek}
-            onChange={(e) => setZoek(e.target.value)}
-            placeholder={`Zoek in ${sjablonen.length} sjablonen — op naam of onderwerp`}
-            className="w-full border-b border-navy/10 px-3 py-2 text-sm text-navy outline-none"
-          />
+          <div className="flex items-center gap-2 border-b border-navy/10 px-2 py-1.5">
+            <input
+              autoFocus
+              value={zoek}
+              onChange={(e) => setZoek(e.target.value)}
+              placeholder={`Zoek in ${sjablonen.length} sjablonen — op naam of onderwerp`}
+              className="min-w-0 flex-1 px-1 py-1 text-sm text-navy outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => setAlleenFavorieten((v) => !v)}
+              aria-pressed={alleenFavorieten}
+              className={`inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium ${
+                alleenFavorieten
+                  ? "bg-amber-100 text-amber-800"
+                  : "text-navy/60 hover:bg-navy/5"
+              }`}
+            >
+              <Star
+                size={13}
+                fill={alleenFavorieten ? "currentColor" : "none"}
+              />
+              Favorieten ({aantalFavoriet})
+            </button>
+          </div>
+
           <ul className="max-h-80 overflow-y-auto">
             <li>
               <button
@@ -275,29 +372,26 @@ function SjabloonKiezer({
                 Leeg bericht
               </button>
             </li>
-            {gevonden.map((s) => (
-              <li key={s.id} className="border-t border-navy/5">
-                <button
-                  type="button"
-                  onClick={() => kies(s.id)}
-                  className={`block w-full px-3 py-2 text-left hover:bg-navy/5 ${
-                    s.id === gekozenId ? "bg-navy/5" : ""
-                  }`}
-                >
-                  <span className="block truncate text-sm font-medium text-navy">
-                    {s.naam}
-                  </span>
-                  {s.onderwerp && (
-                    <span className="block truncate text-xs text-navy/50">
-                      {s.onderwerp}
-                    </span>
-                  )}
-                </button>
+
+            {favorieten.length > 0 && (
+              <li className="border-t border-navy/5 bg-amber-50/60 px-3 py-1 text-xs font-medium text-amber-800">
+                Favorieten
               </li>
-            ))}
+            )}
+            {favorieten.map(rij)}
+
+            {overige.length > 0 && favorieten.length > 0 && (
+              <li className="border-t border-navy/5 bg-navy/[0.03] px-3 py-1 text-xs font-medium text-navy/50">
+                Overige
+              </li>
+            )}
+            {overige.map(rij)}
+
             {gevonden.length === 0 && (
               <li className="px-3 py-3 text-sm text-navy/40">
-                Niets gevonden voor “{zoek}”.
+                {alleenFavorieten && aantalFavoriet === 0
+                  ? "Nog geen favorieten — klik op een ster om er een te maken."
+                  : `Niets gevonden voor “${zoek}”.`}
               </li>
             )}
           </ul>
