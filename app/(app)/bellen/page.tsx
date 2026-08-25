@@ -1,4 +1,12 @@
-import { CheckCircle2, Gauge, MapPin, Phone, PhoneCall, StickyNote } from "lucide-react";
+import {
+  CalendarClock,
+  CheckCircle2,
+  Gauge,
+  MapPin,
+  Phone,
+  PhoneCall,
+  StickyNote,
+} from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { StatKaart } from "@/components/ui/StatKaart";
 import { Badge } from "@/components/ui/Badge";
@@ -7,9 +15,13 @@ import { Avatar } from "@/components/ui/Avatar";
 import { createClient } from "@/lib/supabase/server";
 import { euro, datumKort } from "@/lib/format";
 import { scoreToon, type Lead } from "@/lib/leads";
-import { markeerGebeld, bewaarBelNotitie } from "../leads/acties";
+import { bewaarBelNotitie } from "../leads/acties";
 import { BelSuggesties } from "./BelSuggesties";
-import { haalVanBellijst } from "./acties";
+import { BelVenster, type BelscriptOptie } from "./BelVenster";
+import { haalVanBellijst, legGesprekVast } from "./acties";
+import { contextVanKlant } from "@/lib/variabelen";
+import { FonioDemo } from "./FonioDemo";
+import { haalFonio } from "./fonio";
 
 export const dynamic = "force-dynamic";
 
@@ -28,17 +40,77 @@ async function haalBellijst(): Promise<{ leads: Lead[]; schemaOntbreekt: boolean
   }
 }
 
+/** De belscripts uit de sjablonen-machine (best effort — tabel kan ontbreken). */
+async function haalBelscripts(): Promise<BelscriptOptie[]> {
+  const supabase = createClient();
+  try {
+    const { data, error } = await supabase
+      .from("sjablonen")
+      .select("id, naam, onderwerp, inhoud_html")
+      .eq("type", "belscript")
+      .order("naam");
+    if (error) throw error;
+    return data ?? [];
+  } catch {
+    return [];
+  }
+}
+
+type Terugbelafspraak = {
+  id: string;
+  titel: string | null;
+  lead_id: string | null;
+  follow_up_datum: string | null;
+  bedrijf: string | null;
+};
+
+/**
+ * Openstaande terugbelafspraken waarvan de datum is bereikt. Bewust `lte` en
+ * niet `eq`, zodat wat je gisteren hebt laten liggen niet stilletjes verdwijnt.
+ */
+async function haalTerugbellijst(): Promise<Terugbelafspraak[]> {
+  const supabase = createClient();
+  const vandaag = new Date().toISOString().slice(0, 10);
+  try {
+    const { data, error } = await supabase
+      .from("activiteiten")
+      .select("id, titel, lead_id, follow_up_datum, leads(bedrijf)")
+      .eq("type", "follow_up")
+      .eq("status", "open")
+      .lte("follow_up_datum", vandaag)
+      .order("follow_up_datum");
+    if (error) throw error;
+    return (data ?? []).map((r) => {
+      const lead = r.leads as { bedrijf: string | null } | { bedrijf: string | null }[] | null;
+      return {
+        id: r.id,
+        titel: r.titel,
+        lead_id: r.lead_id,
+        follow_up_datum: r.follow_up_datum,
+        bedrijf: Array.isArray(lead) ? lead[0]?.bedrijf ?? null : lead?.bedrijf ?? null,
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
 function telefoonVan(l: Lead): string | null {
   return l.telefoon_contact || l.telefoon || null;
 }
 
-function isVandaag(iso: string | null): boolean {
-  if (!iso) return false;
-  return new Date(iso).toDateString() === new Date().toDateString();
+function isAchterstallig(datum: string | null): boolean {
+  if (!datum) return false;
+  return datum < new Date().toISOString().slice(0, 10);
 }
 
 export default async function BellenPagina() {
-  const { leads, schemaOntbreekt } = await haalBellijst();
+  const [{ leads, schemaOntbreekt }, scripts, terugbellen, fonio] = await Promise.all([
+    haalBellijst(),
+    haalBelscripts(),
+    haalTerugbellijst(),
+    haalFonio(),
+  ]);
 
   const gemScore =
     leads.length > 0
@@ -60,6 +132,49 @@ export default async function BellenPagina() {
         <StatKaart label="Waarde op lijst" waarde={euro(lijstWaarde)} icoon={PhoneCall} toon="amber" />
         <StatKaart label="Belbaar" waarde={String(leads.filter(telefoonVan).length)} icoon={CheckCircle2} toon="groen" />
       </section>
+
+      {/* Terugbelafspraken die vandaag (of eerder) aan de beurt zijn */}
+      {terugbellen.length > 0 && (
+        <section className="mb-6 rounded-xl border border-navy/10 bg-white p-4 shadow-sm">
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-navy">
+            <CalendarClock size={15} /> Vandaag terugbellen
+            <span className="rounded-full bg-navy/10 px-2 py-0.5 text-xs text-navy/70">
+              {terugbellen.length}
+            </span>
+          </h2>
+          <ul className="divide-y divide-navy/5">
+            {terugbellen.map((t) => (
+              <li key={t.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                <div className="min-w-0">
+                  {t.lead_id ? (
+                    <a
+                      href={`/leads/${t.lead_id}`}
+                      className="text-sm font-medium text-navy hover:underline"
+                    >
+                      {t.bedrijf ?? "Onbekende lead"}
+                    </a>
+                  ) : (
+                    <span className="text-sm font-medium text-navy">{t.bedrijf ?? "—"}</span>
+                  )}
+                  {t.titel && <span className="ml-2 text-xs text-navy/50">{t.titel}</span>}
+                </div>
+                {isAchterstallig(t.follow_up_datum) ? (
+                  <Badge toon="amber">achterstallig · {datumKort(t.follow_up_datum!)}</Badge>
+                ) : (
+                  <span className="text-xs text-navy/40">vandaag</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Fonio-democonsole (zichtbaar zodra ingesteld op /koppelingen) */}
+      {fonio && (
+        <div className="mb-6">
+          <FonioDemo {...fonio} />
+        </div>
+      )}
 
       {/* AI-suggesties */}
       <div className="mb-8">
@@ -116,6 +231,11 @@ export default async function BellenPagina() {
                               laatst gebeld {datumKort(l.laatst_gebeld)}
                             </span>
                           )}
+                          {Number(l.belpogingen ?? 0) > 1 && (
+                            <span className="text-navy/40">
+                              {l.belpogingen}× geprobeerd
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -131,15 +251,6 @@ export default async function BellenPagina() {
                       ) : (
                         <span className="text-xs text-navy/40">geen nummer</span>
                       )}
-                      <form action={markeerGebeld.bind(null, l.id)}>
-                        <button
-                          type="submit"
-                          title="Gebeld — van de lijst af"
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50"
-                        >
-                          <CheckCircle2 size={15} /> Gebeld
-                        </button>
-                      </form>
                       <form action={haalVanBellijst.bind(null, l.id)}>
                         <button
                           type="submit"
@@ -175,6 +286,14 @@ export default async function BellenPagina() {
                       </button>
                     </div>
                   </form>
+
+                  {/* Het gesprek voeren en in één keer vastleggen */}
+                  <BelVenster
+                    leadId={l.id}
+                    context={contextVanKlant(l)}
+                    scripts={scripts}
+                    legVastActie={legGesprekVast}
+                  />
                 </li>
               );
             })}

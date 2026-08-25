@@ -10,7 +10,7 @@ import {
   type Integratie,
 } from "@/lib/integraties";
 import { outlookStatus } from "@/lib/microsoft";
-import { wijzigIntegratieStatus, ontkoppelOutlook } from "./acties";
+import { wijzigIntegratieStatus, ontkoppelOutlook, bewaarFonio } from "./acties";
 import { voegAgendaBronToe, verwijderAgendaBron } from "../agenda/acties";
 
 const inputCls =
@@ -68,6 +68,14 @@ export default async function KoppelingenPagina({
 
   const statusVan = (key: string) =>
     integraties.find((i) => i.dienst === key)?.status ?? "niet_verbonden";
+
+  const fonioConfig = (integraties.find((i) => i.dienst === "fonio")?.config ??
+    {}) as {
+    demonummer?: string;
+    demo_url?: string;
+    partner_url?: string;
+    insluiten?: boolean;
+  };
 
   return (
     <>
@@ -228,6 +236,70 @@ export default async function KoppelingenPagina({
             ))}
           </ul>
         )}
+      </Kaart>
+
+      {/* Fonio — AI-telefonie, democonsole op de bellijst */}
+      <Kaart className="mt-8">
+        <h3 className="text-sm font-medium text-navy">Fonio-demo (AI-telefonie)</h3>
+        <p className="mt-1 text-xs text-navy/60">
+          Vul een demonummer of demo-link in, dan verschijnt de democonsole op de
+          bellijst. Handig om tijdens een verkoopgesprek live te laten horen wat
+          een AI-telefoniste doet.
+        </p>
+        <form action={bewaarFonio} className="mt-3 grid gap-2 sm:grid-cols-2">
+          <label className="text-xs text-navy/60">
+            Demonummer
+            <input
+              name="demonummer"
+              defaultValue={fonioConfig.demonummer ?? ""}
+              placeholder="+31 …"
+              className={`mt-1 w-full ${inputCls}`}
+            />
+          </label>
+          <label className="text-xs text-navy/60">
+            Demo-link
+            <input
+              name="demo_url"
+              type="url"
+              defaultValue={fonioConfig.demo_url ?? ""}
+              placeholder="https://…"
+              className={`mt-1 w-full ${inputCls}`}
+            />
+          </label>
+          <label className="text-xs text-navy/60">
+            Partnerportaal
+            <input
+              name="partner_url"
+              type="url"
+              defaultValue={fonioConfig.partner_url ?? ""}
+              placeholder="https://…"
+              className={`mt-1 w-full ${inputCls}`}
+            />
+          </label>
+          <div className="flex flex-col justify-end gap-2">
+            <label className="flex items-start gap-2 text-xs text-navy/60">
+              <input
+                type="checkbox"
+                name="insluiten"
+                defaultChecked={fonioConfig.insluiten === true}
+                className="mt-0.5"
+              />
+              <span>
+                Demo insluiten in het dashboard.
+                <span className="block text-navy/40">
+                  Werkt alleen als Fonio insluiten toestaat — blijft de kaart leeg,
+                  zet dit dan weer uit.
+                </span>
+              </span>
+            </label>
+            <button
+              type="submit"
+              className="self-start rounded-lg bg-navy px-4 py-2 text-sm font-medium text-white hover:bg-navy/90"
+            >
+              Bewaren
+            </button>
+          </div>
+        </form>
       </Kaart>
 
       <p className="mt-6 text-xs text-navy/50">

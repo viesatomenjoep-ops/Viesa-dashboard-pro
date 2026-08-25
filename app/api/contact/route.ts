@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { verstuurMail, mailHandtekening } from "@/lib/resend";
+import { verstuurMail, mailHtmlRijk } from "@/lib/resend";
 import { BEDRIJF } from "@/lib/bedrijf";
 
 /**
@@ -46,22 +46,18 @@ export async function POST(request: Request) {
 
   const naam = `${firstName} ${lastName}`.trim() || email;
   const onderwerp = `Nieuwe aanvraag van ${naam}`;
-  const html = `
-    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px;">
-      <h1 style="color:#19445B; font-size:22px; font-weight:bold; margin:0 0 16px; border-bottom:2px solid #1E9E93; padding-bottom:10px;">Nieuwe contactaanvraag</h1>
-      <div style="margin-bottom:16px; color:#1e293b;">
+  const mailBody = `
+      <div style="margin-bottom:16px;">
         <p style="margin:4px 0;"><strong>Naam:</strong> ${naam}</p>
-        <p style="margin:4px 0;"><strong>E-mail:</strong> <a href="mailto:${email}">${email}</a></p>
+        <p style="margin:4px 0;"><strong>E-mail:</strong> <a href="mailto:${email}" style="color:#19445B;">${email}</a></p>
         ${projectType ? `<p style="margin:4px 0;"><strong>Project:</strong> ${projectType}</p>` : ""}
       </div>
       <p style="margin:0 0 8px; font-weight:bold; color:#475569;">Beschrijving:</p>
-      <div style="background:#f8fafc; padding:16px; border-radius:8px; border-left:4px solid #1E9E93; color:#1e293b; line-height:1.6;">
+      <div style="background:#f8fafc; padding:16px; border-radius:8px; border-left:4px solid #19445B; line-height:1.6;">
         ${description.replace(/\n/g, "<br/>")}
       </div>
-      <hr style="margin:24px 0; border:none; border-top:1px solid #e2e8f0;" />
-      <p style="color:#94a3b8; font-size:12px; margin:0 0 8px;">Automatisch bericht vanaf de ${BEDRIJF.naam}-website.</p>
-      ${mailHandtekening()}
-    </div>`;
+      <p style="color:#94a3b8; font-size:12px; margin:16px 0 0;">Automatisch bericht vanaf de ${BEDRIJF.naam}-website.</p>`;
+  const html = mailHtmlRijk("Nieuwe contactaanvraag", mailBody);
 
   // 1) Altijd loggen zodat de aanvraag in het dashboard (E-mail → Ontvangen)
   //    verschijnt — ongeacht of de Resend-notificatie lukt.

@@ -53,6 +53,8 @@ export type Lead = {
   bellen: boolean;
   bel_notitie: string | null;
   laatst_gebeld: string | null;
+  // 0040: belgesprekken — hoe vaak we het geprobeerd hebben
+  belpogingen?: number | null;
   created_at: string;
   updated_at: string;
 };

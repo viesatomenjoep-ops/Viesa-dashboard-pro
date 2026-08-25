@@ -15,8 +15,42 @@ import {
   Underline,
 } from "lucide-react";
 import { VARIABELEN } from "@/lib/variabelen";
+import {
+  LETTERTYPES,
+  LETTERTYPE_GROEPEN,
+  STANDAARD_LETTERTYPE,
+  googleFontUrl,
+  lettertypeStack,
+} from "@/lib/lettertypes";
 
 type Tab = "bewerken" | "voorbeeld";
+
+/**
+ * Laadt één webfont van Google Fonts zodat je 'm in de editor en het voorbeeld
+ * écht ziet. Eén <link> per familie, nooit dubbel. Lettertypes uit de veilige
+ * groep staan al op het apparaat en laden niets.
+ */
+function laadWebfont(sleutel: string) {
+  const url = googleFontUrl(sleutel);
+  if (!url) return;
+  if (document.querySelector(`link[data-viesa-font="${sleutel}"]`)) return;
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = url;
+  link.dataset.viesaFont = sleutel;
+  document.head.appendChild(link);
+}
+
+/**
+ * Laadt alle webfonts in één keer. Wordt pas aangeroepen als je de kiezer
+ * daadwerkelijk opent, zodat de pagina zelf licht blijft — daarna staat elke
+ * optie in de lijst in zijn eigen letter.
+ */
+function laadAlleWebfonts() {
+  LETTERTYPES.filter((l) => l.groep === "webfont").forEach((l) =>
+    laadWebfont(l.sleutel),
+  );
+}
 
 /**
  * Grote WYSIWYG-editor voor sjablonen, e-mails, offertes en audits. Geeft HTML
@@ -30,13 +64,19 @@ type Tab = "bewerken" | "voorbeeld";
 export function GroteEditor({
   naamHtml = "html",
   naamTekst = "tekst",
+  naamLettertype = "lettertype",
   beginHtml = "",
+  beginLettertype = STANDAARD_LETTERTYPE,
+  lettertypeKiezer = true,
   variabelen = true,
   minHoogte = 320,
 }: {
   naamHtml?: string;
   naamTekst?: string;
+  naamLettertype?: string;
   beginHtml?: string;
+  beginLettertype?: string;
+  lettertypeKiezer?: boolean;
   variabelen?: boolean;
   minHoogte?: number;
 }) {
@@ -46,6 +86,14 @@ export function GroteEditor({
   const [vol, setVol] = useState(false);
   const [tab, setTab] = useState<Tab>("bewerken");
   const [varOpen, setVarOpen] = useState(false);
+  const [lettertype, setLettertype] = useState(beginLettertype);
+
+  const fontStack = lettertypeStack(lettertype);
+
+  // Het gekozen webfont meteen laden, zodat editor en voorbeeld kloppen.
+  useEffect(() => {
+    laadWebfont(lettertype);
+  }, [lettertype]);
 
   function sync() {
     const el = ref.current;
@@ -152,7 +200,12 @@ export function GroteEditor({
   );
 
   return (
+    // --mail-font staat op de buitenste laag, niet op het contentEditable zelf:
+    // die is gememoizeerd en zou bij elke fontwissel opnieuw gemonteerd worden
+    // (en dan wist React je getypte tekst — zie de geleerde les in CLAUDE.md).
+    // Als custom property erft hij gewoon naar binnen door.
     <div
+      style={{ "--mail-font": fontStack } as React.CSSProperties}
       className={
         vol
           ? "fixed inset-0 z-50 flex flex-col bg-white"
@@ -162,6 +215,9 @@ export function GroteEditor({
       {/* Opmaakbalk */}
       <div className="flex flex-wrap items-center gap-0.5 border-b border-navy/10 bg-white px-2 py-1.5">
         <BlokKiezer onKies={(tag) => opdracht("formatBlock", tag)} />
+        {lettertypeKiezer && (
+          <LettertypeKiezer waarde={lettertype} onKies={setLettertype} />
+        )}
         <Scheiding />
         <Knop titel="Vet" onClick={() => opdracht("bold")}>
           <Bold size={16} />
@@ -245,7 +301,47 @@ export function GroteEditor({
 
       <input type="hidden" name={naamHtml} value={html} />
       <input type="hidden" name={naamTekst} value={tekst} />
+      <input type="hidden" name={naamLettertype} value={lettertype} />
     </div>
+  );
+}
+
+/**
+ * Lettertypekiezer. Elke optie is in zijn eigen letter opgemaakt, zodat je in de
+ * lijst al ziet wat je kiest; de gekozen letter wordt daarna meteen toegepast op
+ * de editor én het voorbeeld.
+ */
+function LettertypeKiezer({
+  waarde,
+  onKies,
+}: {
+  waarde: string;
+  onKies: (sleutel: string) => void;
+}) {
+  return (
+    <select
+      title="Lettertype van de e-mail"
+      aria-label="Lettertype"
+      value={waarde}
+      onMouseDown={(e) => {
+        e.stopPropagation();
+        laadAlleWebfonts();
+      }}
+      onFocus={laadAlleWebfonts}
+      onChange={(e) => onKies(e.target.value)}
+      className="max-w-[10rem] rounded px-1.5 py-1 text-sm text-navy/80 outline-none hover:bg-navy/10"
+      style={{ fontFamily: lettertypeStack(waarde) }}
+    >
+      {LETTERTYPE_GROEPEN.map((groep) => (
+        <optgroup key={groep.key} label={groep.label}>
+          {LETTERTYPES.filter((l) => l.groep === groep.key).map((l) => (
+            <option key={l.sleutel} value={l.sleutel} style={{ fontFamily: l.stack }}>
+              {l.label}
+            </option>
+          ))}
+        </optgroup>
+      ))}
+    </select>
   );
 }
 

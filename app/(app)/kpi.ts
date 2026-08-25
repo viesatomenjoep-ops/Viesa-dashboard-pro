@@ -8,6 +8,8 @@ export type FollowupVandaag = {
   titel: string | null;
   lead_id: string | null;
   bedrijf: string | null;
+  /** Stond de datum vóór vandaag? Dan is hij blijven liggen. */
+  achterstallig: boolean;
 };
 
 export type DashboardData = {
@@ -113,24 +115,34 @@ export async function haalDashboardData(): Promise<DashboardData> {
     ),
     veilig<FollowupVandaag[]>(
       async () => {
+        // `lte` en niet `eq`: wat gisteren bleef liggen hoort óók op het
+        // dashboard te staan, anders verdwijnt een gemiste follow-up stilletjes.
         const { data, error } = await supabase
           .from("activiteiten")
-          .select("id, titel, lead_id, leads(bedrijf)")
+          .select("id, titel, lead_id, follow_up_datum, leads(bedrijf)")
           .eq("status", "open")
-          .eq("follow_up_datum", vandaag);
+          .lte("follow_up_datum", vandaag)
+          .order("follow_up_datum");
         if (error) throw error;
         return (data ?? []).map((r) => {
+          // De embed `leads(bedrijf)` levert afhankelijk van de relatie een
+          // object óf een array op; beide vormen afvangen.
           const rec = r as {
             id: string;
             titel: string | null;
             lead_id: string | null;
-            leads?: { bedrijf?: string } | null;
+            follow_up_datum: string | null;
+            leads?: { bedrijf?: string | null } | { bedrijf?: string | null }[] | null;
           };
+          const lead = Array.isArray(rec.leads) ? rec.leads[0] : rec.leads;
           return {
             id: rec.id,
             titel: rec.titel,
             lead_id: rec.lead_id,
-            bedrijf: rec.leads?.bedrijf ?? null,
+            bedrijf: lead?.bedrijf ?? null,
+            achterstallig: Boolean(
+              rec.follow_up_datum && rec.follow_up_datum < vandaag,
+            ),
           };
         });
       },

@@ -7,7 +7,8 @@ export type IntegratieDienst =
   | "slack"
   | "gmail"
   | "outlook"
-  | "claude_api";
+  | "claude_api"
+  | "fonio";
 
 export type IntegratieStatus = "niet_verbonden" | "verbonden" | "fout";
 
@@ -33,6 +34,7 @@ export const DIENSTEN: {
   { key: "outlook", label: "Outlook", omschrijving: "Alternatief mailkanaal." },
   { key: "slack", label: "Slack", omschrijving: "Notificaties (later)." },
   { key: "claude_api", label: "Claude API", omschrijving: "Openingszinnen en offerteteksten." },
+  { key: "fonio", label: "Fonio", omschrijving: "AI-telefonie — democonsole op de bellijst." },
 ];
 
 export function integratieStatusToon(

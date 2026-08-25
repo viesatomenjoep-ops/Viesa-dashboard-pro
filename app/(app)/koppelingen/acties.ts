@@ -23,3 +23,37 @@ export async function wijzigIntegratieStatus(
     .eq("dienst", dienst);
   revalidatePath("/koppelingen");
 }
+
+/**
+ * Bewaart de Fonio-demo-instellingen (demonummer, demo-link, partnerportaal).
+ * Zodra er een nummer of link staat, verschijnt de democonsole op /bellen.
+ *
+ * De config gaat in de bestaande `integraties`-rij onder dienst 'fonio'; een
+ * eventuele API-sleutel hoort niet hier maar in FONIO_API_KEY (server-only).
+ */
+export async function bewaarFonio(formData: FormData) {
+  const tekst = (k: string) => String(formData.get(k) ?? "").trim() || null;
+  const config = {
+    demonummer: tekst("demonummer"),
+    demo_url: tekst("demo_url"),
+    partner_url: tekst("partner_url"),
+    insluiten: formData.get("insluiten") === "on",
+  };
+  const ingesteld = Boolean(config.demonummer || config.demo_url);
+
+  const supabase = createClient();
+  await supabase
+    .from("integraties")
+    .upsert(
+      {
+        dienst: "fonio",
+        config,
+        status: ingesteld ? "verbonden" : "niet_verbonden",
+        laatst_gecontroleerd_op: new Date().toISOString(),
+      },
+      { onConflict: "dienst" },
+    );
+
+  revalidatePath("/koppelingen");
+  revalidatePath("/bellen");
+}

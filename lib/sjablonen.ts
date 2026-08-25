@@ -1,20 +1,27 @@
 /** Types en helpers voor sjablonen (template-machine, migratie 0032). */
 import { MAIL_TEMPLATES } from "@/lib/mailtemplates";
+import { OUTREACH_TEMPLATES } from "@/lib/mailtemplates-outreach";
+import { BELSCRIPTS } from "@/lib/belscripts";
+import { STANDAARD_LETTERTYPE } from "@/lib/lettertypes";
 
-export type SjabloonType = "email" | "offerte" | "audit";
+export type SjabloonType = "email" | "offerte" | "audit" | "belscript";
 
 export type Sjabloon = {
   id: string;
   type: SjabloonType;
   naam: string;
+  /** E-mail: de onderwerpregel. Belscript: het doel van het gesprek. */
   onderwerp: string | null;
   inhoud_html: string;
+  /** Sleutel uit lib/lettertypes.ts; leeg = de standaard (migratie 0041). */
+  lettertype?: string | null;
   created_at: string;
   updated_at: string;
 };
 
 export const SJABLOON_TYPES: { key: SjabloonType; label: string }[] = [
   { key: "email", label: "E-mail" },
+  { key: "belscript", label: "Belscript" },
   { key: "offerte", label: "Offerte" },
   { key: "audit", label: "Audit" },
 ];
@@ -74,26 +81,62 @@ export const OFFERTE_START_HTML = `<p>Beste {{voornaam}},</p>
 
 /**
  * De standaardsjablonen om (eenmalig) te importeren in de database: de
- * ingebouwde e-mailsjablonen + een audit- en offerte-start. Idempotent inzetbaar
- * (de import slaat bestaande naam+type over).
+ * ingebouwde e-mailsjablonen, de 25 outreach-sjablonen, de 25 belscripts en een
+ * audit- en offerte-start. Idempotent inzetbaar (de import slaat bestaande
+ * naam+type over).
  */
 export function standaardSjablonen(): {
   type: SjabloonType;
   naam: string;
   onderwerp: string | null;
   inhoud_html: string;
+  lettertype: string | null;
 }[] {
+  const naarVariabelen = (s: string) =>
+    s.replace(/\[bedrijf\]/gi, "{{bedrijf}}").replace(/\[naam\]/gi, "{{voornaam}}");
+
   const email = MAIL_TEMPLATES.filter((t) => t.key !== "leeg").map((t) => ({
     type: "email" as const,
     naam: t.naam,
-    onderwerp: t.onderwerp
-      .replace(/\[bedrijf\]/gi, "{{bedrijf}}")
-      .replace(/\[naam\]/gi, "{{voornaam}}"),
+    onderwerp: naarVariabelen(t.onderwerp),
     inhoud_html: tekstNaarHtml(t.tekst),
+    lettertype: STANDAARD_LETTERTYPE,
   }));
+
+  // De 25 outreach-sjablonen schrijven hun variabelen al als {{...}}.
+  const outreach = OUTREACH_TEMPLATES.map((t) => ({
+    type: "email" as const,
+    naam: t.naam,
+    onderwerp: t.onderwerp,
+    inhoud_html: tekstNaarHtml(t.tekst),
+    lettertype: STANDAARD_LETTERTYPE,
+  }));
+
+  const belscripts = BELSCRIPTS.map((s) => ({
+    type: "belscript" as const,
+    naam: s.naam,
+    onderwerp: s.doel,
+    inhoud_html: tekstNaarHtml(s.tekst),
+    lettertype: null,
+  }));
+
   return [
     ...email,
-    { type: "audit", naam: "Standaard auditverslag", onderwerp: null, inhoud_html: AUDIT_START_HTML },
-    { type: "offerte", naam: "Standaard offerte", onderwerp: null, inhoud_html: OFFERTE_START_HTML },
+    ...outreach,
+    ...belscripts,
+    {
+      type: "audit",
+      naam: "Standaard auditverslag",
+      onderwerp: null,
+      inhoud_html: AUDIT_START_HTML,
+      lettertype: null,
+    },
+    {
+      type: "offerte",
+      naam: "Standaard offerte",
+      onderwerp: null,
+      inhoud_html: OFFERTE_START_HTML,
+      lettertype: null,
+    },
   ];
 }

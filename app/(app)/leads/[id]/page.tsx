@@ -6,6 +6,8 @@ import { haalCategorieen } from "@/lib/categorieen";
 import {
   activiteitTypeLabel,
   activiteitToon,
+  belUitkomstLabel,
+  belUitkomstToon,
   type Activiteit,
 } from "@/lib/activiteiten";
 import { Kaart } from "@/components/ui/Kaart";
@@ -262,6 +264,11 @@ export default async function LeadDetail({
                         <Badge toon={activiteitToon(a.type)}>
                           {activiteitTypeLabel(a.type)}
                         </Badge>
+                        {a.uitkomst && (
+                          <Badge toon={belUitkomstToon(a.uitkomst)}>
+                            {belUitkomstLabel(a.uitkomst)}
+                          </Badge>
+                        )}
                         <span className="text-sm text-navy">{a.titel ?? "—"}</span>
                         {a.status === "afgerond" && (
                           <span className="text-xs text-emerald-600">afgerond</span>

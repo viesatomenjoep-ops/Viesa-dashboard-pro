@@ -78,13 +78,26 @@ body {
 }
 
 /* Eenvoudige markdown-opmaak (design-context: rustig, navy) */
-/* Eén vast lettertype overal in de editors en de opgemaakte output (mail,
-   offerte, audit, sjabloon). !important overschrijft geplakte inline-fonts,
-   zodat er nooit verschillende lettertypes door elkaar staan. */
+/* Eén lettertype voor de hele editor en de opgemaakte output (mail, offerte,
+   audit, sjabloon). Het !important overschrijft geplakte inline-fonts, zodat er
+   nooit verschillende lettertypes door elkaar staan.
+
+   De wáárde komt uit --mail-font, die de lettertypekiezer op de editor zet (zie
+   components/GroteEditor.tsx en lib/lettertypes.ts). Staat die variabele niet,
+   dan geldt de terugval hieronder — precies het oude gedrag. */
 .prose-viesa,
 .prose-viesa * {
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    Helvetica, Arial, sans-serif !important;
+  font-family: var(
+    --mail-font,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif
+  ) !important;
 }
 .prose-viesa h1,
 .prose-viesa h2,

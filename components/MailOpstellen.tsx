@@ -4,6 +4,7 @@ import { useState } from "react";
 import { GroteEditor } from "@/components/GroteEditor";
 import { ZoekKies } from "@/components/ZoekKies";
 import { contextVanKlant, vulVariabelen, type VariabeleContext } from "@/lib/variabelen";
+import { STANDAARD_LETTERTYPE } from "@/lib/lettertypes";
 
 const inputCls =
   "w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy";
@@ -25,6 +26,8 @@ type MailSjabloon = {
   naam: string;
   onderwerp: string | null;
   inhoud_html: string;
+  /** Het lettertype dat bij dit sjabloon hoort (sleutel uit lib/lettertypes.ts). */
+  lettertype?: string | null;
 };
 
 /**
@@ -55,6 +58,7 @@ export function MailOpstellen({
   const [ctx, setCtx] = useState<VariabeleContext>({});
   const [sjabloonId, setSjabloonId] = useState("");
   const [klantZoek, setKlantZoek] = useState("");
+  const [lettertype, setLettertype] = useState(STANDAARD_LETTERTYPE);
 
   // Bekende e-mailadressen uit het klantenbestand (uniek, gesorteerd) — voor het
   // automatisch aanvullen van het Aan-veld.
@@ -71,6 +75,8 @@ export function MailOpstellen({
     if (!s) return;
     setOnderwerp(vulVariabelen(s.onderwerp ?? "", context, false));
     setEditorHtml(vulVariabelen(s.inhoud_html, context));
+    // Een sjabloon mag zijn eigen lettertype meebrengen; anders de standaard.
+    setLettertype(s.lettertype || STANDAARD_LETTERTYPE);
     setEditorSleutel((n) => n + 1);
   }
 
@@ -180,7 +186,11 @@ export function MailOpstellen({
         className={`${inputCls} mt-3`}
       />
       <div className="mt-3">
-        <GroteEditor key={editorSleutel} beginHtml={editorHtml} />
+        <GroteEditor
+          key={editorSleutel}
+          beginHtml={editorHtml}
+          beginLettertype={lettertype}
+        />
       </div>
       <div className="mt-4">
         <button

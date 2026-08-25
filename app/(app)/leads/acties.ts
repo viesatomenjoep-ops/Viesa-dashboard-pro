@@ -169,17 +169,9 @@ export async function wisselBellijst(id: string, aan: boolean): Promise<void> {
   revalidatePath(`/leads/${id}`);
 }
 
-/** Markeert een lead als gebeld (legt het tijdstip vast, haalt 'm van de lijst). */
-export async function markeerGebeld(id: string) {
-  const supabase = createClient();
-  await supabase
-    .from("leads")
-    .update({ bellen: false, laatst_gebeld: new Date().toISOString() })
-    .eq("id", id);
-  revalidatePath("/bellen");
-  revalidatePath("/leads");
-  revalidatePath(`/leads/${id}`);
-}
+// `markeerGebeld` is vervallen: een gesprek wordt nu vastgelegd met
+// `legGesprekVast` in app/(app)/bellen/acties.ts, dat óók de uitkomst, een
+// activiteit en een follow-up wegschrijft in plaats van alleen een datum.
 
 /** Bewaart de bel-notitie bij een lead. */
 export async function bewaarBelNotitie(id: string, formData: FormData) {
