@@ -7,6 +7,7 @@ import type { LeadBron, LeadStatus } from "@/lib/leads";
 import type { ActiviteitType } from "@/lib/activiteiten";
 import { bewaarCategorieWaarden } from "@/lib/categorieen";
 import { zoekLeadsViaGoogleMaps } from "@/lib/apify";
+import { zoekLeadsViaGooglePlaces } from "@/lib/google-places";
 import { verrijkLead } from "@/lib/ai/verrijking";
 
 /** Snel een lead toevoegen — alleen bedrijf is verplicht. */
@@ -346,12 +347,13 @@ export async function importeerLeads(
   return { aantal: schoon.length };
 }
 
-/** Zoekt bedrijven via Google Maps (Apify) en slaat nieuwe als lead op. Bestaande place_id's slaat hij over. */
+/** Zoekt bedrijven via Google Maps (Apify of Google Places) en slaat nieuwe als lead op. Bestaande place_id's slaat hij over. */
 export async function zoekLeadsGoogleMaps(formData: FormData): Promise<{ aantal: number; overgeslagen: number; fout?: string }> {
   const zoekterm = String(formData.get("zoekterm") ?? "").trim();
   const locatie = String(formData.get("locatie") ?? "").trim();
   const maxResultaten = Number(formData.get("max_resultaten") ?? 20);
   const metContactverrijking = formData.get("met_contactverrijking") === "on";
+  const bron = formData.get("bron") === "places" ? "places" : "apify";
 
   if (!zoekterm || !locatie) {
     return { aantal: 0, overgeslagen: 0, fout: "Zoekterm en locatie zijn verplicht." };
@@ -360,14 +362,25 @@ export async function zoekLeadsGoogleMaps(formData: FormData): Promise<{ aantal:
   const supabase = createClient();
   let gevonden;
   try {
-    gevonden = await zoekLeadsViaGoogleMaps({
-      zoekterm,
-      locatie,
-      maxResultaten: Number.isFinite(maxResultaten) ? maxResultaten : 20,
-      metContactverrijking,
-    });
+    gevonden =
+      bron === "places"
+        ? await zoekLeadsViaGooglePlaces({
+            zoekterm,
+            locatie,
+            maxResultaten: Number.isFinite(maxResultaten) ? maxResultaten : 20,
+          })
+        : await zoekLeadsViaGoogleMaps({
+            zoekterm,
+            locatie,
+            maxResultaten: Number.isFinite(maxResultaten) ? maxResultaten : 20,
+            metContactverrijking,
+          });
   } catch (e) {
-    return { aantal: 0, overgeslagen: 0, fout: e instanceof Error ? e.message : "Apify-zoekopdracht mislukt." };
+    return {
+      aantal: 0,
+      overgeslagen: 0,
+      fout: e instanceof Error ? e.message : `${bron === "places" ? "Google Places" : "Apify"}-zoekopdracht mislukt.`,
+    };
   }
 
   const placeIds = gevonden.map((g) => g.place_id).filter((id): id is string => Boolean(id));
@@ -379,9 +392,11 @@ export async function zoekLeadsGoogleMaps(formData: FormData): Promise<{ aantal:
   const nieuw = gevonden.filter((g) => !g.place_id || !bekend.has(g.place_id));
   const overgeslagen = gevonden.length - nieuw.length;
 
+  const bronNaam = bron === "places" ? "google-places" : "google-maps";
+
   if (nieuw.length === 0) {
     await supabase.from("prospector_runs").insert({
-      bron: "google-maps",
+      bron: bronNaam,
       status: gevonden.length === 0 ? "mislukt" : "klaar",
       aantal_leads: 0,
       voltooid_op: new Date().toISOString(),
@@ -400,7 +415,7 @@ export async function zoekLeadsGoogleMaps(formData: FormData): Promise<{ aantal:
   );
 
   await supabase.from("prospector_runs").insert({
-    bron: "google-maps",
+    bron: bronNaam,
     status: error ? "mislukt" : "klaar",
     aantal_leads: error ? 0 : nieuw.length,
     voltooid_op: new Date().toISOString(),

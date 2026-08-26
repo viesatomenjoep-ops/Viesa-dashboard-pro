@@ -4,9 +4,17 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { zoekLeadsGoogleMaps } from "./acties";
 
-/** Zoekt bedrijven via Google Maps (Apify) en slaat ze als lead op. */
+/**
+ * Zoekt bedrijven via Google Maps en slaat ze als lead op.
+ *
+ * Twee bronnen naast elkaar, allebei met hetzelfde formulier: Apify (kant-en-
+ * klaar, met optionele betaalde contactverrijking) of rechtstreeks de Google
+ * Places API (goedkoper — gratis maandelijks tegoed op hetzelfde Google
+ * Cloud-project als PAGESPEED_API_KEY, maar zonder e-mail/LinkedIn erbij).
+ */
 export function GoogleMapsZoeken() {
   const router = useRouter();
+  const [bron, setBron] = useState<"apify" | "places">("apify");
   const [bezig, setBezig] = useState(false);
   const [melding, setMelding] = useState<string | null>(null);
 
@@ -28,9 +36,43 @@ export function GoogleMapsZoeken() {
   return (
     <form action={verzend} className="space-y-4">
       <p className="text-xs text-navy/60">
-        Zoekt bedrijven op Google Maps (via Apify) en zet nieuwe resultaten om in leads met
-        bron &ldquo;Prospector&rdquo;. Bedrijven met een al bekende Google-plaats worden overgeslagen.
+        Zoekt bedrijven op Google Maps en zet nieuwe resultaten om in leads met bron
+        &ldquo;Prospector&rdquo;. Bedrijven met een al bekende Google-plaats worden overgeslagen.
       </p>
+
+      <div>
+        <span className="mb-1 block text-sm font-medium text-navy">Bron</span>
+        <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
+          <label className="flex items-start gap-2 text-xs text-navy/70">
+            <input
+              type="radio"
+              name="bron"
+              value="apify"
+              checked={bron === "apify"}
+              onChange={() => setBron("apify")}
+              className="mt-0.5"
+            />
+            <span>
+              <span className="font-medium text-navy">Apify</span> — kant-en-klaar, optioneel
+              e-mail/LinkedIn erbij (betaald per bedrijf).
+            </span>
+          </label>
+          <label className="flex items-start gap-2 text-xs text-navy/70">
+            <input
+              type="radio"
+              name="bron"
+              value="places"
+              checked={bron === "places"}
+              onChange={() => setBron("places")}
+              className="mt-0.5"
+            />
+            <span>
+              <span className="font-medium text-navy">Google Places</span> — goedkoper (gratis
+              maandelijks tegoed), geen contactverrijking.
+            </span>
+          </label>
+        </div>
+      </div>
 
       <div>
         <label className="mb-1 block text-sm font-medium text-navy">Zoekterm *</label>
@@ -64,13 +106,15 @@ export function GoogleMapsZoeken() {
         />
       </div>
 
-      <label className="flex items-start gap-2 text-xs text-navy/70">
-        <input type="checkbox" name="met_contactverrijking" className="mt-0.5" />
-        <span>
-          Verrijk met e-mail/LinkedIn van de website (betaalde Apify-add-on — extra kosten per
-          bedrijf).
-        </span>
-      </label>
+      {bron === "apify" && (
+        <label className="flex items-start gap-2 text-xs text-navy/70">
+          <input type="checkbox" name="met_contactverrijking" className="mt-0.5" />
+          <span>
+            Verrijk met e-mail/LinkedIn van de website (betaalde Apify-add-on — extra kosten per
+            bedrijf).
+          </span>
+        </label>
+      )}
 
       <div className="flex items-center gap-3">
         <button
