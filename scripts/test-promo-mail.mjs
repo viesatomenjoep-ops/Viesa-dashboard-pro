@@ -32,7 +32,7 @@ function test(naam, echt, verwacht) {
 
 const basis = {
   contactMail: "contact@viesa-automations.nl",
-  siteUrl: "https://viesa-dashboard-pro.vercel.app",
+  logoUrl: "https://www.viesa-automations.nl/viesa-hex.png",
 };
 
 const kaal = promotieMail(basis);
@@ -108,7 +108,7 @@ test("met WhatsApp wél", vol.html.includes("Of app ons direct"), true);
 test("zonder agenda valt de knop terug op mailto", kaal.html.includes("mailto:contact@viesa-automations.nl?subject="), true);
 test("met agenda wijst de knop daarheen", vol.html.includes("https://cal.com/viesa/audit"), true);
 
-test("het logo heeft een absolute URL", vol.html.includes("https://viesa-dashboard-pro.vercel.app/viesa-hex.png"), true);
+test("het logo heeft een absolute URL", vol.html.includes("https://www.viesa-automations.nl/viesa-hex.png"), true);
 test("het logo heeft een alt-tekst", /<img[^>]+alt="Viesa"/.test(vol.html), true);
 
 test(

@@ -63,8 +63,8 @@ export type PromoMailInvoer = {
   whatsappUrl?: string | null;
   /** Ons mailadres, voor de voettekst en de terugval-knop. */
   contactMail: string;
-  /** De basis-URL waar het logo vandaan komt, zonder slash op het eind. */
-  siteUrl: string;
+  /** De volledige https-URL van het logo. Relatieve paden werken niet in mail. */
+  logoUrl: string;
 };
 
 export type PromoMail = {
@@ -181,10 +181,9 @@ export function promotieMail(invoer: PromoMailInvoer): PromoMail {
     afspraakUrl,
     whatsappUrl,
     contactMail,
-    siteUrl,
+    logoUrl,
   } = invoer;
 
-  const basis = siteUrl.replace(/\/$/, "");
   const naam = bedrijf?.trim() || null;
   const aanhef = naam ? `Beste team van ${naam},` : "Goedendag,";
 
@@ -290,7 +289,7 @@ export function promotieMail(invoer: PromoMailInvoer): PromoMail {
       <table role="presentation" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td width="30" valign="middle">
-            <img src="${basis}/viesa-hex.png" width="30" height="30" alt="Viesa" style="display:block;width:30px;height:30px;border:0;">
+            <img src="${veilig(logoUrl)}" width="30" height="30" alt="Viesa" style="display:block;width:30px;height:30px;border:0;">
           </td>
           <td valign="middle" style="padding-left:10px;font-size:15px;font-weight:800;letter-spacing:1.2px;color:${K.zand};">
             VIESA <span style="font-weight:400;color:${K.lichtblauw};">AUTOMATIONS</span>

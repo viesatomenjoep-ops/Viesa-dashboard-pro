@@ -333,7 +333,11 @@ voor een mail die zelf al een compleet ontwerp is. Het voorbeeldvenster en de
 verstuurde mail lopen allebei door `lib/mail/voorstel-opzet.ts`, zodat het
 voorbeeld geen gok is.
 
-Env (alle drie optioneel; leeg = de knop verdwijnt of valt terug op mail):
-- `NEXT_PUBLIC_WHATSAPP` — nummer in internationale vorm, zonder plus of spaties
-- `NEXT_PUBLIC_AFSPRAAK_URL` — Calendly, Cal.com, Google Afspraakschema's
-- `NEXT_PUBLIC_SITE_URL` — waar het logo in de mail vandaan komt
+Env (alle optioneel):
+- `NEXT_PUBLIC_WHATSAPP` — nummer zonder plus of spaties; leeg = de terugval in
+  `lib/rapport/contact.ts`
+- `NEXT_PUBLIC_AFSPRAAK_URL` — Cal.com-link; leeg = de knop wordt een mailtje
+- `NEXT_PUBLIC_LOGO_URL` — volledige https-URL van het logo voor de mail.
+  Bewust níét `NEXT_PUBLIC_SITE_URL`: die stuurt ook de Google-login-redirect
+  aan, en de marketingsite is niet het dashboard. Leeg = `/viesa-hex.png` uit
+  de public-map van het dashboard.

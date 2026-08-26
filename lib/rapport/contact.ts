@@ -17,9 +17,14 @@ export const CONTACT_SITE = "viesa-automations.nl";
  *
  * `NEXT_PUBLIC_`, want het rapport is een leesdocument dat ook in de browser
  * staat; er valt hier niets te verbergen.
+ *
+ * Het huidige nummer staat als terugval in de code, zodat de knop het ook doet
+ * wanneer de variabele nog niet is gezet — dat is minder erg dan een rapport dat
+ * zonder aankondiging zonder WhatsApp-knop de deur uit gaat.
  */
-export const WHATSAPP_NUMMER = (process.env.NEXT_PUBLIC_WHATSAPP ?? "")
-  .replace(/[^0-9]/g, "");
+export const WHATSAPP_NUMMER = (
+  process.env.NEXT_PUBLIC_WHATSAPP ?? "31683052875"
+).replace(/[^0-9]/g, "");
 
 /**
  * De volledige wa.me-link, met een bericht dat de klant alleen nog hoeft te
@@ -48,4 +53,24 @@ export function afspraakDoel(host: string): { href: string; agenda: boolean } {
   if (AFSPRAAK_URL) return { href: AFSPRAAK_URL, agenda: true };
   const onderwerp = `Deep Scan ${host} — graag een gesprek`;
   return { href: `mailto:${CONTACT_MAIL}?subject=${encodeURIComponent(onderwerp)}`, agenda: false };
+}
+
+/**
+ * Het logo dat in de promotiemail komt te staan.
+ *
+ * Waarom dit niet uit `NEXT_PUBLIC_SITE_URL` wordt afgeleid: die variabele
+ * stuurt óók de Google-login-redirect aan (`app/login/actions.ts`). Zou je die
+ * op de marketingsite zetten om het logo daarvandaan te halen, dan komt
+ * inloggen op de verkeerde plek uit. Twee dingen die niets met elkaar te maken
+ * hebben, horen niet aan dezelfde variabele te hangen.
+ *
+ * De terugval is de kopie in `public/` van het dashboard zelf: die staat er
+ * gegarandeerd en wordt over https geserveerd, wat een mail nodig heeft.
+ */
+export function logoUrlVoorMail(): string {
+  const eigen = (process.env.NEXT_PUBLIC_LOGO_URL ?? "").trim();
+  if (eigen) return eigen;
+  const basis = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://viesa-dashboard-pro.vercel.app")
+    .replace(/\/$/, "");
+  return `${basis}/viesa-hex.png`;
 }

@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { promotieMail, type PromoMail } from "@/lib/mail/promo-mail";
-import { CONTACT_MAIL, AFSPRAAK_URL, whatsappLink } from "@/lib/rapport/contact";
+import { CONTACT_MAIL, AFSPRAAK_URL, whatsappLink, logoUrlVoorMail } from "@/lib/rapport/contact";
 
 /**
  * Zet een keuze in het dashboard om in een verzendklare voorstelmail.
@@ -69,7 +69,7 @@ export async function voorstelOpzet(
     afspraakUrl: AFSPRAAK_URL || null,
     whatsappUrl: host ? whatsappLink(host) : whatsappLink("uw website"),
     contactMail: CONTACT_MAIL,
-    siteUrl,
+    logoUrl: logoUrlVoorMail(),
   });
 
   return { ...mail, host };
