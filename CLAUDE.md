@@ -70,6 +70,12 @@ De middleware (`middleware.ts`) beschermt alle routes.
 - `/zoeken` — globale zoekbalk over leads/projecten/notities/offertes
 - `/design` — markdown-editor voor design_docs met GitHub-sync
   (**bewust niet in de navigatie**; alleen via directe URL)
+- `/scan` — **Websitescanner**: één URL → één oordeel (0–100). Drie metingen,
+  gewogen 40/35/25: AI-zichtbaarheid (de vier modellen), GEO-gereedheid
+  (`lib/geo-analyse.ts` — robots.txt, JSON-LD, kopstructuur, llms.txt) en
+  techniek (PageSpeed Insights). Ontbreekt een onderdeel, dan wordt herwogen
+  over wat er wél is in plaats van een nul mee te tellen. De niche wordt
+  afgeleid uit de pagina als je hem niet opgeeft.
 - `/audit` — **AI Visibility Audit** (SaaS-module): vraagt ChatGPT, Claude,
   Gemini en Perplexity parallel wie zij aanraden in een niche, en toont per
   model of de klant genoemd wordt. Met PDF-rapport voor de prospect en een

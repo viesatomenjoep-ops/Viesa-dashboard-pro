@@ -1,5 +1,6 @@
 /** Gesecteerde navigatie voor de zijbalk. */
 import {
+  Globe,
   AlarmClock,
   Radar,
   Briefcase,
@@ -45,6 +46,7 @@ export const navSecties: NavSectie[] = [
       { label: "Follow-ups", href: "/followups", icoon: AlarmClock },
       { label: "AI Audit", href: "/audit", icoon: Radar },
       { label: "Audits", href: "/audits", icoon: ClipboardCheck },
+      { label: "Websitescan", href: "/scan", icoon: Globe },
       { label: "Offertes", href: "/offertes", icoon: FileText },
       { label: "Facturen", href: "/facturen", icoon: ReceiptEuro },
       { label: "Sjablonen", href: "/sjablonen", icoon: FileType },
