@@ -94,7 +94,8 @@ export function WebsitePrototype({
           <h2 className="text-sm font-semibold text-navy">Website-prototype</h2>
           <p className="text-xs text-navy/50">
             Laat zien hoe een vernieuwde website (of app) er voor deze klant uit zou kunnen zien —
-            direct en zonder tokenkosten.
+            zonder tokenkosten. Heeft de lead een website, dan haalt hij er een echte foto en
+            omschrijving bij (een paar seconden werk, geen AI).
           </p>
         </div>
       </div>
