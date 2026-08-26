@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Circle,
   Clock,
+  ExternalLink,
   FileSearch,
   Gauge,
   Globe,
@@ -26,7 +27,7 @@ import type { ScanRapport } from "@/lib/scan";
 import { ZoekKies } from "@/components/ZoekKies";
 import { ScanPdfKnop } from "@/components/ScanPdfKnop";
 import { pushScanRapportNaarLead } from "@/app/(app)/leads/acties";
-import { laadOpgeslagenScan, verwijderScan } from "@/app/(app)/scan/acties";
+import { deelScan, laadOpgeslagenScan, verwijderScan } from "@/app/(app)/scan/acties";
 
 /**
  * Websitescanner: één URL erin, en de controles komen er live één voor één
@@ -177,6 +178,8 @@ export function WebsiteScanner({
   const [gepusht, setGepusht] = useState(false);
   const [openBezig, setOpenBezig] = useState<string | null>(null);
   const [verwijderBezig, setVerwijderBezig] = useState<string | null>(null);
+  const [deelBezig, setDeelBezig] = useState<string | null>(null);
+  const [gekopieerd, setGekopieerd] = useState<string | null>(null);
   const bronRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
@@ -206,6 +209,9 @@ export function WebsiteScanner({
     // overal hetzelfde — alleen GET met query-parameters, geen POST-body.
     const params = new URLSearchParams({ url: url.trim() });
     if (niche.trim()) params.set("niche", niche.trim());
+    // De bedrijfsnaam komt van de gekozen lead en gaat mee naar de omslag van
+    // het klantrapport.
+    if (leadZoek.trim()) params.set("bedrijf", leadZoek.trim());
     const bron = new EventSource(`/api/scan/stream?${params}`);
     bronRef.current = bron;
 
@@ -316,6 +322,36 @@ export function WebsiteScanner({
       else setFout(res.fout ?? "Kon de scan niet laden.");
     } finally {
       setOpenBezig(null);
+    }
+  }
+
+  /**
+   * Maakt (of hergebruikt) het deelbare adres en opent het in een nieuw tabblad.
+   * De link belandt ook op het klembord, zodat hij zo in een mail kan.
+   */
+  async function deelOpgeslagenScan(id: string) {
+    if (deelBezig) return;
+    setDeelBezig(id);
+    setFout(null);
+    try {
+      const res = await deelScan(id);
+      if (!res.ok || !res.url) {
+        setFout(res.fout ?? "Kon geen deellink maken.");
+        return;
+      }
+      const volledig = `${window.location.origin}${res.url}`;
+      try {
+        await navigator.clipboard.writeText(volledig);
+        setGekopieerd(id);
+        window.setTimeout(() => setGekopieerd(null), 2500);
+      } catch {
+        // Klembord geweigerd (geen https, of de gebruiker staat het niet toe).
+        // Het openen hieronder werkt dan nog steeds.
+      }
+      window.open(volledig, "_blank", "noopener");
+      router.refresh();
+    } finally {
+      setDeelBezig(null);
     }
   }
 
@@ -498,6 +534,22 @@ export function WebsiteScanner({
                       </span>
                     )}
                     {s.host} · {s.created_at.slice(0, 10)}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deelOpgeslagenScan(s.id)}
+                    disabled={deelBezig !== null}
+                    aria-label="Klantrapport openen en link kopiëren"
+                    title="Klantrapport openen en link kopiëren"
+                    className="text-navy/30 hover:text-navy disabled:opacity-50"
+                  >
+                    {deelBezig === s.id ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : gekopieerd === s.id ? (
+                      <Check size={12} className="text-emerald-600" />
+                    ) : (
+                      <ExternalLink size={12} />
+                    )}
                   </button>
                   <button
                     type="button"

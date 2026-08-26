@@ -311,6 +311,9 @@ export async function GET(request: Request) {
           niche: niche ?? null,
           totaal_score: score,
           rapport: resultaat,
+          // De bedrijfsnaam als die is meegegeven; die leest op de omslag van
+          // het klantrapport een stuk beter dan een hostnaam.
+          bedrijf: params.get("bedrijf")?.trim() || null,
         });
 
         stuur({ type: "stap_klaar", stap: "voorbeeld", goed: true, samenvatting: "", data: { voorbeeld } });
