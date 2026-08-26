@@ -17,5 +17,5 @@ export const metadata = {
 };
 
 export default function RapportVoorbeeld() {
-  return <Rapport rapport={VOORBEELDRAPPORT} />;
+  return <Rapport rapport={VOORBEELDRAPPORT} korteUrl="/rapport-voorbeeld/kort" />;
 }

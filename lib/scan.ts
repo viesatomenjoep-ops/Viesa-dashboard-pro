@@ -86,6 +86,11 @@ export type ScanRapport = ScanResultaat & {
   technologie?: { groep: string; namen: string[] }[];
   /** Hoe lang de hele scan duurde, voor het herkomstblok. */
   rekentijdMs?: number;
+  /**
+   * Een echte schermafdruk van de homepage op laptopformaat (data-URI), zoals
+   * Lighthouse hem rendert. Staat bovenaan het rapport in een laptopbeeld.
+   */
+  schermafdruk?: string | null;
 };
 
 const HAAL_TIMEOUT_MS = 15_000;
@@ -246,6 +251,55 @@ export type PagespeedUitkomst = {
   lighthouseVersie: string | null;
   fout?: string;
 };
+
+/**
+ * Een echte schermafdruk van de homepage, zoals een bezoeker op een laptop hem
+ * ziet.
+ *
+ * Lighthouse maakt die afdruk toch al: het rendert de pagina in een echte
+ * Chrome bij Google en levert 'm mee als `final-screenshot`, een kant-en-klare
+ * data-URI. Wij hoeven dus geen browser te draaien en geen screenshotdienst te
+ * betalen — alleen te vragen om de desktopvariant, want de meting hierboven
+ * draait op mobiel en dat past niet in een laptopbeeld.
+ *
+ * Een losse aanroep, met opzet: hij mag mislukken zonder de scan te raken. Komt
+ * er geen afdruk, dan valt het rapport terug op de og:image van de site.
+ */
+export async function haalSchermafdruk(url: string): Promise<string | null> {
+  const { sleutel } = schoonSleutel(process.env.PAGESPEED_API_KEY);
+  const params = new URLSearchParams({ url, strategy: "desktop", category: "performance" });
+  if (sleutel) params.set("key", sleutel);
+
+  const ac = new AbortController();
+  const t = setTimeout(() => ac.abort(), 60_000);
+  try {
+    const res = await fetch(
+      `https://pagespeedonline.googleapis.com/pagespeedonline/v5/runPagespeed?${params}`,
+      { signal: ac.signal },
+    );
+    if (!res.ok) return null;
+
+    const data = (await res.json()) as {
+      lighthouseResult?: {
+        audits?: Record<string, { details?: { data?: string } }>;
+        fullPageScreenshot?: { screenshot?: { data?: string } };
+      };
+    };
+    const lh = data.lighthouseResult;
+    // final-screenshot is het beeld boven de vouw op laptopformaat — precies
+    // wat er in een laptopbeeld hoort. De volledige pagina is de terugval.
+    const afdruk =
+      lh?.audits?.["final-screenshot"]?.details?.data ??
+      lh?.fullPageScreenshot?.screenshot?.data ??
+      null;
+
+    return typeof afdruk === "string" && afdruk.startsWith("data:image/") ? afdruk : null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(t);
+  }
+}
 
 export async function meetPagespeed(url: string): Promise<PagespeedUitkomst> {
   const leeg: PagespeedScores = {

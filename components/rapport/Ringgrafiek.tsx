@@ -40,11 +40,18 @@ export function Ringgrafiek({
   norm,
   maat = 116,
   toonNorm = true,
+  toonOordeel = true,
 }: {
   score: number | null;
   norm: number;
   maat?: number;
   toonNorm?: boolean;
+  /**
+   * Op de omslag staat het oordeel al groot naast de ring. Het er dan óók
+   * onder zetten leest als twee verschillende uitspraken over hetzelfde
+   * cijfer.
+   */
+  toonOordeel?: boolean;
 }) {
   const stand = standVanScore(score, norm);
   const kleur = `var(--${stand === "geen" ? "geen" : stand})`;
@@ -92,9 +99,11 @@ export function Ringgrafiek({
           )}
         </span>
       </div>
-      <span className="rap-ring-oordeel" style={{ color: kleur }}>
-        {STAND_LABEL[stand]}
-      </span>
+      {toonOordeel && (
+        <span className="rap-ring-oordeel" style={{ color: kleur }}>
+          {STAND_LABEL[stand]}
+        </span>
+      )}
       {toonNorm && <span className="rap-ring-norm">{normTekst(score, norm)}</span>}
     </div>
   );

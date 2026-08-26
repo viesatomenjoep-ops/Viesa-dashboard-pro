@@ -80,6 +80,12 @@ De middleware (`middleware.ts`) beschermt alle routes.
   Gemini en Perplexity parallel wie zij aanraden in een niche, en toont per
   model of de klant genoemd wordt. Met PDF-rapport voor de prospect en een
   GEO-artikelgenerator. `/audit/leads` is de bijbehorende prospectlijst.
+- `/rapport/[sleutel]` — het **klantrapport** van een Deep Scan, buiten de login
+  (RLS via de deelsleutel, migratie 0048). Drie documenten op hetzelfde adres:
+  het volledige rapport, `/kort` (samenvatting van twee vellen) en `/voorstel`
+  (wat Viesa aanbiedt). Alle drie zijn hetzelfde document als hun PDF — de knop
+  drukt de pagina af, er is geen tweede sjabloon. Voorbeelden achter de login op
+  `/rapport-voorbeeld`, `/rapport-voorbeeld/kort` en `/rapport-voorbeeld/voorstel`.
 - `/brand-factory` — **Brand Factory dashboard**: overzicht van merken,
   concepten, renders en batches. Data komt binnen via `POST /api/brand-factory/sync`
   vanuit het lokale Brand Factory-project op de Mac (na elke batch-render).
@@ -173,6 +179,22 @@ Bij elke gemelde fout die niet nog eens mag gebeuren: hier bijwerken.
   faalt dan met "does not match the required types of a Next.js Route" — terwijl
   `tsc --noEmit` gewoon groen is. Zet zulke code in `lib/`; dat is bovendien de
   enige manier om hem los te testen.
+- **Een JSON-kolom is geen type.** `website_scans.rapport` is geschreven door de
+  scanner van *toen*; `JSON.stringify` laat bovendien elke `undefined` sleutel
+  weg. `rapportVanScan` controleerde op `scores.lcp === null`, een ontbrekende
+  sleutel las als `undefined`, glipte erdoorheen, en de regel erna riep
+  `.toLocaleString()` aan op niets — waarna de klant "a client-side exception has
+  occurred" zag in plaats van zijn rapport. Alles wat uit zo'n kolom komt gaat nu
+  eerst door `lib/rapport/heelScan.ts`. Een ontbrekende meting wordt `null`,
+  nooit nul: nul leest als een slechte uitslag.
+- **Papier is geen telefoon.** Een A4 is ~794 CSS-px breed, dus een
+  `@media (max-width: 900px)`-regel slaat in de afdrukweergave óók aan. De
+  omslag stapelde daardoor, de laptop werd paginabreed en de rest schoof van het
+  vel. Zet de kolommen in het `@media print`-blok expliciet terug.
+- **`min-width: auto` van flexbox wint van `max-width`.** De lettertypekiezer in
+  de mail-editor had `max-w-[10rem]` maar bleef zo breed als "Times New Roman",
+  duwde het venster opzij, en het sluitkruis schoof uit beeld. Een `<select>` in
+  een flexrij heeft `min-w-0` nodig.
 - **Geen functies van server- naar client-component doorgeven**: een
   `'use client'`-component (bv. `AreaGrafiek`) mag géén functie-prop krijgen
   vanuit een server-component ("Functions cannot be passed directly to Client
@@ -284,3 +306,38 @@ Geen agent verstuurt iets. De laatste meter is menselijk.
 Het scoringsmodel is niet opnieuw bedacht: `prospect-dossier` gebruikt de drie
 assen uit de bestaande skill `webshop-prospector` (ouderdom · administratieve
 bezetting · Excel-waarschijnlijkheid), inclusief de tiergrenzen op 24/18/12.
+
+## 14. Voorstel en promotiemail
+
+Eén bron voor het aanbod: **`lib/aanbod.ts`** (zes diensten, drie pijlers, één
+review, de kernbelofte en de auditbelofte). De teksten komen letterlijk van de
+landingspagina, zodat een prospect die eerst de mail leest en daarna de site
+opent hetzelfde verhaal ziet.
+
+Twee documenten, dezelfde teksten, heel andere opmaak:
+
+- **`lib/mail/promo-mail.ts`** — de promotiemail. Geneste tabellen, inline
+  stijlen, font-stacks met veilige terugval, geen SVG, geen flexbox, geen grid.
+  Niet uit netheid maar uit noodzaak: Gmail gooit `<style>`-blokken weg en
+  Outlook op Windows rendert met de opmaakmotor van Word. De "graphics" zijn
+  gekleurde tabelcellen, want mailprogramma's blokkeren externe afbeeldingen tot
+  de lezer erop klikt — een mail die voor zijn opmaak op plaatjes leunt ziet er
+  bij eerste opening kapot uit. Bewaakt door `scripts/test-promo-mail.mjs`.
+- **`components/rapport/Voorstel.tsx`** — hetzelfde aanbod in de
+  rapport-huisstijl, afdrukbaar als derde PDF naast de korte en lange scan.
+
+Versturen gaat via **Mail → Voorstel versturen**. Dat is een eigen server-action
+(`verstuurVoorstel`), níét de gewone `verstuurBericht`: die wikkelt de inhoud in
+`mailHtmlRijk()` — briefhoofd, titel, voettekst — en dat is precies verkeerd
+voor een mail die zelf al een compleet ontwerp is. Het voorbeeldvenster en de
+verstuurde mail lopen allebei door `lib/mail/voorstel-opzet.ts`, zodat het
+voorbeeld geen gok is.
+
+Env (alle optioneel):
+- `NEXT_PUBLIC_WHATSAPP` — nummer zonder plus of spaties; leeg = de terugval in
+  `lib/rapport/contact.ts`
+- `NEXT_PUBLIC_AFSPRAAK_URL` — Cal.com-link; leeg = de knop wordt een mailtje
+- `NEXT_PUBLIC_LOGO_URL` — volledige https-URL van het logo voor de mail.
+  Bewust níét `NEXT_PUBLIC_SITE_URL`: die stuurt ook de Google-login-redirect
+  aan, en de marketingsite is niet het dashboard. Leeg = `/viesa-hex.png` uit
+  de public-map van het dashboard.

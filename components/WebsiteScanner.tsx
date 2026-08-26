@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import type { Bevinding } from "@/lib/geo-analyse";
 import type { ScanRapport } from "@/lib/scan";
+import { heelScan } from "@/lib/rapport/heelScan";
 import { ZoekKies } from "@/components/ZoekKies";
 import { pushScanRapportNaarLead } from "@/app/(app)/leads/acties";
 import { deelScan, laadOpgeslagenScan, verwijderScan } from "@/app/(app)/scan/acties";
@@ -266,7 +267,12 @@ export function WebsiteScanner({
    * opnieuw te draaien. Bouwt de stappenlijst na uit de al bewaarde
    * bevindingen, in plaats van live gebeurtenissen te volgen.
    */
-  function laadRapport(r: ScanRapport) {
+  function laadRapport(ruw: ScanRapport) {
+    // Een bewaarde scan komt uit een JSON-kolom en kan door een oudere versie
+    // van de scanner geschreven zijn: dan ontbreken velden die deze weergave
+    // wel verwacht. Eerst heel maken (zie lib/rapport/heelScan.ts), anders
+    // klapt de pagina eruit op het moment dat je 'm opent.
+    const r = heelScan(ruw);
     bronRef.current?.close();
     setBezig(false);
     setFout(null);
@@ -419,7 +425,7 @@ export function WebsiteScanner({
   const gehaald = alleBevindingen.filter((b) => b.goed);
 
   const zichtbaarheidData = stappen.zichtbaarheid?.data as
-    | Record<string, { success: boolean; target_found: boolean; error?: string; competitors: { name: string }[] }>
+    | Record<string, { success: boolean; target_found: boolean; error?: string; competitors?: { name: string }[] }>
     | undefined;
 
   const klaar = Boolean(totaal);
@@ -707,9 +713,9 @@ export function WebsiteScanner({
                           ? "Noemt dit bedrijf"
                           : "Noemt dit bedrijf niet"}
                     </p>
-                    {m.success && m.competitors.length > 0 && (
+                    {m.success && (m.competitors?.length ?? 0) > 0 && (
                       <p className="mt-2 text-xs text-navy/45">
-                        Noemt wel: {m.competitors.slice(0, 3).map((c) => c.name).join(", ")}
+                        Noemt wel: {(m.competitors ?? []).slice(0, 3).map((c) => c.name).join(", ")}
                       </p>
                     )}
                   </div>

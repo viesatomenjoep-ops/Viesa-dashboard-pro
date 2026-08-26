@@ -247,9 +247,14 @@ const CACHE_UUR = 24;
  * Herberekent alleen "staat dit bedrijf ertussen" op een hergebruikt
  * resultaat — de concurrentenlijst zelf blijft ongewijzigd.
  */
-function herwaardeer(resultaten: AuditResultaten, targetUrl: string): AuditResultaten {
-  const opnieuw = (u: ModelUitkomst): ModelUitkomst =>
-    u.success ? { ...u, target_found: doelGevonden(targetUrl, u.competitors) } : u;
+function herwaardeer(resultaten: Partial<AuditResultaten>, targetUrl: string): AuditResultaten {
+  // Een model kan hier ontbreken: de cache bewaart alleen de modellen die
+  // antwoordden. Zonder deze terugval leest `u.success` van niets, en dan valt
+  // de hele scan om op een model dat toevallig stil was.
+  const opnieuw = (u: ModelUitkomst | undefined): ModelUitkomst => {
+    if (!u) return { success: false, target_found: false, competitors: [], error: "Geen antwoord" };
+    return u.success ? { ...u, target_found: doelGevonden(targetUrl, u.competitors ?? []) } : u;
+  };
   return {
     openai: opnieuw(resultaten.openai),
     anthropic: opnieuw(resultaten.anthropic),

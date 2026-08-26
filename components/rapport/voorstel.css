@@ -1,0 +1,221 @@
+/* ============================================================================
+   Voorstel — het Viesa-aanbod als afdrukbaar document
+   ----------------------------------------------------------------------------
+   Bouwt voort op rapport.css: dezelfde kleuren, hetzelfde lettertype, dezelfde
+   afdrukregels. Wat hier staat is alleen wat dit document eigen is.
+
+   Bewust dezelfde huisstijl als de Deep Scan: een prospect die eerst het
+   rapport leest en daarna dit voorstel opent, hoort niet het gevoel te krijgen
+   dat het van twee verschillende bedrijven komt.
+   ========================================================================== */
+
+.vst-omslag { padding: 58px 0 50px; }
+.vst .vst-titel {
+  max-width: 22ch;
+  margin-top: 26px;
+}
+/* Hogere specificiteit dan `.rap p { margin: 0 }`, anders plakt deze alinea
+   tegen de kop aan — en dat is precies wat er gebeurde. */
+.vst .vst-onderkop {
+  margin-top: 18px;
+  max-width: 56ch;
+  font-size: 1.02rem;
+  line-height: 1.65;
+  color: #B9C2D4;
+}
+
+.vst-kernen { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 30px; }
+.vst-kern {
+  font-family: var(--letter-data);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  border: 1px solid rgba(30, 158, 147, 0.4);
+  border-radius: var(--radius-pil);
+  padding: 6px 14px;
+}
+
+/* ---------- het aanbod ---------- */
+.vst-blok { padding: 54px 0; }
+
+.vst-raster {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.vst-kaart {
+  position: relative;
+  background: var(--wit);
+  border: 1px solid var(--lijn);
+  border-radius: var(--radius-kaart);
+  padding: 20px 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  overflow: hidden;
+}
+/* De gekleurde kaplijn in plaats van een icoon: één accent, over de hele
+   breedte, dat de kaarten als één reeks laat lezen. */
+.vst-kaart-band {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--accent);
+}
+.vst-kaart-nr {
+  font-family: var(--letter-data);
+  font-size: 0.63rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--accent-tekst);
+  font-weight: 600;
+  margin-top: 4px;
+}
+.vst-kaart-titel { font-size: 1.14rem; font-weight: 700; line-height: 1.25; }
+.vst-kaart-belofte { font-size: 0.92rem; line-height: 1.55; color: var(--gedempt); }
+.vst-kaart-opbrengst {
+  margin-top: auto;
+  padding-top: 11px;
+  border-top: 1px solid var(--lijn);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+.vst-opbrengst-label {
+  display: block;
+  font-family: var(--letter-data);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  color: var(--accent-tekst);
+  margin-bottom: 3px;
+}
+
+/* ---------- de scan, als die erbij hoort ---------- */
+.vst-scan { background: var(--zanddiep); padding: 44px 0; border-top: 1px solid var(--lijn); }
+.vst-scankaart {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  background: var(--wit);
+  border: 1px solid var(--lijn);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius-kaart);
+  padding: 26px 28px;
+}
+.vst-scancijfer { text-align: right; }
+.vst-scancijfer b {
+  display: block;
+  font-family: var(--letter-data);
+  font-size: 3.4rem;
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  color: var(--navy);
+  font-variant-numeric: tabular-nums;
+}
+.vst-scancijfer span {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--letter-data);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--zacht);
+}
+
+/* ---------- waarom Viesa ---------- */
+.vst-waarom { background: var(--diepnavy); color: var(--zand); padding: 52px 0; }
+
+.vst-pijlers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 26px;
+}
+.vst-pijler { display: flex; flex-direction: column; gap: 7px; }
+.vst-pijler-stip {
+  width: 9px;
+  height: 9px;
+  border-radius: var(--radius-pil);
+  background: var(--accent);
+  margin-bottom: 3px;
+}
+.vst-pijler-naam { font-size: 1.05rem; font-weight: 700; color: var(--zand); }
+.vst-pijler-uitleg { font-size: 0.9rem; line-height: 1.6; color: #B9C2D4; }
+
+.vst-review {
+  margin: 34px 0 0;
+  padding: 22px 26px;
+  border-left: 3px solid var(--accent);
+  background: rgba(243, 240, 233, 0.06);
+  border-radius: 0 var(--radius-kaart) var(--radius-kaart) 0;
+}
+.vst-sterren { color: #F5BE4F; letter-spacing: 3px; font-size: 0.95rem; }
+.vst-review-tekst {
+  margin-top: 10px;
+  font-size: 1.02rem;
+  line-height: 1.6;
+  font-style: italic;
+  color: var(--zand);
+  max-width: 62ch;
+}
+.vst-review-bron { margin-top: 10px; font-size: 0.82rem; color: #8FA1BD; }
+
+/* ---------- afsluiter ---------- */
+.vst-slot { background: var(--navy); color: var(--zand); padding: 52px 0; }
+.vst-voetregel { background: var(--diepnavy); color: #8FA1BD; padding: 30px 0; }
+
+@media (max-width: 640px) {
+  .vst-blok, .vst-waarom, .vst-slot { padding: 36px 0; }
+  .vst-scankaart { padding: 20px 20px; }
+  .vst-scancijfer b { font-size: 2.6rem; }
+}
+
+/* ---------------------------------------------------------------------------
+   Papier — twee vellen, en de kaarten breken niet
+   ------------------------------------------------------------------------- */
+@media print {
+  .vst-omslag { padding: 11mm 0 8mm; break-after: avoid; }
+  /* Op A4 is de kolom smaller dan op een scherm: een titel van 22ch valt hier
+     in vijf korte regels uiteen. Ruimer toestaan en iets kleiner zetten. */
+  .vst .vst-titel { font-size: 19pt; max-width: 30ch; margin-top: 5mm; }
+  .vst .vst-onderkop { font-size: 8.8pt; margin-top: 3.5mm; max-width: 66ch; }
+  .vst-kernen { margin-top: 4mm; gap: 4pt; }
+  .vst-kern { font-size: 6pt; padding: 3pt 8pt; }
+
+  .vst-blok { padding: 10pt 0; }
+  .vst-raster { grid-template-columns: 1fr 1fr; gap: 7pt; }
+  .vst-kaart { break-inside: avoid; padding: 9pt 11pt 9pt; gap: 4pt; }
+  .vst-kaart-nr { font-size: 5.8pt; margin-top: 2pt; }
+  .vst-kaart-titel { font-size: 10pt; }
+  .vst-kaart-belofte, .vst-kaart-opbrengst { font-size: 8pt; line-height: 1.38; }
+  .vst-kaart-opbrengst { padding-top: 7pt; }
+  .vst-opbrengst-label { font-size: 5.6pt; }
+
+  .vst-scan { padding: 12pt 0; break-inside: avoid; }
+  .vst-scankaart { padding: 12pt 14pt; gap: 14pt; }
+  .vst-scancijfer b { font-size: 26pt; }
+
+  .vst-waarom { padding: 14pt 0; break-inside: avoid; }
+  .vst-pijlers { grid-template-columns: 1fr 1fr 1fr; gap: 12pt; }
+  .vst-pijler-naam { font-size: 9.6pt; }
+  .vst-pijler-uitleg { font-size: 8.2pt; line-height: 1.42; }
+  .vst-review { margin-top: 14pt; padding: 12pt 14pt; break-inside: avoid; }
+  .vst-review-tekst { font-size: 9.4pt; }
+
+  .vst-slot { padding: 16pt 0; break-before: avoid; }
+  .vst-voetregel { padding: 10pt 0; }
+
+  /* Zonder dit laat de browser elk gekleurd vlak weg en blijft er van het
+     voorstel niets over dan zwarte tekst op wit. */
+  .vst-omslag, .vst-kern, .vst-kaart, .vst-kaart-band, .vst-scan, .vst-scankaart,
+  .vst-waarom, .vst-pijler-stip, .vst-review, .vst-slot, .vst-voetregel {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

@@ -117,6 +117,9 @@ export type Herkomst = {
 
 /** Eén kaart in de doorbladerbare samenvatting. */
 export type SamenvattingKaart = {
+  /** Het onderdeel waar deze kaart bij hoort — voor de ankerlink en de sleutel. */
+  sleutel: string;
+  naam: string;
   /** De vraag erboven: "Hoe goed is de technische basis?" */
   vraag: string;
   kop: string;
@@ -124,6 +127,18 @@ export type SamenvattingKaart = {
   waaromBelangrijk: string;
   slotzin: string;
   prioriteit: Prioriteit;
+  /**
+   * De score en de norm van het onderdeel, zodat de kaart zijn kleur uit de
+   * meting haalt en niet uit de prioriteit. Prioriteit zegt hoe zwaar iets
+   * weegt in het gesprek; kleur hoort te zeggen hoe het ervoor staat. Dat zijn
+   * twee verschillende dingen, en ze door elkaar halen maakt een goed
+   * onderdeel rood zodra het belangrijk is.
+   */
+  score: number | null;
+  norm: number;
+  /** Hoeveel er goed staat en hoeveel er te doen is — de balk op de kaart. */
+  goed: number;
+  teDoen: number;
 };
 
 export type Rapport = {
@@ -132,8 +147,14 @@ export type Rapport = {
   url: string;
   /** `null` als er te weinig gemeten kon worden voor een totaaloordeel. */
   totaalScore: number | null;
-  /** De schermafdruk van de site tijdens de scan — kaart 1 van de samenvatting. */
+  /**
+   * Een echte schermafdruk van de homepage op laptopformaat. Staat bovenaan
+   * beide rapporten in een laptopbeeld: de klant ziet zijn eigen site als
+   * eerste, en pas daarna het cijfer erover.
+   */
   schermafdruk: string | null;
+  /** De og:image — de terugval, en wat een gedeelde link laat zien. */
+  ogAfbeelding: string | null;
   onderdelen: Onderdeel[];
   samenvatting: SamenvattingKaart[];
   herkomst: Herkomst;
