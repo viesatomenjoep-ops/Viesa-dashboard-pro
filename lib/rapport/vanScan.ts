@@ -11,6 +11,15 @@ import type {
   Vaststelling,
 } from "./types";
 import { standVanScore } from "./schaal";
+import {
+  bevindingenUitAudits,
+  geraakteElementen,
+  nietBeoordeeldeAudits,
+  TOEGANKELIJKHEID,
+  WERKING,
+} from "./lighthouse";
+import { paginaWerkt, werkingScore } from "./paginas";
+import { aantalTechnologieen, heeftMeting } from "./technologie";
 
 /**
  * Zet een voltooide scan om in het klantrapport.
@@ -182,7 +191,7 @@ function veiligheid(scan: ScanRapport): Onderdeel {
 
   return {
     sleutel: "veiligheid",
-    nummer: 3,
+    nummer: 6,
     naam: "Veiligheid",
     oordeelKop:
       stand === "goed"
@@ -235,7 +244,7 @@ function aiVindbaarheid(scan: ScanRapport): Onderdeel {
 
   return {
     sleutel: "ai-vindbaarheid",
-    nummer: 4,
+    nummer: 7,
     naam: "AI-vindbaarheid",
     oordeelKop:
       getest === 0
@@ -268,6 +277,159 @@ function aiVindbaarheid(scan: ScanRapport): Onderdeel {
   };
 }
 
+
+function toegankelijkheid(scan: ScanRapport): Onderdeel {
+  const audits = scan.audits ?? {};
+  const bevindingen = bevindingenUitAudits(audits, TOEGANKELIJKHEID);
+  const gemist = bevindingen.filter((b) => !b.goed);
+  const elementen = geraakteElementen(audits, TOEGANKELIJKHEID);
+  const score = scan.techniek.scores.toegankelijkheid;
+  const stand = standVanScore(score, 80);
+  const paginas = scan.paginas?.length ?? 1;
+
+  return {
+    sleutel: "toegankelijkheid",
+    nummer: 3,
+    naam: "Toegankelijkheid",
+    oordeelKop:
+      score === null
+        ? "De toegankelijkheid kon deze keer niet gemeten worden"
+        : stand === "goed"
+          ? "Uw site is bruikbaar voor wie een schermlezer of toetsenbord gebruikt"
+          : "De belangrijkste onderdelen zijn bruikbaar",
+    methode:
+      "We laten uw pagina in een echte browser openen en lopen hem na op de punten die onder de wettelijke norm (WCAG) vallen — inclusief kleurcontrast, dat alleen te meten is als de pagina daadwerkelijk getekend wordt.",
+    score,
+    norm: 80,
+    prioriteit: gemist.length === 0 ? 1 : gemist.some((b) => b.ernst === "ernstig") ? 4 : 3,
+    oordeel:
+      score === null
+        ? "De toegankelijkheidsmeting leverde geen uitkomst op. Dit onderdeel telt daarom niet mee in het totaal."
+        : gemist.length === 0
+          ? "Er kwamen geen punten uit die onder de wettelijke norm vallen. Hier is geen werk te doen."
+          : "Klein om te verhelpen, en de moeite waard: een toegankelijke webshop helpt meer bezoekers én voorkomt dat toegankelijkheid later een kostbaar project wordt.",
+    metingen:
+      elementen === 0
+        ? []
+        : [
+            {
+              titel: "Toegankelijkheidsproblemen",
+              uitleg:
+                "Plekken waar iets niet werkt voor mensen die een schermlezer of toetsenbord gebruiken. Alleen de punten die onder de wettelijke norm vallen.",
+              waarde: elementen,
+              weergave: `${gemist.length} ${gemist.length === 1 ? "probleem" : "problemen"}, ${elementen} ${elementen === 1 ? "element" : "elementen"}`,
+              schaal: {
+                zones: [
+                  { tot: 5, stand: "goed", label: "goed" },
+                  { tot: 40, stand: "beter", label: "kan beter" },
+                  { tot: 100, stand: "nodig", label: "aandacht nodig" },
+                ],
+              },
+              duiding: `Verspreid over ${paginas} ${paginas === 1 ? "pagina" : "pagina's"} gevonden, en samen raken ze ${elementen} ${elementen === 1 ? "element" : "elementen"}. Hoe meer elementen geraakt zijn, hoe groter de kans dat een bezoeker met een beperking vastloopt.`,
+            },
+          ],
+    vaststellingen: [],
+    bevindingen,
+    acties: actiesVan(bevindingen, "Niets. Er kwamen geen punten uit die onder de wettelijke norm vallen."),
+  };
+}
+
+function werking(scan: ScanRapport): Onderdeel {
+  const paginas = scan.paginas ?? [];
+  const score = werkingScore(paginas);
+  const kapot = paginas.filter((p) => !paginaWerkt(p));
+  const bevindingen = bevindingenUitAudits(scan.audits ?? {}, WERKING);
+
+  // Elke opgevraagde pagina als eigen vaststelling: dit is het bewijs onder
+  // het cijfer, en precies wat een ontwikkelaar wil nalopen.
+  const vaststellingen: Vaststelling[] = paginas.map((p) => {
+    const werkt = paginaWerkt(p);
+    let pad: string;
+    try {
+      pad = new URL(p.url).pathname || "/";
+    } catch {
+      pad = p.url;
+    }
+    return {
+      titel: pad === "/" ? "De homepage" : pad,
+      uitleg: p.fout
+        ? "Deze pagina was helemaal niet op te halen."
+        : `Antwoord ${p.status ?? "onbekend"}${p.laadtijdMs !== null ? `, in ${Math.round(p.laadtijdMs)} ms` : ""}${p.https ? ", via https" : ", zónder https"}.`,
+      antwoord: werkt ? "Doet het" : (p.fout ?? "Werkt niet zoals verwacht"),
+      stand: werkt ? "goed" : "nodig",
+    };
+  });
+
+  return {
+    sleutel: "werking",
+    nummer: 4,
+    naam: "Werking",
+    oordeelKop:
+      kapot.length === 0
+        ? "Uw pagina's doen wat ze moeten doen"
+        : "Niet elke pagina doet wat hij moet doen",
+    methode:
+      `We vragen ${paginas.length === 1 ? "de pagina" : `${paginas.length} pagina's`} op zoals een bezoeker dat doet en kijken of ze werken: een normaal antwoord van de server, geen terugval naar http, en niets dat stukloopt in de browser. Dat lijkt vanzelfsprekend, maar we vinden hier regelmatig een productpagina die stil crasht op mobiel.`,
+    score,
+    norm: 100,
+    prioriteit: kapot.length > 0 ? 5 : 1,
+    oordeel:
+      kapot.length === 0
+        ? "Alles wat we opvroegen kwam netjes binnen. Hier is geen werk te doen."
+        : `${kapot.length} van de ${paginas.length} opgevraagde pagina's deed niet wat hij moest doen. Dit is het eerste dat we zouden oppakken — een pagina die het niet doet, kost direct omzet.`,
+    metingen: [],
+    vaststellingen,
+    bevindingen,
+    acties: actiesVan(
+      bevindingen,
+      kapot.length === 0
+        ? "Niets. Alles doet het — laat het zoals het is."
+        : "Loop de pagina's na die hierboven rood staan.",
+    ),
+  };
+}
+
+function techniek(scan: ScanRapport): Onderdeel {
+  const groepen = scan.technologie ?? [];
+  const aantal = aantalTechnologieen(groepen);
+  const meting = heeftMeting(groepen);
+
+  return {
+    sleutel: "techniek",
+    nummer: 5,
+    naam: "Techniek",
+    oordeelKop:
+      aantal === 0
+        ? "We konden niet vaststellen wat er onder uw winkel draait"
+        : `${aantal} ${aantal === 1 ? "technologie" : "technologieën"} gevonden`,
+    methode:
+      "We herkennen de gebruikte technologie aan de buitenkant van de pagina. Versienummers staan vrijwel altijd alleen in code die pas in de browser draait, en daar kijken we niet in — we doen dus géén uitspraak over of u bij bent.",
+    // Bewust geen cijfer: welke techniek er draait is achtergrond bij het
+    // gesprek, geen rapportcijfer. Een streepje is eerlijker dan een score die
+    // suggereert dat de ene keuze beter is dan de andere.
+    score: null,
+    norm: 80,
+    prioriteit: meting ? 2 : 4,
+    oordeel: meting
+      ? "Er draait meetsoftware op uw site, dus u kunt zien wat uw advertenties en pagina's opleveren. Dit onderdeel krijgt geen cijfer: welke techniek u gebruikt is een keuze, geen fout."
+      : "Zonder meting weet u niet welke advertentie of welke pagina uw omzet oplevert — dat is het eerste dat we zouden inrichten. Dit onderdeel krijgt verder geen cijfer: welke techniek u gebruikt is een keuze, geen fout.",
+    metingen: [],
+    vaststellingen: [
+      {
+        titel: "Uw meting en uw advertentiebudget",
+        uitleg: "Zonder meting weet u niet welke advertentie of welke pagina uw omzet oplevert.",
+        antwoord: meting ? "Meetsoftware gevonden" : "Geen meetscripts op uw site",
+        stand: meting ? "goed" : "nodig",
+      },
+    ],
+    bevindingen: [],
+    technologie: groepen,
+    acties: meting
+      ? ["Niets. De meting staat; kijk of de doelen erin ook aansluiten op uw omzet."]
+      : ["Zet een meetscript op de site, zodat bestellingen aan een bron gekoppeld worden."],
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Samenvatting
 // ---------------------------------------------------------------------------
@@ -277,6 +439,9 @@ function samenvattingVan(onderdelen: Onderdeel[]): SamenvattingKaart[] {
   const vragen: Record<string, string> = {
     vindbaarheid: "Kan Google uw site vinden en lezen?",
     snelheid: "Hoe snel is uw website?",
+    toegankelijkheid: "Kan iedereen uw winkel gebruiken?",
+    werking: "Doen uw pagina's het gewoon?",
+    techniek: "Wat draait er onder uw winkel?",
     veiligheid: "Hoe goed is de technische basis?",
     "ai-vindbaarheid": "Is uw site klaar voor AI-assistenten?",
   };
@@ -309,7 +474,15 @@ export function rapportVanScan(
   scan: ScanRapport,
   opts: { bedrijf?: string | null; gemetenOp?: string; rekentijdSeconden?: number } = {},
 ): Rapport {
-  const onderdelen = [vindbaarheid(scan), snelheid(scan), veiligheid(scan), aiVindbaarheid(scan)];
+  const onderdelen = [
+    vindbaarheid(scan),
+    snelheid(scan),
+    toegankelijkheid(scan),
+    werking(scan),
+    techniek(scan),
+    veiligheid(scan),
+    aiVindbaarheid(scan),
+  ];
 
   // Regel 4: wat we niet konden beoordelen, staat erbij — inclusief de reden.
   const nietBeoordeeld: string[] = [
@@ -320,6 +493,8 @@ export function rapportVanScan(
     if (o.score === null) nietBeoordeeld.unshift(`${o.naam}: ${o.oordeel}`);
   }
   for (const w of scan.waarschuwingen) nietBeoordeeld.push(w);
+  // Lighthouse zegt zelf welke punten het niet automatisch kan beoordelen.
+  nietBeoordeeld.push(...nietBeoordeeldeAudits(scan.audits ?? {}, TOEGANKELIJKHEID));
 
   const controles = onderdelen.reduce(
     (n, o) => n + o.bevindingen.length + o.vaststellingen.length + o.metingen.length,
@@ -335,19 +510,21 @@ export function rapportVanScan(
     onderdelen,
     samenvatting: samenvattingVan(onderdelen),
     herkomst: {
-      paginas: 1,
+      paginas: scan.paginas?.length ?? 1,
       controles,
-      rekentijdSeconden: opts.rekentijdSeconden ?? 0,
+      rekentijdSeconden:
+        opts.rekentijdSeconden ??
+        (scan.rekentijdMs ? Math.round(scan.rekentijdMs / 1000) : 0),
       gemetenOp: opts.gemetenOp ?? new Date().toISOString(),
       instrumenten: [
-        { naam: "Lighthouse", versie: "via PageSpeed Insights" },
+        { naam: "Lighthouse", versie: scan.lighthouseVersie ?? "via PageSpeed" },
         { naam: "modellen", versie: `${scan.zichtbaarheid.getest} bevraagd` },
       ],
-      scoremodel: "1.0.0",
+      scoremodel: "1.1.0",
     },
     nietBeoordeeld,
   };
 }
 
 /** Alleen voor de tests: de losse onderdeelbouwers. */
-export const _intern = { vindbaarheid, snelheid, veiligheid, aiVindbaarheid, samenvattingVan };
+export const _intern = { vindbaarheid, snelheid, toegankelijkheid, werking, techniek, veiligheid, aiVindbaarheid, samenvattingVan };

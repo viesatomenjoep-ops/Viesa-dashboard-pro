@@ -76,8 +76,8 @@ const r = rapportVanScan(scan(), { bedrijf: "Voorbeeld BV", gemetenOp: "2026-08-
 const perSleutel = Object.fromEntries(r.onderdelen.map((o) => [o.sleutel, o]));
 
 console.log("opbouw");
-test("vier onderdelen", r.onderdelen.map((o) => o.sleutel), ["vindbaarheid", "snelheid", "veiligheid", "ai-vindbaarheid"]);
-test("onderdelen zijn doorlopend genummerd", r.onderdelen.map((o) => o.nummer), [1, 2, 3, 4]);
+test("zeven onderdelen", r.onderdelen.map((o) => o.sleutel), ["vindbaarheid", "snelheid", "toegankelijkheid", "werking", "techniek", "veiligheid", "ai-vindbaarheid"]);
+test("onderdelen zijn doorlopend genummerd", r.onderdelen.map((o) => o.nummer), [1, 2, 3, 4, 5, 6, 7]);
 test("bedrijfsnaam komt op de omslag", r.bedrijf, "Voorbeeld BV");
 test("totaalscore wordt overgenomen", r.totaalScore, 71);
 test("schermafdruk wordt overgenomen", r.schermafdruk, "https://voorbeeld.nl/og.png");
@@ -153,8 +153,8 @@ test("het uitgevallen model komt niet als vaststelling terug", perSleutel["ai-vi
 test("de llms.txt-bevinding hoort bij dit onderdeel", perSleutel["ai-vindbaarheid"].bevindingen.some((b) => b.titel === "llms.txt"), true);
 
 console.log("\nprioriteit en samenvatting");
-test("een kaart per onderdeel", r.samenvatting.length, 4);
-test("de zwaarste staat vooraan", r.samenvatting[0].prioriteit >= r.samenvatting[3].prioriteit, true);
+test("een kaart per onderdeel", r.samenvatting.length, 7);
+test("de zwaarste staat vooraan", r.samenvatting[0].prioriteit >= r.samenvatting[6].prioriteit, true);
 test("elke kaart heeft een vraag, kop en slotzin", r.samenvatting.every((k) => k.vraag && k.kop && k.slotzin), true);
 test("nul modellen die het bedrijf noemen weegt het zwaarst", (() => {
   const niemand = rapportVanScan(scan({

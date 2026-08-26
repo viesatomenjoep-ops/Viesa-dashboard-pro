@@ -196,8 +196,47 @@ export const VOORBEELDRAPPORT: Rapport = {
     },
 
     {
-      sleutel: "techniek",
+      sleutel: "werking",
       nummer: 4,
+      naam: "Werking",
+      oordeelKop: "Uw pagina's doen wat ze moeten doen",
+      methode:
+        "We vragen 2 pagina's op zoals een bezoeker dat doet en kijken of ze werken: een normaal antwoord van de server, geen terugval naar http, en niets dat stukloopt in de browser. Dat lijkt vanzelfsprekend, maar we vinden hier regelmatig een productpagina die stil crasht op mobiel.",
+      score: 100,
+      norm: 100,
+      prioriteit: 1,
+      oordeel: "Alles wat we opvroegen kwam netjes binnen. Hier is geen werk te doen.",
+      metingen: [],
+      vaststellingen: [
+        {
+          titel: "De homepage",
+          uitleg: "Antwoord 200, in 340 ms, via https.",
+          antwoord: "Doet het",
+          stand: "goed",
+        },
+        {
+          titel: "/producten/tuinstoelen",
+          uitleg: "Antwoord 200, in 410 ms, via https.",
+          antwoord: "Doet het",
+          stand: "goed",
+        },
+      ],
+      bevindingen: [
+        {
+          titel: "fouten in de browser",
+          aantal: "3 elementen",
+          uitleg: "De pagina meldt fouten terwijl hij laadt. Dat is wat er stukgaat vlak voordat iets niet werkt.",
+          advies: "Loop de meldingen na; ze wijzen meestal op een functie die het op sommige apparaten niet doet.",
+          ernst: "gemiddeld",
+          goed: false,
+        },
+      ],
+      acties: ["Loop de drie consolefouten na; die wijzen op iets dat op sommige apparaten niet werkt."],
+    },
+
+    {
+      sleutel: "techniek",
+      nummer: 5,
       naam: "Techniek",
       oordeelKop: "Wat er onder uw winkel draait",
       methode:
@@ -262,7 +301,7 @@ export const VOORBEELDRAPPORT: Rapport = {
       { naam: "Lighthouse", versie: "13.4.1" },
       { naam: "axe-core", versie: "4.10.2" },
     ],
-    scoremodel: "1.0.0",
+    scoremodel: "1.1.0",
   },
 
   nietBeoordeeld: [

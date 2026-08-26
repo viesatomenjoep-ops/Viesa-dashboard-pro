@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Circle,
   Clock,
+  Cpu,
   ExternalLink,
   FileSearch,
   Gauge,
@@ -46,6 +47,7 @@ const STAPPEN: { key: string; label: string; icoon: typeof Gauge }[] = [
   { key: "content", label: "Content-analyse", icoon: FileSearch },
   { key: "beveiliging", label: "Beveiliging", icoon: ShieldCheck },
   { key: "scripts", label: "Scripts & tracking", icoon: Lock },
+  { key: "technologie", label: "Technologie", icoon: Cpu },
   { key: "snelheid", label: "Snelheidsmeting", icoon: Gauge },
   { key: "zichtbaarheid", label: "AI-zichtbaarheid", icoon: Bot },
 ];

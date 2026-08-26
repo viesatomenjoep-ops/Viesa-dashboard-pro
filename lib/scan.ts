@@ -2,6 +2,7 @@ import "server-only";
 import { schoonSleutel } from "@/lib/geheimen";
 import { analyseerGeo, type GeoAnalyse } from "@/lib/geo-analyse";
 import type { AuditResultaten } from "@/lib/audit";
+import { kiesTweedePagina, type PaginaMeting } from "@/lib/rapport/paginas";
 
 /**
  * Websitescanner: haalt de site op, meet hem, en telt drie oordelen samen.
@@ -13,6 +14,25 @@ import type { AuditResultaten } from "@/lib/audit";
  */
 
 export const WEGING = { zichtbaarheid: 40, geo: 35, techniek: 25 } as const;
+
+/**
+ * Eén audit uit het Lighthouse-rapport.
+ *
+ * `score` is 0 (gezakt), 1 (geslaagd) of null. `scoreDisplayMode` zegt of de
+ * audit überhaupt beoordeeld is: "manual" en "notApplicable" betekenen dat
+ * Lighthouse er géén uitspraak over doet — die horen bij de punten die we
+ * eerlijk als niet-beoordeeld melden, niet bij de gezakte.
+ */
+export type LighthouseAudit = {
+  id?: string;
+  title?: string;
+  description?: string;
+  score?: number | null;
+  scoreDisplayMode?: string;
+  displayValue?: string;
+  numericValue?: number;
+  details?: { items?: unknown[] };
+};
 
 export type PagespeedScores = {
   prestatie: number | null;
@@ -53,6 +73,19 @@ export type ScanRapport = ScanResultaat & {
   scripts?: unknown;
   vindbaarheid?: unknown;
   voorbeeld?: string | null;
+  /**
+   * De losse Lighthouse-audits. Hieruit komen toegankelijkheid en werking:
+   * Lighthouse draait in een echte Chrome bij Google en meet daarmee ook
+   * kleurcontrast, wat zonder gerenderde pagina niet kan.
+   */
+  audits?: Record<string, LighthouseAudit>;
+  lighthouseVersie?: string | null;
+  /** Wat elke opgevraagde pagina deed — het onderdeel "werking". */
+  paginas?: PaginaMeting[];
+  /** Herkende technologie uit de HTML en de headers. */
+  technologie?: { groep: string; namen: string[] }[];
+  /** Hoe lang de hele scan duurde, voor het herkomstblok. */
+  rekentijdMs?: number;
 };
 
 const HAAL_TIMEOUT_MS = 15_000;
@@ -109,6 +142,14 @@ export type SiteGegevens = {
   https: boolean;
   laadtijdMs: number;
   waarschuwingen: string[];
+  /**
+   * Elke pagina die we hebben opgevraagd, met wat eruit kwam.
+   *
+   * Twee in plaats van één: de homepage is meestal de best verzorgde pagina van
+   * een site, dus daar alleen naar kijken vleit de klant. Een tweede,
+   * willekeurige inhoudspagina laat zien hoe het er dagelijks aan toegaat.
+   */
+  paginas: PaginaMeting[];
 };
 
 /** Haalt pagina, robots.txt, llms.txt en sitemap op. Alleen de pagina is verplicht. */
@@ -141,6 +182,38 @@ export async function haalSite(url: string): Promise<SiteGegevens> {
   const llmsTxtGevonden = llms.status === "fulfilled" && isEchteTekst(llms.value);
   const sitemapGevonden = sitemap.status === "fulfilled" && isEchteTekst(sitemap.value);
 
+  const paginas: PaginaMeting[] = [
+    {
+      url,
+      status: pagina.value.status,
+      https: url.startsWith("https://"),
+      laadtijdMs: pagina.value.ms,
+    },
+  ];
+
+  // Een tweede pagina erbij, als de homepage ergens naartoe wijst. Mislukt dat,
+  // dan meten we er één en zegt het rapport dat ook — beter dan doen alsof.
+  const tweede = kiesTweedePagina(pagina.value.tekst, url);
+  if (tweede) {
+    try {
+      const res = await haalRuw(tweede, 10_000);
+      paginas.push({
+        url: tweede,
+        status: res.status,
+        https: tweede.startsWith("https://"),
+        laadtijdMs: res.ms,
+      });
+    } catch (e) {
+      paginas.push({
+        url: tweede,
+        status: null,
+        https: tweede.startsWith("https://"),
+        laadtijdMs: null,
+        fout: e instanceof Error ? e.message : "Niet op te halen.",
+      });
+    }
+  }
+
   return {
     html: pagina.value.tekst,
     robotsTxt,
@@ -150,6 +223,7 @@ export async function haalSite(url: string): Promise<SiteGegevens> {
     https: url.startsWith("https://"),
     laadtijdMs: pagina.value.ms,
     waarschuwingen,
+    paginas,
   };
 }
 
@@ -157,9 +231,23 @@ export async function haalSite(url: string): Promise<SiteGegevens> {
  * PageSpeed Insights. Zonder sleutel werkt het ook, maar met een strenge
  * limiet — vandaar dat de sleutel wordt aanbevolen en niet vereist.
  */
-export async function meetPagespeed(
-  url: string,
-): Promise<{ scores: PagespeedScores; fout?: string }> {
+export type PagespeedUitkomst = {
+  scores: PagespeedScores;
+  /**
+   * De losse audits, ongefilterd.
+   *
+   * Hier zit het echte werk in: Lighthouse draait in Google's Chrome en voert
+   * daarmee de volledige toegankelijkheidscontrole uit, inclusief kleurcontrast
+   * — iets wat je zonder browser niet kunt meten. Wij hoeven dus geen eigen
+   * browser te draaien, we moeten alleen ophouden deze gegevens weg te gooien.
+   */
+  audits: Record<string, LighthouseAudit>;
+  /** De versie van het meetinstrument, voor het herkomstblok in het rapport. */
+  lighthouseVersie: string | null;
+  fout?: string;
+};
+
+export async function meetPagespeed(url: string): Promise<PagespeedUitkomst> {
   const leeg: PagespeedScores = {
     prestatie: null,
     seo: null,
@@ -192,29 +280,32 @@ export async function meetPagespeed(
           : res.status === 429
             ? "Aanvraaglimiet van PageSpeed bereikt."
             : `PageSpeed gaf ${res.status}.`;
-      return { scores: leeg, fout: melding };
+      return { scores: leeg, audits: {}, lighthouseVersie: null, fout: melding };
     }
 
     const data = (await res.json()) as {
       lighthouseResult?: {
+        lighthouseVersion?: string;
         categories?: Record<string, { score?: number | null }>;
-        audits?: Record<string, { numericValue?: number }>;
+        audits?: Record<string, LighthouseAudit>;
       };
     };
     const cat = data.lighthouseResult?.categories ?? {};
     const naar100 = (v?: number | null) =>
       typeof v === "number" ? Math.round(v * 100) : null;
 
+    const audits = data.lighthouseResult?.audits ?? {};
+
     return {
+      lighthouseVersie: data.lighthouseResult?.lighthouseVersion ?? null,
+      audits,
       scores: {
         prestatie: naar100(cat.performance?.score),
         seo: naar100(cat.seo?.score),
         toegankelijkheid: naar100(cat.accessibility?.score),
         bestPractices: naar100(cat["best-practices"]?.score),
-        lcp: data.lighthouseResult?.audits?.["largest-contentful-paint"]?.numericValue
-          ? Math.round(
-              (data.lighthouseResult.audits["largest-contentful-paint"].numericValue / 1000) * 10,
-            ) / 10
+        lcp: audits["largest-contentful-paint"]?.numericValue
+          ? Math.round((audits["largest-contentful-paint"].numericValue! / 1000) * 10) / 10
           : null,
       },
     };
@@ -222,6 +313,8 @@ export async function meetPagespeed(
     const afgebroken = e instanceof Error && e.name === "AbortError";
     return {
       scores: leeg,
+      audits: {},
+      lighthouseVersie: null,
       fout: afgebroken ? "PageSpeed antwoordde niet binnen een minuut." : "PageSpeed niet bereikbaar.",
     };
   } finally {

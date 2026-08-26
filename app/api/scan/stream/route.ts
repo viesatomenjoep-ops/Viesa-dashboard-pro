@@ -16,6 +16,7 @@ import {
   controleerVindbaarheid,
   voorbeeldAfbeelding,
 } from "@/lib/site-checks";
+import { herkenTechnologie } from "@/lib/rapport/technologie";
 
 /**
  * Streamende websitescan — dezelfde meting als /api/scan, maar dan als een
@@ -80,6 +81,7 @@ export async function GET(request: Request) {
 
   const stream = new ReadableStream({
     async start(controller) {
+      const begonnenOp = Date.now();
       const stuur = (e: Event) => controller.enqueue(encoder.encode(sse(e)));
       // Voert een stap uit, meldt start en einde, en laat een fout in één stap
       // de rest van de scan niet meeslepen — precies zoals Promise.allSettled
@@ -173,6 +175,19 @@ export async function GET(request: Request) {
           "scripts",
           async () => controleerScripts(site.html, host),
           (r) => ({ goed: true, samenvatting: r.samenvatting, data: r }),
+        );
+
+        const technologie = await stap(
+          "technologie",
+          async () => herkenTechnologie(site.html, site.headers),
+          (groepen) => {
+            const n = groepen.reduce((s, g) => s + g.namen.length, 0);
+            return {
+              goed: true,
+              samenvatting: n === 0 ? "Niets herkend" : `${n} herkend`,
+              data: groepen,
+            };
+          },
         );
 
         // 3. De trage, externe metingen — pas hierna, want ze kosten tijd en
@@ -288,6 +303,13 @@ export async function GET(request: Request) {
           scripts,
           vindbaarheid: geo,
           voorbeeld,
+          // Alles wat fase 3 nodig heeft om toegankelijkheid, werking en
+          // techniek als eigen onderdeel te tonen.
+          audits: pagespeed?.audits ?? {},
+          lighthouseVersie: pagespeed?.lighthouseVersie ?? null,
+          paginas: site.paginas,
+          technologie: technologie ?? [],
+          rekentijdMs: Date.now() - begonnenOp,
         };
 
         stuur({ type: "totaal", score, oordeel, resultaat });
