@@ -17,7 +17,13 @@ function datumLang(iso: string): string {
  * totaaloordeel in één cijfer. Op papier is dit de voorpagina — daarna begint
  * elk onderdeel op een eigen vel.
  */
-export function RapportOmslag({ rapport }: { rapport: Rapport }) {
+export function RapportOmslag({
+  rapport,
+  korteUrl,
+}: {
+  rapport: Rapport;
+  korteUrl?: string | null;
+}) {
   const { totaalScore, host, bedrijf, herkomst, onderdelen } = rapport;
   const stand = standVanScore(totaalScore, 80);
 
@@ -60,6 +66,17 @@ export function RapportOmslag({ rapport }: { rapport: Rapport }) {
             </p>
           </div>
         </div>
+
+        {korteUrl && (
+          <p className="rap-alleen-scherm" style={{ marginTop: 22 }}>
+            <a
+              href={korteUrl}
+              style={{ color: "#B9C2D4", fontSize: ".92rem", textDecoration: "underline" }}
+            >
+              Liever de samenvatting van één pagina?
+            </a>
+          </p>
+        )}
 
         <div className="rap-tegels">
           <div className="rap-tegel">

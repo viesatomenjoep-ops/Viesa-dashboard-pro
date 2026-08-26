@@ -269,7 +269,19 @@ export const VOORBEELDRAPPORT: Rapport = {
     },
   ],
 
+  // Eén kaart per onderdeel, zwaarste eerst — precies wat samenvattingVan()
+  // uit een echte scan maakt. Hier handmatig, zodat de previewpagina de
+  // afdrukindeling met het werkelijke aantal kaarten toont.
   samenvatting: [
+    {
+      vraag: "Doen uw pagina's het gewoon?",
+      kop: "Uw pagina's doen wat ze moeten doen",
+      verhaal:
+        "Alles wat we opvroegen kwam netjes binnen: een normaal antwoord van de server, via https, zonder terugval.",
+      waaromBelangrijk: "Dit onderdeel staat op 100 van 100; de norm is dat alles werkt.",
+      slotzin: "Geen spoed — dit staat er goed voor.",
+      prioriteit: 1,
+    },
     {
       vraag: "Hoe snel is uw webshop?",
       kop: "Het eerste beeld laat twee seconden op zich wachten",
@@ -277,6 +289,16 @@ export const VOORBEELDRAPPORT: Rapport = {
         "Uw pagina komt netjes aan, maar de eerste twee seconden ziet een bezoeker een leeg scherm. Dat is precies het moment waarop mensen teruggaan naar de zoekresultaten.",
       waaromBelangrijk:
         "Elke seconde wachten kost bestellingen, en op mobiel het hardst — daar is het geduld het kortst.",
+      slotzin: "Dit zouden wij als eerste bespreken.",
+      prioriteit: 4,
+    },
+    {
+      vraag: "Wat draait er onder uw winkel?",
+      kop: "Vijf technologieën gevonden, maar geen meting",
+      verhaal:
+        "Zonder meting weet u niet welke advertentie of welke pagina uw omzet oplevert — dat is het eerste dat we zouden inrichten.",
+      waaromBelangrijk:
+        "Dit onderdeel telt niet mee in het totaal, maar hoort wel bij het gesprek.",
       slotzin: "Dit zouden wij als eerste bespreken.",
       prioriteit: 4,
     },
@@ -289,6 +311,15 @@ export const VOORBEELDRAPPORT: Rapport = {
         "Een toegankelijke webshop helpt meer bezoekers én voorkomt dat toegankelijkheid later een kostbaar project wordt.",
       slotzin: "Klein om te verhelpen, en de moeite waard.",
       prioriteit: 3,
+    },
+    {
+      vraag: "Kan Google uw site vinden en lezen?",
+      kop: "Google vindt uw producten en leest de details",
+      verhaal:
+        "Google kan uw site vinden en begrijpen. Hier is geen werk te doen — de basis staat, en dat scheelt u een hoop bijstelwerk later.",
+      waaromBelangrijk: "Dit onderdeel staat op 92 van 100; de norm is 80.",
+      slotzin: "Geen spoed — dit staat er goed voor.",
+      prioriteit: 2,
     },
   ],
 

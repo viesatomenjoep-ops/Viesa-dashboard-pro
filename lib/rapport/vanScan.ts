@@ -20,6 +20,7 @@ import {
 } from "./lighthouse";
 import { paginaWerkt, werkingScore } from "./paginas";
 import { aantalTechnologieen, heeftMeting } from "./technologie";
+import { heelScan } from "./heelScan";
 
 /**
  * Zet een voltooide scan om in het klantrapport.
@@ -471,9 +472,13 @@ function samenvattingVan(onderdelen: Onderdeel[]): SamenvattingKaart[] {
 // ---------------------------------------------------------------------------
 
 export function rapportVanScan(
-  scan: ScanRapport,
+  ruweScan: ScanRapport,
   opts: { bedrijf?: string | null; gemetenOp?: string; rekentijdSeconden?: number } = {},
 ): Rapport {
+  // De scan komt uit een JSON-kolom en kan geschreven zijn door een oudere
+  // versie van de scanner. Eerst heel maken, dan pas lezen — zie heelScan.ts.
+  const scan = heelScan(ruweScan);
+
   const onderdelen = [
     vindbaarheid(scan),
     snelheid(scan),

@@ -76,14 +76,18 @@ export function VolScherm({
       {open &&
         gemonteerd &&
         createPortal(
-          <div className="fixed inset-0 z-50 flex flex-col bg-achtergrond">
-            <div className="flex items-center justify-between border-b border-navy/10 bg-white px-4 py-3 sm:px-6">
-              <h2 className="truncate text-lg font-semibold text-navy">{titel ?? label}</h2>
+          <div className="fixed inset-0 z-50 flex w-full max-w-full flex-col overflow-x-hidden bg-achtergrond">
+            {/* De kop blijft staan waar hij staat. Schoof de inhoud opzij — en
+                dat gebeurde op mobiel zodra één veld te breed was — dan
+                verdween het kruisje mee uit beeld en zat je vast in het
+                venster. Sticky + overflow-x-hidden houdt de uitweg bereikbaar. */}
+            <div className="sticky top-0 z-10 flex w-full shrink-0 items-center justify-between gap-3 border-b border-navy/10 bg-white px-4 py-3 sm:px-6">
+              <h2 className="min-w-0 flex-1 truncate text-base font-semibold text-navy sm:text-lg">{titel ?? label}</h2>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Sluiten"
-                className="rounded-lg border border-navy/20 p-2 text-navy hover:bg-navy/5"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-navy/20 text-navy hover:bg-navy/5"
               >
                 <X size={18} />
               </button>
@@ -91,8 +95,8 @@ export function VolScherm({
             {vullend ? (
               <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
             ) : (
-              <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-                <div className={`mx-auto ${maxBreed}`}>{children}</div>
+              <div className="min-h-0 w-full flex-1 overflow-y-auto overflow-x-hidden overscroll-contain p-4 sm:p-6">
+                <div className={`mx-auto w-full min-w-0 ${maxBreed}`}>{children}</div>
               </div>
             )}
           </div>,

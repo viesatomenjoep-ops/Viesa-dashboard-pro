@@ -235,8 +235,12 @@
    met de hoofdknop. Op een navy vlak leent hij zijn rand van de tekstkleur. */
 .rap-knop-stil { background: transparent; color: var(--navy); border: 1px solid var(--lijn); }
 .rap-knop-stil:hover { background: var(--zanddiep); }
-#afspraak .rap-knop-stil { color: var(--zand); border-color: rgba(243,240,233,.35); }
-#afspraak .rap-knop-stil:hover { background: rgba(243,240,233,.1); }
+/* Op een donker vlak leent de omlijnde knop zijn kleur van de tekst eromheen.
+   Bewust op een klasse en niet op #afspraak: die id bestaat alleen in het
+   volledige rapport, en dan zijn de knoppen in de samenvatting navy-op-navy —
+   dus onzichtbaar. Zet `rap-op-donker` op elk donker blok met knoppen. */
+.rap-op-donker .rap-knop-stil { color: var(--zand); border-color: rgba(243,240,233,.35); }
+.rap-op-donker .rap-knop-stil:hover { background: rgba(243,240,233,.1); }
 
 .rap :focus-visible { outline: 2px solid var(--accent-tekst); outline-offset: 2px; }
 
@@ -264,21 +268,45 @@
 
 /* ============================================================================
    Papier — dit is de hele PDF-oplossing
+   ----------------------------------------------------------------------------
+   Drie dingen maakten de eerste PDF rommelig, en alle drie staan hieronder
+   opgelost:
+
+   1. Elk onderdeel begon op een eigen vel (`break-before: page`). Bij zeven
+      onderdelen leverde dat dertien pagina's op waarvan de meeste voor
+      driekwart leeg waren. Nu loopt de tekst gewoon door en breken we alleen
+      binnen een blok niet af.
+
+   2. De browser zette er zelf een kop- en voetregel bij met de datum, de
+      paginatitel en de volledige URL. Precies wat een document er als een
+      schermafdruk uit laat zien. `@page { margin: 0 }` haalt de ruimte weg
+      waar Chrome die in kwijt kan; de witmarge zetten we zelf met padding.
+
+   3. Doordat de marge van de pagina kwam en niet van ons, stond de navy omslag
+      als een los kadertje midden op een wit vel. Nu loopt hij van rand tot rand.
    ========================================================================== */
-@page { size: A4; margin: 16mm 14mm; }
+@page { size: A4; margin: 0; }
 
 @media print {
-  .rap { background: var(--wit); font-size: 10.5pt; line-height: 1.5; }
-  .rap-breed { max-width: none; padding: 0; }
+  .rap { background: var(--wit); font-size: 10.2pt; line-height: 1.45; }
+
+  /* De marge komt nu van ons, zodat de gekleurde vlakken tot de rand lopen. */
+  .rap-breed { max-width: none; padding: 0 14mm; }
 
   /* Schermnavigatie hoort niet op papier. */
   .rap-tabs, .rap-alleen-scherm { display: none !important; }
   .rap-alleen-papier { display: block !important; }
 
-  /* Elk onderdeel op een eigen pagina, en nooit een kop los onderaan. */
-  .rap-onderdeel { break-before: page; padding: 0 0 12pt; border-bottom: 0; }
-  .rap-onderdeel:first-of-type { break-before: auto; }
-  .rap-onderdeel-kop, .rap-meting, .rap-bevinding, .rap-vaststelling, .rap-oordeel {
+  /* Doorlopen in plaats van elk onderdeel een eigen vel. Wat níét mag breken is
+     een blok dat als geheel gelezen wordt — een meetbalk met zijn duiding, een
+     bevinding met zijn advies. */
+  .rap-onderdeel {
+    break-before: auto;
+    padding: 14pt 0;
+    border-bottom: 1px solid var(--lijn);
+  }
+  .rap-onderdeel-kop, .rap-meting, .rap-bevinding, .rap-vaststelling,
+  .rap-oordeel, .rap-actie, .rap-tech-groep, .rap-kaart {
     break-inside: avoid;
   }
   h1, h2, h3 { break-after: avoid; }
@@ -288,14 +316,23 @@
      hier staat. */
   .rap-omslag, .rap-balk-zones, .rap-balk-zone, .rap-balk-punt, .rap-chip,
   .rap-vaststelling, .rap-vinkje, .rap-oordeel, .rap-actie-nr, .rap-pil,
-  .rap-tegel, .rap-tegels, .rap-ruit, .rap-stip {
+  .rap-tegel, .rap-tegels, .rap-stip, .rap-knop, .rap-knop-accent,
+  .sam-kaart, .sam-slotblok, .sam-voetregel, .sam-bol, .sam-bol-aan,
+  .sam-balk, .sam-balk-vul {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
-  .rap-omslag { padding: 0 0 22pt; break-after: page; }
+  /* De omslag van rand tot rand, met eigen witruimte erbinnen. */
+  .rap-omslag { padding: 16mm 0 12mm; break-after: avoid; }
+  .rap-omslag h1 { font-size: 26pt; }
+
   .rap-kaart { border-color: var(--lijn); box-shadow: none; }
   a { text-decoration: none; color: inherit; }
+
+  /* De afsluiter mag niet als losse pagina achterblijven. */
+  #afspraak, .sam-slotblok { break-before: avoid; }
+  #afspraak .rap-breed { padding-top: 14pt; padding-bottom: 14pt; }
 }
 
 .rap-alleen-papier { display: none; }

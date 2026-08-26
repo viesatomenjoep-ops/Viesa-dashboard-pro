@@ -209,11 +209,11 @@ export function GroteEditor({
       className={
         vol
           ? "fixed inset-0 z-50 flex flex-col bg-white"
-          : "flex flex-col overflow-hidden rounded-lg border border-navy/20 focus-within:border-navy"
+          : "flex w-full min-w-0 max-w-full flex-col overflow-hidden rounded-lg border border-navy/20 focus-within:border-navy"
       }
     >
       {/* Opmaakbalk */}
-      <div className="flex flex-wrap items-center gap-0.5 border-b border-navy/10 bg-white px-2 py-1.5">
+      <div className="flex w-full max-w-full flex-wrap items-center gap-0.5 overflow-x-hidden border-b border-navy/10 bg-white px-2 py-1.5">
         <BlokKiezer onKies={(tag) => opdracht("formatBlock", tag)} />
         {lettertypeKiezer && (
           <LettertypeKiezer waarde={lettertype} onKies={setLettertype} />
@@ -329,7 +329,7 @@ function LettertypeKiezer({
       }}
       onFocus={laadAlleWebfonts}
       onChange={(e) => onKies(e.target.value)}
-      className="max-w-[10rem] rounded px-1.5 py-1 text-sm text-navy/80 outline-none hover:bg-navy/10"
+      className="w-[8.5rem] min-w-0 max-w-[10rem] shrink rounded px-1.5 py-1 text-sm text-navy/80 outline-none hover:bg-navy/10 sm:w-auto"
       style={{ fontFamily: lettertypeStack(waarde) }}
     >
       {LETTERTYPE_GROEPEN.map((groep) => (
@@ -355,7 +355,7 @@ function BlokKiezer({ onKies }: { onKies: (tag: string) => void }) {
         onKies(e.target.value);
         e.currentTarget.selectedIndex = 0;
       }}
-      className="rounded px-1.5 py-1 text-sm text-navy/80 outline-none hover:bg-navy/10"
+      className="min-w-0 max-w-[7rem] shrink rounded px-1.5 py-1 text-sm text-navy/80 outline-none hover:bg-navy/10"
     >
       <option value="p">Tekst</option>
       <option value="h1">Kop 1</option>

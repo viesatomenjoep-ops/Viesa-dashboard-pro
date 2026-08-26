@@ -1,20 +1,20 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Rapport } from "@/components/rapport/Rapport";
+import { Samenvatting } from "@/components/rapport/Samenvatting";
 import { rapportVanScan } from "@/lib/rapport/vanScan";
 import type { ScanRapport } from "@/lib/scan";
 
 /**
- * Het klantrapport op een eigen, deelbaar adres.
+ * De korte versie van het klantrapport, op hetzelfde deelbare adres met /kort
+ * erachter.
  *
- * Staat bewust buiten de route-group `(app)`: dit is de enige pagina van het
- * dashboard die een buitenstaander te zien krijgt, dus zonder navigatie,
- * zonder zijbalk, en zonder login. De toegang loopt via de deelsleutel in de
- * URL; de RLS-policy uit migratie 0048 staat anoniem lezen alleen toe op rijen
- * die daadwerkelijk gedeeld zijn.
+ * Dezelfde meting, andere lezer. Het volledige rapport toont per onderdeel de
+ * metingen en het bewijs — dat is wat een ontwikkelaar nodig heeft. Deze versie
+ * geeft per onderdeel één kaart met wat er aan de hand is, waarom het uitmaakt
+ * en hoe zwaar het weegt, en past afgedrukt op één of twee vellen.
  *
- * Een onbekende of ingetrokken sleutel geeft een gewone 404 — geen melding
- * waaruit valt af te leiden of de sleutel ooit bestaan heeft.
+ * Dezelfde toegangsregel als het volledige rapport: de deelsleutel in de URL,
+ * afgedwongen door de RLS-policy uit migratie 0048.
  */
 
 export const dynamic = "force-dynamic";
@@ -28,13 +28,12 @@ export async function generateMetadata({ params }: { params: { sleutel: string }
     .maybeSingle();
 
   return {
-    title: data?.host ? `Deep Scan — ${data.host}` : "Deep Scan",
-    // Een rapport over de site van een klant hoort niet in een zoekmachine.
+    title: data?.host ? `Samenvatting — ${data.host}` : "Samenvatting",
     robots: { index: false, follow: false },
   };
 }
 
-export default async function GedeeldRapport({ params }: { params: { sleutel: string } }) {
+export default async function KorteSamenvatting({ params }: { params: { sleutel: string } }) {
   const supabase = createClient();
 
   const { data, error } = await supabase
@@ -50,5 +49,5 @@ export default async function GedeeldRapport({ params }: { params: { sleutel: st
     gemetenOp: data.created_at as string,
   });
 
-  return <Rapport rapport={rapport} korteUrl={`/rapport/${params.sleutel}/kort`} />;
+  return <Samenvatting rapport={rapport} volledigUrl={`/rapport/${params.sleutel}`} />;
 }

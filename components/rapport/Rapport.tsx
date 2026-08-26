@@ -1,5 +1,6 @@
 import type { Rapport as RapportData } from "@/lib/rapport/types";
 import { merkKlassen } from "@/lib/rapport/fonts";
+import { CONTACT_MAIL } from "@/lib/rapport/contact";
 import { RapportOmslag } from "./RapportOmslag";
 import { Tabbalk } from "./Tabbalk";
 import { OnderdeelBlok } from "./OnderdeelBlok";
@@ -17,10 +18,17 @@ import "./rapport.css";
  * en dan hoort er geen JavaScript naar de browser te gaan. Alleen de afdrukknop
  * is een client-component, want die roept window.print() aan.
  */
-export function Rapport({ rapport }: { rapport: RapportData }) {
+export function Rapport({
+  rapport,
+  korteUrl,
+}: {
+  rapport: RapportData;
+  /** De korte versie, als die er is — bovenaan als tweede ingang. */
+  korteUrl?: string | null;
+}) {
   return (
     <div className={`rap ${merkKlassen}`}>
-      <RapportOmslag rapport={rapport} />
+      <RapportOmslag rapport={rapport} korteUrl={korteUrl} />
       <Tabbalk onderdelen={rapport.onderdelen} />
 
       {rapport.onderdelen.map((onderdeel) => (
@@ -29,7 +37,7 @@ export function Rapport({ rapport }: { rapport: RapportData }) {
 
       <HerkomstBlok herkomst={rapport.herkomst} nietBeoordeeld={rapport.nietBeoordeeld} />
 
-      <section id="afspraak" style={{ background: "var(--navy)", color: "var(--zand)" }}>
+      <section id="afspraak" className="rap-op-donker" style={{ background: "var(--navy)", color: "var(--zand)" }}>
         <div className="rap-breed" style={{ padding: "58px 24px" }}>
           <div className="rap-stapel" style={{ gap: 18 }}>
             <h2 style={{ color: "var(--zand)" }}>Zullen we dit samen doornemen?</h2>
@@ -38,7 +46,7 @@ export function Rapport({ rapport }: { rapport: RapportData }) {
               hierboven langs op volgorde van wat het meeste oplevert.
             </p>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 8 }}>
-              <a className="rap-knop rap-knop-accent" href="mailto:info@viesa-automations.nl">
+              <a className="rap-knop rap-knop-accent" href={`mailto:${CONTACT_MAIL}`}>
                 Plan een strategiegesprek
                 <span aria-hidden="true">→</span>
               </a>
@@ -57,7 +65,7 @@ export function Rapport({ rapport }: { rapport: RapportData }) {
         >
           <Merkregel toon="donker" hoogte={28} />
           <span className="rap-klein" style={{ color: "#8FA1BD" }}>
-            {rapport.host} · scoremodel {rapport.herkomst.scoremodel}
+            {rapport.host} · {CONTACT_MAIL}
           </span>
         </div>
       </footer>
