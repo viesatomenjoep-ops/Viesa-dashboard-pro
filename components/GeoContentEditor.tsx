@@ -3,7 +3,11 @@
 import { useState, useTransition } from "react";
 import ReactMarkdown from "react-markdown";
 import { Check, Copy, Eye, FileText, Loader2, PenLine, Sparkles } from "lucide-react";
-import { genereerGeoContent, publiceerGeoPagina } from "@/actions/generate-geo-content";
+import {
+  bewaarGeoConcept,
+  genereerGeoContent,
+  publiceerGeoPagina,
+} from "@/actions/generate-geo-content";
 
 type Weergave = "bewerken" | "voorbeeld";
 
@@ -35,6 +39,7 @@ export function GeoContentEditor({
   const [gepubliceerd, setGepubliceerd] = useState(false);
   const [weergave, setWeergave] = useState<Weergave>("bewerken");
   const [gekopieerd, setGekopieerd] = useState(false);
+  const [bewaard, setBewaard] = useState(false);
   const [fout, setFout] = useState<string | null>(null);
   const [bezig, start] = useTransition();
 
@@ -68,12 +73,30 @@ export function GeoContentEditor({
     }
   }
 
+  // De bewerkte tekst gaat altijd mee. Alleen de status omzetten zou je
+  // correcties in dit veld laten staan terwijl de ruwe modeltekst als
+  // "gepubliceerd" de database in gaat.
   function publiceer() {
     if (!paginaId) return;
+    setFout(null);
     start(async () => {
-      const r = await publiceerGeoPagina(paginaId);
+      const r = await publiceerGeoPagina(paginaId, content);
       if (r.ok) setGepubliceerd(true);
       else setFout(r.fout ?? "Publiceren mislukt.");
+    });
+  }
+
+  function bewaar() {
+    if (!paginaId) return;
+    setFout(null);
+    start(async () => {
+      const r = await bewaarGeoConcept(paginaId, content);
+      if (r.ok) {
+        setBewaard(true);
+        setTimeout(() => setBewaard(false), 2000);
+      } else {
+        setFout(r.fout ?? "Bewaren mislukt.");
+      }
     });
   }
 
@@ -197,6 +220,16 @@ export function GeoContentEditor({
               {paginaId && (
                 <button
                   type="button"
+                  onClick={bewaar}
+                  disabled={bezig}
+                  className="rounded-lg border border-navy/15 px-3 py-1.5 text-xs font-medium text-navy hover:bg-navy/5 disabled:opacity-50"
+                >
+                  {bewaard ? "Bewaard" : "Concept bewaren"}
+                </button>
+              )}
+              {paginaId && (
+                <button
+                  type="button"
                   onClick={publiceer}
                   disabled={bezig || gepubliceerd}
                   className="rounded-lg border border-navy/15 px-3 py-1.5 text-xs font-medium text-navy hover:bg-navy/5 disabled:opacity-50"
@@ -210,7 +243,10 @@ export function GeoContentEditor({
           {weergave === "bewerken" ? (
             <textarea
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={(e) => {
+                setContent(e.target.value);
+                setGepubliceerd(false);
+              }}
               rows={26}
               spellCheck
               className="w-full resize-y px-5 py-4 font-mono text-sm leading-relaxed text-navy outline-none"

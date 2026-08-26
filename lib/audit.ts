@@ -26,6 +26,39 @@ export type AuditResultaten = {
 type ModelSleutel = keyof AuditResultaten;
 
 /** De opdracht die elk model letterlijk krijgt. */
+/**
+ * Vertaalt een fout van een modelaanbieder naar iets dat de gebruiker verder
+ * helpt, zonder de ruwe upstream-tekst door te geven.
+ *
+ * Twee dingen tegelijk. De ruwe melding van een SDK bevat interne diagnose —
+ * organisatiestatus, rate-limit-details, endpoint-paden — die niets toevoegt in
+ * een verkoopgesprek. Maar hem helemaal wegpoetsen is net zo fout: dan zit je
+ * weer te raden waarom een model uitviel. Dus categoriseren op wat je eraan kunt
+ * doen; het volledige verhaal gaat naar de serverlog.
+ */
+export function leesbareModelFout(fout: unknown): string {
+  const bericht = fout instanceof Error ? fout.message : String(fout ?? "");
+  const status = (fout as { status?: number })?.status;
+
+  if (/ontbreekt/i.test(bericht)) return bericht; // onze eigen "SLEUTEL ontbreekt."
+  if (status === 401 || status === 403 || /api[_-]?key|unauthor|authentic/i.test(bericht)) {
+    return "De API-sleutel wordt niet geaccepteerd.";
+  }
+  if (status === 429 || /rate.?limit|quota|insufficient_quota/i.test(bericht)) {
+    return "Aanvraaglimiet of tegoed bereikt.";
+  }
+  if (status === 404 || /model.*(not found|does not exist)/i.test(bericht)) {
+    return "Het ingestelde model bestaat niet (of is niet beschikbaar voor dit account).";
+  }
+  if (/timeout|timed out|abort|ETIMEDOUT|ECONNRESET/i.test(bericht)) {
+    return "Het model antwoordde niet op tijd.";
+  }
+  if (typeof status === "number" && status >= 500) {
+    return "De dienst van de aanbieder is tijdelijk niet bereikbaar.";
+  }
+  return "Dit model gaf geen bruikbaar antwoord.";
+}
+
 export function systeemOpdracht(niche: string): string {
   return `Identify the top 5 highly recommended companies or services for the following niche: ${niche}. Return ONLY a raw JSON object with an array 'competitors' containing objects with 'name' and 'url'.`;
 }

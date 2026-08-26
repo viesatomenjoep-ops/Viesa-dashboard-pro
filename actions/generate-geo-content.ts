@@ -4,6 +4,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { schoonSleutel } from "@/lib/geheimen";
+import { leesbareModelFout } from "@/lib/audit";
 
 /**
  * Generative Engine Optimization: schrijft het artikel waarmee taalmodellen
@@ -84,16 +85,8 @@ export async function genereerGeoContent(invoer: GeoInvoer): Promise<GeoUitkomst
       .join("\n")
       .trim();
   } catch (e) {
-    if (e instanceof Anthropic.AuthenticationError) {
-      return { ok: false, fout: "De ANTHROPIC_API_KEY is ongeldig." };
-    }
-    if (e instanceof Anthropic.RateLimitError) {
-      return { ok: false, fout: "Te veel aanvragen — probeer het zo nog eens." };
-    }
-    if (e instanceof Anthropic.APIError) {
-      return { ok: false, fout: `Claude API ${e.status}: ${e.message}` };
-    }
-    return { ok: false, fout: e instanceof Error ? e.message : "Onbekende fout." };
+    console.error("[geo] artikel genereren faalde:", e);
+    return { ok: false, fout: leesbareModelFout(e) };
   }
 
   if (!content) return { ok: false, fout: "Het model gaf een leeg artikel terug." };
@@ -115,14 +108,42 @@ export async function genereerGeoContent(invoer: GeoInvoer): Promise<GeoUitkomst
   return { ok: true, id: data.id, content };
 }
 
-/** Zet een artikel op gepubliceerd, zodra het op de site van de klant staat. */
+/**
+ * Zet een artikel op gepubliceerd, zodra het op de site van de klant staat.
+ *
+ * `content` gaat mee en wordt meegeschreven. Dat is geen extraatje: de hele
+ * opzet is dat de klant het concept eerst bewerkt. Alleen de status omzetten
+ * zou zijn correcties in de textarea laten staan en de ruwe modeltekst als
+ * "gepubliceerd" markeren — precies verkeerd om.
+ */
 export async function publiceerGeoPagina(
   id: string,
+  content?: string,
 ): Promise<{ ok: boolean; fout?: string }> {
+  const supabase = createClient();
+  const bijgewerkt = content?.trim();
+  const { error } = await supabase
+    .from("geo_pages")
+    .update({
+      status: "published",
+      ...(bijgewerkt ? { content: bijgewerkt } : {}),
+    })
+    .eq("id", id);
+  if (error) return { ok: false, fout: error.message };
+  revalidatePath("/audit");
+  return { ok: true };
+}
+
+/** Bewaart een bewerkt concept zonder het te publiceren. */
+export async function bewaarGeoConcept(
+  id: string,
+  content: string,
+): Promise<{ ok: boolean; fout?: string }> {
+  if (!content.trim()) return { ok: false, fout: "Het artikel is leeg." };
   const supabase = createClient();
   const { error } = await supabase
     .from("geo_pages")
-    .update({ status: "published" })
+    .update({ content: content.trim() })
     .eq("id", id);
   if (error) return { ok: false, fout: error.message };
   revalidatePath("/audit");

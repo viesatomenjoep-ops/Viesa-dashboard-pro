@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { schoonSleutel } from "@/lib/geheimen";
 import {
   doelGevonden,
+  leesbareModelFout,
   parseConcurrenten,
   systeemOpdracht,
   type AuditResultaten,
@@ -114,14 +115,17 @@ async function fetchPerplexity(niche: string): Promise<Concurrent[]> {
 function naarUitkomst(
   uitslag: PromiseSettledResult<Concurrent[]>,
   targetUrl: string,
+  model: string,
 ): ModelUitkomst {
   if (uitslag.status === "rejected") {
-    const fout = uitslag.reason;
+    // Het volledige verhaal naar de serverlog, een bruikbare samenvatting naar
+    // de gebruiker — ruwe SDK-meldingen horen niet in een verkoopgesprek.
+    console.error(`[audit] ${model} faalde:`, uitslag.reason);
     return {
       success: false,
       target_found: false,
       competitors: [],
-      error: fout instanceof Error ? fout.message : "Onbekende fout.",
+      error: leesbareModelFout(uitslag.reason),
     };
   }
   return {
@@ -170,10 +174,10 @@ export async function POST(request: Request) {
   ]);
 
   const resultaten: AuditResultaten = {
-    openai: naarUitkomst(openai, targetUrl),
-    anthropic: naarUitkomst(anthropic, targetUrl),
-    gemini: naarUitkomst(gemini, targetUrl),
-    perplexity: naarUitkomst(perplexity, targetUrl),
+    openai: naarUitkomst(openai, targetUrl, "openai"),
+    anthropic: naarUitkomst(anthropic, targetUrl, "anthropic"),
+    gemini: naarUitkomst(gemini, targetUrl, "gemini"),
+    perplexity: naarUitkomst(perplexity, targetUrl, "perplexity"),
   };
 
   // Opslaan, maar de audit niet laten mislukken als dat niet lukt — de klant
