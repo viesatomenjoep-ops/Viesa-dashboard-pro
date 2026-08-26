@@ -20,7 +20,8 @@ import { datumKort } from "@/lib/format";
 import { leesFout } from "@/lib/fout";
 import { sorteerMetFavorietenBovenaan } from "@/lib/sjablonen";
 import { wisselFavoriet } from "../sjablonen/acties";
-import { MailOpstellen, type KlantOptie } from "@/components/MailOpstellen";
+import { MailOpstellen, type KlantOptie, type MailRapport } from "@/components/MailOpstellen";
+import type { ScanRapport } from "@/lib/scan";
 import { VerzondenMelding } from "@/components/VerzondenMelding";
 import { MailLeesPaneel } from "@/components/MailLeesPaneel";
 import { MailTriage } from "./MailTriage";
@@ -160,6 +161,32 @@ export default async function MailPagina({
   }
   mailSjablonen = sorteerMetFavorietenBovenaan(mailSjablonen);
 
+  // Bewaarde scanrapporten (activiteiten type 'rapport') — om als PDF-bijlage
+  // bij een mail te kunnen voegen. Best effort: migratie 0046 kan ontbreken.
+  let rapporten: MailRapport[] = [];
+  try {
+    const { data } = await supabase
+      .from("activiteiten")
+      .select("id, titel, created_at, data, leads(bedrijf)")
+      .eq("type", "rapport")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    rapporten = (data ?? [])
+      .filter((r) => r.data)
+      .map((r) => {
+        const lead = r.leads as { bedrijf: string | null } | { bedrijf: string | null }[] | null;
+        return {
+          id: r.id,
+          titel: r.titel ?? "Rapport",
+          bedrijf: Array.isArray(lead) ? lead[0]?.bedrijf ?? null : lead?.bedrijf ?? null,
+          created_at: r.created_at,
+          data: r.data as ScanRapport,
+        };
+      });
+  } catch {
+    /* activiteiten.data (migratie 0046) nog niet aanwezig */
+  }
+
   const inMap = (m: MailMap) => emails.filter((e) => (e.map ?? "inbox") === m);
   const ongelezen = inMap("inbox").filter((e) => !e.gelezen).length;
   const aantalPerMap = Object.fromEntries(
@@ -224,6 +251,7 @@ export default async function MailPagina({
               klanten={klanten}
               sjablonen={mailSjablonen}
               favorietActie={wisselFavoriet}
+              rapporten={rapporten}
               initieelNaar={searchParams.naar ?? ""}
               initieelOnderwerp={searchParams.onderwerp ?? ""}
             />

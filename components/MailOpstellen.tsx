@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Star } from "lucide-react";
+import { Loader2, Paperclip, Star, X } from "lucide-react";
 import { GroteEditor } from "@/components/GroteEditor";
 import { ZoekKies } from "@/components/ZoekKies";
 import { contextVanKlant, vulVariabelen, type VariabeleContext } from "@/lib/variabelen";
 import { STANDAARD_LETTERTYPE } from "@/lib/lettertypes";
+import type { ScanRapport } from "@/lib/scan";
 
 const inputCls =
   "w-full rounded-lg border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy";
@@ -38,6 +39,27 @@ type FavorietActie = (
   favoriet: boolean,
 ) => Promise<{ ok: boolean; fout?: string }>;
 
+/** Een bewaard scanrapport (activiteit type 'rapport') — kandidaat om als PDF bij te voegen. */
+export type MailRapport = {
+  id: string;
+  titel: string;
+  bedrijf: string | null;
+  created_at: string;
+  data: ScanRapport;
+};
+
+type Bijlage = { filename: string; content: string };
+
+/** Leest een lokaal bestand als base64 (zonder het data:-voorvoegsel). */
+function bestandNaarBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
+    reader.onerror = () => reject(reader.error ?? new Error("Kon bestand niet lezen."));
+    reader.readAsDataURL(file);
+  });
+}
+
 /**
  * Opstelvenster voor een e-mail. Kies een sjabloon uit de sjablonen-machine
  * (vult onderwerp + bericht) en/of een klant — dan vullen we het e-mailadres in
@@ -49,6 +71,7 @@ export function MailOpstellen({
   klanten = [],
   sjablonen = [],
   favorietActie,
+  rapporten = [],
   initieelNaar = "",
   initieelOnderwerp = "",
 }: {
@@ -57,6 +80,8 @@ export function MailOpstellen({
   klanten?: KlantOptie[];
   sjablonen?: MailSjabloon[];
   favorietActie?: FavorietActie;
+  /** Bewaarde scanrapporten — om als PDF-bijlage toe te voegen. */
+  rapporten?: MailRapport[];
   initieelNaar?: string;
   initieelOnderwerp?: string;
 }) {
@@ -69,6 +94,10 @@ export function MailOpstellen({
   const [sjabloonId, setSjabloonId] = useState("");
   const [klantZoek, setKlantZoek] = useState("");
   const [lettertype, setLettertype] = useState(STANDAARD_LETTERTYPE);
+  const [bijlagen, setBijlagen] = useState<Bijlage[]>([]);
+  const [rapportId, setRapportId] = useState("");
+  const [bijlageBezig, setBijlageBezig] = useState(false);
+  const [bijlageFout, setBijlageFout] = useState<string | null>(null);
 
   // Bekende e-mailadressen uit het klantenbestand (uniek, gesorteerd) — voor het
   // automatisch aanvullen van het Aan-veld.
@@ -93,6 +122,50 @@ export function MailOpstellen({
   function kiesSjabloon(id: string) {
     setSjabloonId(id);
     if (id) pasSjabloonToe(id, ctx);
+  }
+
+  async function voegBestandToe(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setBijlageBezig(true);
+    setBijlageFout(null);
+    try {
+      const nieuw: Bijlage[] = [];
+      for (const file of Array.from(files)) {
+        nieuw.push({ filename: file.name, content: await bestandNaarBase64(file) });
+      }
+      setBijlagen((v) => [...v, ...nieuw]);
+    } catch (e) {
+      setBijlageFout(e instanceof Error ? e.message : "Bestand kon niet worden toegevoegd.");
+    } finally {
+      setBijlageBezig(false);
+    }
+  }
+
+  async function voegRapportToe(id: string) {
+    const r = rapporten.find((x) => x.id === id);
+    setRapportId("");
+    if (!r) return;
+    setBijlageBezig(true);
+    setBijlageFout(null);
+    try {
+      const [{ pdf }, { ScanPDFDocument }] = await Promise.all([
+        import("@react-pdf/renderer"),
+        import("@/components/ScanPDFDocument"),
+      ]);
+      const blob = await pdf(<ScanPDFDocument rapport={r.data} />).toBlob();
+      const content = await bestandNaarBase64(new File([blob], "rapport.pdf"));
+      const datum = r.created_at.slice(0, 10);
+      const filename = `websitescan-${r.data.host}-${datum}.pdf`;
+      setBijlagen((v) => [...v, { filename, content }]);
+    } catch (e) {
+      setBijlageFout(e instanceof Error ? e.message : "Rapport kon niet worden toegevoegd.");
+    } finally {
+      setBijlageBezig(false);
+    }
+  }
+
+  function verwijderBijlage(i: number) {
+    setBijlagen((v) => v.filter((_, idx) => idx !== i));
   }
 
   function kiesKlant(bedrijf: string) {
@@ -188,6 +261,65 @@ export function MailOpstellen({
           beginLettertype={lettertype}
         />
       </div>
+
+      {/* Bijlagen */}
+      <input type="hidden" name="bijlagen" value={JSON.stringify(bijlagen)} />
+      <div className="mt-3 border-t border-navy/10 pt-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-navy/20 px-3 py-1.5 text-xs font-medium text-navy hover:bg-navy/5">
+            <Paperclip size={13} /> Bijlage toevoegen
+            <input
+              type="file"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                voegBestandToe(e.target.files);
+                e.target.value = "";
+              }}
+            />
+          </label>
+          {rapporten.length > 0 && (
+            <select
+              value={rapportId}
+              onChange={(e) => voegRapportToe(e.target.value)}
+              className="rounded-lg border border-navy/20 px-2 py-1.5 text-xs text-navy outline-none focus:border-navy"
+            >
+              <option value="">Rapport bijvoegen…</option>
+              {rapporten.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.bedrijf ?? "Onbekende lead"} — {r.titel} ({r.created_at.slice(0, 10)})
+                </option>
+              ))}
+            </select>
+          )}
+          {bijlageBezig && <Loader2 size={14} className="animate-spin text-navy/40" />}
+        </div>
+
+        {bijlageFout && <p className="mt-1.5 text-xs text-red-600">{bijlageFout}</p>}
+
+        {bijlagen.length > 0 && (
+          <ul className="mt-2 flex flex-wrap gap-2">
+            {bijlagen.map((b, i) => (
+              <li
+                key={`${b.filename}-${i}`}
+                className="flex items-center gap-1.5 rounded-lg border border-navy/15 bg-navy/[0.02] px-2.5 py-1 text-xs text-navy"
+              >
+                <Paperclip size={12} className="text-navy/40" />
+                <span className="max-w-[220px] truncate">{b.filename}</span>
+                <button
+                  type="button"
+                  onClick={() => verwijderBijlage(i)}
+                  className="text-navy/40 hover:text-red-600"
+                  aria-label={`${b.filename} verwijderen`}
+                >
+                  <X size={12} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       <div className="mt-4">
         <button
           type="submit"

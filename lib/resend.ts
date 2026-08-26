@@ -13,6 +13,12 @@ export function resendGeconfigureerd(): boolean {
   return Boolean(process.env.RESEND_API_KEY);
 }
 
+export type MailBijlage = {
+  filename: string;
+  /** Base64-inhoud, zonder het "data:...;base64," voorvoegsel. */
+  content: string;
+};
+
 export type MailInvoer = {
   naar: string | string[];
   onderwerp: string;
@@ -22,6 +28,7 @@ export type MailInvoer = {
   van?: string;
   cc?: string | string[];
   bcc?: string | string[];
+  bijlagen?: MailBijlage[];
 };
 
 /** Splitst een komma-/puntkomma-gescheiden adressenreeks in een lijst. */
@@ -52,6 +59,9 @@ export async function verstuurMail(m: MailInvoer): Promise<{ id: string }> {
       html: m.html,
       text: m.tekst,
       reply_to: m.antwoordNaar,
+      attachments: m.bijlagen?.length
+        ? m.bijlagen.map((b) => ({ filename: b.filename, content: b.content }))
+        : undefined,
     }),
   });
 

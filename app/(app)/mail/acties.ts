@@ -48,6 +48,25 @@ export async function verstuurBericht(formData: FormData) {
     redirect("/mail?fout=" + encodeURIComponent("Vul ontvanger, onderwerp en bericht in."));
   }
 
+  // Bijlagen: door de client als JSON meegegeven (bv. een gegenereerd PDF-
+  // rapport, base64). Ongeldige JSON is geen reden om het versturen te
+  // blokkeren — dan gaat de mail gewoon zonder bijlage.
+  let bijlagen: { filename: string; content: string }[] = [];
+  const bijlagenRaw = String(formData.get("bijlagen") ?? "").trim();
+  if (bijlagenRaw) {
+    try {
+      const parsed = JSON.parse(bijlagenRaw);
+      if (Array.isArray(parsed)) {
+        bijlagen = parsed.filter(
+          (b): b is { filename: string; content: string } =>
+            b && typeof b.filename === "string" && typeof b.content === "string",
+        );
+      }
+    } catch {
+      /* negeren — mail gaat zonder bijlage */
+    }
+  }
+
   // Opgemaakte HTML uit de rich-editor gebruiken indien aanwezig (gesaniteerd);
   // anders de platte tekst in de huisstijl-wikkel. Het in de editor gekozen
   // lettertype gaat mee, zodat de ontvanger ziet wat jij zag.
@@ -65,6 +84,7 @@ export async function verstuurBericht(formData: FormData) {
       html,
       tekst,
       antwoordNaar,
+      bijlagen,
     });
     await supabase.from("emails").insert({
       richting: "uitgaand",
@@ -82,6 +102,7 @@ export async function verstuurBericht(formData: FormData) {
       status: "verzonden",
       provider_id: id,
       klant_id: klantId,
+      heeft_bijlagen: bijlagen.length > 0,
     });
   } catch (e) {
     redirect(
