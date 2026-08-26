@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import ReactMarkdown from "react-markdown";
-import { Check, Copy, Eye, FileText, Loader2, PenLine } from "lucide-react";
+import { Check, Copy, Eye, Loader2, PenLine } from "lucide-react";
 import {
   bewaarGeoConcept,
   genereerGeoContent,
@@ -45,6 +45,16 @@ export function GeoContentEditor({
 
   function genereer() {
     setFout(null);
+    // Zeggen wat er mist in plaats van een grijze knop tonen zonder reden —
+    // zie de toelichting in VisibilityAuditView.
+    if (!bedrijf.trim()) {
+      setFout("Vul de bedrijfsnaam in — die komt in het artikel te staan.");
+      return;
+    }
+    if (!niche.trim()) {
+      setFout("Vul een niche in: dat bepaalt waar het artikel de autoriteit op claimt.");
+      return;
+    }
     start(async () => {
       const r = await genereerGeoContent({
         target_url: url.trim(),
@@ -104,8 +114,8 @@ export function GeoContentEditor({
     <div className="space-y-6">
       <section className="rounded-2xl border border-navy/10 bg-white p-6 shadow-sm">
         <div className="flex items-start gap-3">
-          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-navy/5 text-navy">
-            <FileText size={20} />
+          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-navy/10 bg-white text-navy/45">
+            <PenLine size={21} strokeWidth={1.5} />
           </span>
           <div>
             <h2 className="text-base font-semibold text-navy">GEO-artikel schrijven</h2>
@@ -149,7 +159,7 @@ export function GeoContentEditor({
         <button
           type="button"
           onClick={genereer}
-          disabled={bezig || !bedrijf.trim() || !niche.trim()}
+          disabled={bezig}
           className="mt-4 inline-flex items-center gap-2 rounded-lg bg-navy px-5 py-2.5 text-sm font-medium text-white hover:bg-navy/90 disabled:opacity-50"
         >
           {bezig ? (
@@ -158,7 +168,7 @@ export function GeoContentEditor({
             </>
           ) : (
             <>
-              <FileText size={16} /> {content ? "Opnieuw genereren" : "Genereer artikel"}
+              <PenLine size={16} strokeWidth={1.75} /> {content ? "Opnieuw genereren" : "Genereer artikel"}
             </>
           )}
         </button>
