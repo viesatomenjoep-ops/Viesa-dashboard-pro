@@ -1,6 +1,33 @@
 import { STAND_LABEL, standVanScore } from "@/lib/rapport/schaal";
 
 /**
+ * De lettergrootte van het cijfer, naar het aantal cijfers.
+ *
+ * Zonder dit loopt een score van 100 dwars door de "/100" heen: drie cijfers
+ * zijn anderhalf keer zo breed als twee, en de ruimte binnen de ring verandert
+ * niet mee. Eén vaste maat past dus alleen voor twee cijfers.
+ */
+function cijferMaat(score: number | null): number {
+  if (score === null) return 0.3;
+  if (score >= 100) return 0.2;
+  if (score >= 10) return 0.3;
+  return 0.34;
+}
+
+/**
+ * De normregel onder de ring.
+ *
+ * "norm: 100 of hoger" leest raar als honderd het maximum is — dan is er geen
+ * "hoger". Bij een norm van 100 betekent het simpelweg dat alles moet kloppen,
+ * en dat zeggen we dan ook zo.
+ */
+function normTekst(score: number | null, norm: number): string {
+  if (score === null) return "niet gemeten";
+  if (norm >= 100) return "norm: alles moet werken";
+  return `norm: ${norm} of hoger`;
+}
+
+/**
  * De scorering met de norm eronder — regel 1 uit het bouwplan: geen cijfer
  * zonder zijn drempel ernaast.
  *
@@ -21,6 +48,7 @@ export function Ringgrafiek({
 }) {
   const stand = standVanScore(score, norm);
   const kleur = `var(--${stand === "geen" ? "geen" : stand})`;
+  const cijferSchaal = cijferMaat(score);
 
   const dikte = Math.round(maat * 0.086);
   const straal = (maat - dikte) / 2;
@@ -58,8 +86,8 @@ export function Ringgrafiek({
             <b style={{ fontSize: maat * 0.3, color: "var(--zacht)" }}>—</b>
           ) : (
             <>
-              <b style={{ fontSize: maat * 0.3 }}>{score}</b>
-              <span>/ 100</span>
+              <b style={{ fontSize: maat * cijferSchaal }}>{score}</b>
+              <span style={{ fontSize: maat * 0.093 }}>/100</span>
             </>
           )}
         </span>
@@ -67,11 +95,7 @@ export function Ringgrafiek({
       <span className="rap-ring-oordeel" style={{ color: kleur }}>
         {STAND_LABEL[stand]}
       </span>
-      {toonNorm && (
-        <span className="rap-ring-norm">
-          {score === null ? "niet gemeten" : `norm: ${norm} of hoger`}
-        </span>
-      )}
+      {toonNorm && <span className="rap-ring-norm">{normTekst(score, norm)}</span>}
     </div>
   );
 }
