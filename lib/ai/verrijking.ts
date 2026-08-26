@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { draaiAgent } from "./agent";
+import { haalWebsiteTekst } from "@/lib/site-tekst";
 
 /**
  * Lead-verrijkings- & scoring-agent (#2). Bekijkt een lead (en, best-effort, de
@@ -33,33 +34,6 @@ type LeadRij = {
   contact_naam: string | null;
   functie: string | null;
 };
-
-/** Haalt best-effort de leesbare tekst van een website op (kort, met time-out). */
-async function haalWebsiteTekst(url: string | null): Promise<string> {
-  if (!url) return "";
-  const net = /^https?:\/\//i.test(url) ? url : `https://${url}`;
-  try {
-    const controller = new AbortController();
-    const t = setTimeout(() => controller.abort(), 6000);
-    const res = await fetch(net, {
-      signal: controller.signal,
-      headers: { "user-agent": "ViesaBot/1.0 (+lead-verrijking)" },
-    });
-    clearTimeout(t);
-    if (!res.ok) return "";
-    const html = await res.text();
-    return html
-      .replace(/<script[\s\S]*?<\/script>/gi, " ")
-      .replace(/<style[\s\S]*?<\/style>/gi, " ")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/&[a-z]+;/gi, " ")
-      .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, 4000);
-  } catch {
-    return "";
-  }
-}
 
 const SYSTEM = `Je bent de sales-kwalificatie-assistent van Viesa Automations, een Nederlands bureau voor IT, webontwikkeling en (AI-)automatisering.
 Je beoordeelt B2B-leads: hoe kansrijk is deze lead voor Viesa, en wat is een goede insteek?

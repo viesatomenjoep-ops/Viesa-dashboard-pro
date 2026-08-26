@@ -7,7 +7,11 @@ import type { LeadBron, LeadStatus } from "@/lib/leads";
 import type { ActiviteitType } from "@/lib/activiteiten";
 import { bewaarCategorieWaarden } from "@/lib/categorieen";
 import { zoekLeadsViaGoogleMaps } from "@/lib/apify";
+import { zoekLeadsViaGooglePlaces } from "@/lib/google-places";
 import { verrijkLead } from "@/lib/ai/verrijking";
+import { genereerPrototype } from "@/lib/ai/prototype";
+import { bouwStatischPrototype, type PrototypeType } from "@/lib/website-sjabloon";
+import type { ScanRapport } from "@/lib/scan";
 
 /** Snel een lead toevoegen — alleen bedrijf is verplicht. */
 export async function maakLead(formData: FormData) {
@@ -199,6 +203,51 @@ export async function stelVerrijkingVoor(leadId: string) {
   return verrijkLead(supabase, leadId);
 }
 
+/** Genereert met AI een vernieuwd website- of app-prototype voor een lead (kost tokens). */
+export async function genereerWebsitePrototype(
+  leadId: string,
+  url?: string,
+  type: PrototypeType = "website",
+) {
+  const supabase = createClient();
+  const uitkomst = await genereerPrototype(supabase, leadId, url, type);
+  if (uitkomst.ok) revalidatePath(`/leads/${leadId}`);
+  return uitkomst;
+}
+
+/**
+ * Laadt direct (0 tokens) een prototype op basis van het branchethema — het
+ * standaardpad in de UI. Geen AI-aanroep, dus ook geen wachttijd of kosten.
+ */
+export async function laadSjabloonPrototype(
+  leadId: string,
+  type: PrototypeType = "website",
+): Promise<{ ok: boolean; id?: string; html?: string; fout?: string }> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("leads")
+    .select("bedrijf, plaats, branche")
+    .eq("id", leadId)
+    .single();
+  if (error || !data) return { ok: false, fout: error?.message ?? "Lead niet gevonden." };
+
+  const html = bouwStatischPrototype({
+    bedrijf: data.bedrijf ?? "Dit bedrijf",
+    plaats: data.plaats,
+    branche: data.branche,
+    type,
+  });
+
+  const { data: rij } = await supabase
+    .from("website_prototypes")
+    .insert({ lead_id: leadId, type, bron: "sjabloon", html })
+    .select("id")
+    .single();
+
+  revalidatePath(`/leads/${leadId}`);
+  return { ok: true, id: rij?.id, html };
+}
+
 /** Past gekozen verrijkingsvelden toe op de lead (bevestigingsstap). */
 export async function pasVerrijkingToe(
   leadId: string,
@@ -242,6 +291,38 @@ export async function maakActiviteit(leadId: string, formData: FormData) {
     omschrijving: leeg(formData.get("omschrijving")),
   });
   revalidatePath(`/leads/${leadId}`);
+}
+
+/**
+ * Zet een voltooide websitescan als rapport in het activiteitenlog van een
+ * lead — een bewuste keuze van de gebruiker, geen automatisch gedrag bij elke
+ * scan. Bewaart het volledige resultaat (data), zodat de PDF later opnieuw
+ * gegenereerd kan worden zonder de scan te herhalen.
+ */
+export async function pushScanRapportNaarLead(
+  leadId: string,
+  resultaat: ScanRapport,
+): Promise<{ ok: boolean; fout?: string }> {
+  if (!leadId) return { ok: false, fout: "Geen lead gekozen." };
+  const supabase = createClient();
+  const oordeel =
+    resultaat.totaalScore >= 75
+      ? "Goed zichtbaar"
+      : resultaat.totaalScore >= 50
+        ? "Matig zichtbaar"
+        : "Vrijwel onzichtbaar";
+  const { error } = await supabase.from("activiteiten").insert({
+    lead_id: leadId,
+    type: "rapport",
+    titel: `Websitescan — score ${resultaat.totaalScore}`,
+    omschrijving: `${resultaat.host} · ${oordeel}`,
+    status: "afgerond",
+    afgerond_op: new Date().toISOString(),
+    data: resultaat,
+  });
+  if (error) return { ok: false, fout: error.message };
+  revalidatePath(`/leads/${leadId}`);
+  return { ok: true };
 }
 
 /** Plant een follow-up (activiteit type follow_up met datum). */
@@ -346,12 +427,13 @@ export async function importeerLeads(
   return { aantal: schoon.length };
 }
 
-/** Zoekt bedrijven via Google Maps (Apify) en slaat nieuwe als lead op. Bestaande place_id's slaat hij over. */
+/** Zoekt bedrijven via Google Maps (Apify of Google Places) en slaat nieuwe als lead op. Bestaande place_id's slaat hij over. */
 export async function zoekLeadsGoogleMaps(formData: FormData): Promise<{ aantal: number; overgeslagen: number; fout?: string }> {
   const zoekterm = String(formData.get("zoekterm") ?? "").trim();
   const locatie = String(formData.get("locatie") ?? "").trim();
   const maxResultaten = Number(formData.get("max_resultaten") ?? 20);
   const metContactverrijking = formData.get("met_contactverrijking") === "on";
+  const bron = formData.get("bron") === "places" ? "places" : "apify";
 
   if (!zoekterm || !locatie) {
     return { aantal: 0, overgeslagen: 0, fout: "Zoekterm en locatie zijn verplicht." };
@@ -360,14 +442,25 @@ export async function zoekLeadsGoogleMaps(formData: FormData): Promise<{ aantal:
   const supabase = createClient();
   let gevonden;
   try {
-    gevonden = await zoekLeadsViaGoogleMaps({
-      zoekterm,
-      locatie,
-      maxResultaten: Number.isFinite(maxResultaten) ? maxResultaten : 20,
-      metContactverrijking,
-    });
+    gevonden =
+      bron === "places"
+        ? await zoekLeadsViaGooglePlaces({
+            zoekterm,
+            locatie,
+            maxResultaten: Number.isFinite(maxResultaten) ? maxResultaten : 20,
+          })
+        : await zoekLeadsViaGoogleMaps({
+            zoekterm,
+            locatie,
+            maxResultaten: Number.isFinite(maxResultaten) ? maxResultaten : 20,
+            metContactverrijking,
+          });
   } catch (e) {
-    return { aantal: 0, overgeslagen: 0, fout: e instanceof Error ? e.message : "Apify-zoekopdracht mislukt." };
+    return {
+      aantal: 0,
+      overgeslagen: 0,
+      fout: e instanceof Error ? e.message : `${bron === "places" ? "Google Places" : "Apify"}-zoekopdracht mislukt.`,
+    };
   }
 
   const placeIds = gevonden.map((g) => g.place_id).filter((id): id is string => Boolean(id));
@@ -379,9 +472,11 @@ export async function zoekLeadsGoogleMaps(formData: FormData): Promise<{ aantal:
   const nieuw = gevonden.filter((g) => !g.place_id || !bekend.has(g.place_id));
   const overgeslagen = gevonden.length - nieuw.length;
 
+  const bronNaam = bron === "places" ? "google-places" : "google-maps";
+
   if (nieuw.length === 0) {
     await supabase.from("prospector_runs").insert({
-      bron: "google-maps",
+      bron: bronNaam,
       status: gevonden.length === 0 ? "mislukt" : "klaar",
       aantal_leads: 0,
       voltooid_op: new Date().toISOString(),
@@ -400,7 +495,7 @@ export async function zoekLeadsGoogleMaps(formData: FormData): Promise<{ aantal:
   );
 
   await supabase.from("prospector_runs").insert({
-    bron: "google-maps",
+    bron: bronNaam,
     status: error ? "mislukt" : "klaar",
     aantal_leads: error ? 0 : nieuw.length,
     voltooid_op: new Date().toISOString(),

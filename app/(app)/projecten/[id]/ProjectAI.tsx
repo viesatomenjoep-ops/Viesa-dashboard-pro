@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy, FileText, Loader2, Megaphone, Sparkles, Wand2 } from "lucide-react";
+import { Check, Copy, FileText, Loader2, Megaphone, NotebookText, Wand2 } from "lucide-react";
 import type { ContentSoort } from "@/lib/ai/project";
 import { vatProjectSamenAgent, genereerProjectContent } from "../acties";
 
@@ -72,7 +72,7 @@ export function ProjectAI({ projectId }: { projectId: string }) {
     <div className="rounded-xl border border-navy/10 bg-white p-4 shadow-sm sm:p-5">
       <div className="mb-3 flex items-center gap-2.5">
         <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-oranje/10 text-oranje">
-          <Sparkles size={18} />
+          <NotebookText size={18} />
         </span>
         <div>
           <h2 className="text-sm font-semibold text-navy">Project-AI</h2>
@@ -86,7 +86,7 @@ export function ProjectAI({ projectId }: { projectId: string }) {
           disabled={bezig !== null}
           className="inline-flex items-center gap-1.5 rounded-lg bg-navy px-3 py-1.5 text-sm font-medium text-white hover:bg-navy/90 disabled:opacity-60"
         >
-          {bezig === "samenvatting" ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
+          {bezig === "samenvatting" ? <Loader2 size={15} className="animate-spin" /> : <NotebookText size={15} />}
           Samenvatting &amp; signaal
         </button>
         {CONTENT.map(({ soort, label, icoon: Icoon }) => (

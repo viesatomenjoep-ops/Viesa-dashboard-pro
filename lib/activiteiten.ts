@@ -6,7 +6,8 @@ export type ActiviteitType =
   | "email"
   | "follow_up"
   | "taak"
-  | "systeem";
+  | "systeem"
+  | "rapport";
 
 export type ActiviteitStatus = "open" | "afgerond";
 
@@ -29,6 +30,8 @@ export type Activiteit = {
   follow_up_datum: string | null;
   afgerond_op: string | null;
   uitkomst?: BelUitkomst | null;
+  /** Structureerde inhoud bij type 'rapport' (bv. een opgeslagen scanresultaat). */
+  data?: unknown | null;
   created_at: string;
   updated_at: string;
 };
@@ -69,6 +72,7 @@ export const ACTIVITEIT_TYPES: { key: ActiviteitType; label: string }[] = [
   { key: "follow_up", label: "Follow-up" },
   { key: "taak", label: "Taak" },
   { key: "systeem", label: "Systeem" },
+  { key: "rapport", label: "Rapport" },
 ];
 
 export function activiteitTypeLabel(t: ActiviteitType): string {

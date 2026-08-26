@@ -41,6 +41,20 @@ export type ScanResultaat = {
   waarschuwingen: string[];
 };
 
+/**
+ * Het rapport zoals de streamende scanner ('m opbouwt): hetzelfde als
+ * ScanResultaat, plus de losse checks die alleen in die route bestaan
+ * (beveiliging, scripts, vindbaarheid) en de og:image-preview. Dit is wat er
+ * bewaard wordt bij "push naar lead" en wat de PDF opbouwt — zonder de scan
+ * opnieuw te hoeven draaien.
+ */
+export type ScanRapport = ScanResultaat & {
+  beveiliging?: unknown;
+  scripts?: unknown;
+  vindbaarheid?: unknown;
+  voorbeeld?: string | null;
+};
+
 const HAAL_TIMEOUT_MS = 15_000;
 
 /** Vult een kaal domein aan tot een volledige URL. */
@@ -50,43 +64,63 @@ export function normaliseerUrl(invoer: string): string {
   return /^https?:\/\//i.test(s) ? s : `https://${s}`;
 }
 
-async function haalTekst(url: string, timeout = HAAL_TIMEOUT_MS): Promise<string> {
+const CRAWLER_USER_AGENT =
+  // Eerlijk zijn over wie er langskomt. Sommige sites weren onbekende clients;
+  // een herkenbare naam met contactadres voorkomt blokkades en is bovendien
+  // hoe een crawler zich hoort te melden.
+  "ViesaAuditBot/1.0 (+https://www.viesa-automations.nl; contact@viesa-automations.nl)";
+
+async function haalRuw(
+  url: string,
+  timeout = HAAL_TIMEOUT_MS,
+): Promise<{ tekst: string; headers: Record<string, string>; ms: number; status: number }> {
   const ac = new AbortController();
   const t = setTimeout(() => ac.abort(), timeout);
+  const start = Date.now();
   try {
     const res = await fetch(url, {
       signal: ac.signal,
       redirect: "follow",
       headers: {
-        // Eerlijk zijn over wie er langskomt. Sommige sites weren onbekende
-        // clients; een herkenbare naam met contactadres voorkomt blokkades en
-        // is bovendien hoe een crawler zich hoort te melden.
-        "User-Agent":
-          "ViesaAuditBot/1.0 (+https://www.viesa-automations.nl; contact@viesa-automations.nl)",
+        "User-Agent": CRAWLER_USER_AGENT,
         Accept: "text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.8",
       },
     });
+    const ms = Date.now() - start;
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.text();
+    const headers: Record<string, string> = {};
+    res.headers.forEach((v, k) => (headers[k] = v));
+    return { tekst: await res.text(), headers, ms, status: res.status };
   } finally {
     clearTimeout(t);
   }
 }
 
-/** Haalt pagina, robots.txt en llms.txt op. Alleen de pagina is verplicht. */
-export async function haalSite(url: string): Promise<{
+async function haalTekst(url: string, timeout = HAAL_TIMEOUT_MS): Promise<string> {
+  return (await haalRuw(url, timeout)).tekst;
+}
+
+export type SiteGegevens = {
   html: string;
   robotsTxt: string;
   llmsTxtGevonden: boolean;
+  sitemapGevonden: boolean;
+  headers: Record<string, string>;
+  https: boolean;
+  laadtijdMs: number;
   waarschuwingen: string[];
-}> {
+};
+
+/** Haalt pagina, robots.txt, llms.txt en sitemap op. Alleen de pagina is verplicht. */
+export async function haalSite(url: string): Promise<SiteGegevens> {
   const basis = new URL(url).origin;
   const waarschuwingen: string[] = [];
 
-  const [pagina, robots, llms] = await Promise.allSettled([
-    haalTekst(url),
+  const [pagina, robots, llms, sitemap] = await Promise.allSettled([
+    haalRuw(url),
     haalTekst(`${basis}/robots.txt`, 8000),
     haalTekst(`${basis}/llms.txt`, 8000),
+    haalTekst(`${basis}/sitemap.xml`, 8000),
   ]);
 
   if (pagina.status === "rejected") {
@@ -102,13 +136,21 @@ export async function haalSite(url: string): Promise<{
     waarschuwingen.push("robots.txt niet gevonden — er wordt dus niets geweerd.");
   }
 
-  // Een 404-pagina die HTML teruggeeft telt niet als llms.txt.
-  const llmsTxtGevonden =
-    llms.status === "fulfilled" &&
-    llms.value.trim().length > 0 &&
-    !/^\s*<(!doctype|html)/i.test(llms.value);
+  // Een 404-pagina die HTML teruggeeft telt niet mee.
+  const isEchteTekst = (v: string) => v.trim().length > 0 && !/^\s*<(!doctype|html)/i.test(v);
+  const llmsTxtGevonden = llms.status === "fulfilled" && isEchteTekst(llms.value);
+  const sitemapGevonden = sitemap.status === "fulfilled" && isEchteTekst(sitemap.value);
 
-  return { html: pagina.value, robotsTxt, llmsTxtGevonden, waarschuwingen };
+  return {
+    html: pagina.value.tekst,
+    robotsTxt,
+    llmsTxtGevonden,
+    sitemapGevonden,
+    headers: pagina.value.headers,
+    https: url.startsWith("https://"),
+    laadtijdMs: pagina.value.ms,
+    waarschuwingen,
+  };
 }
 
 /**

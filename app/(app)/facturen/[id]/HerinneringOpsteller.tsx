@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy, Loader2, Mail, Sparkles } from "lucide-react";
+import { Check, Copy, Lightbulb, Loader2, Mail } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { stelHerinneringOp } from "../acties";
 
@@ -54,7 +54,7 @@ export function HerinneringOpsteller({ factuurId }: { factuurId: string }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-oranje/10 text-oranje">
-            <Sparkles size={18} />
+            <Lightbulb size={18} />
           </span>
           <div>
             <h2 className="text-sm font-semibold text-navy">AI-betalingsherinnering</h2>
@@ -68,7 +68,7 @@ export function HerinneringOpsteller({ factuurId }: { factuurId: string }) {
           disabled={laden}
           className="inline-flex items-center gap-2 rounded-lg bg-navy px-4 py-2 text-sm font-medium text-white hover:bg-navy/90 disabled:opacity-60"
         >
-          {laden ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+          {laden ? <Loader2 size={16} className="animate-spin" /> : <Lightbulb size={16} />}
           {laden ? "Bezig…" : tekst ? "Opnieuw" : "Herinnering opstellen"}
         </button>
       </div>

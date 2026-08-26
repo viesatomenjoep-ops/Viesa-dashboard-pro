@@ -40,6 +40,23 @@ export async function zetSuggestieOpLijst(
   return { ok: true };
 }
 
+/**
+ * Zet een zelf gekozen lead handmatig op de bellijst — geen AI, geen
+ * gesprekspunten die worden overschreven. Voor als je zelf al weet wie je
+ * wilt bellen, los van de suggesties hierboven.
+ */
+export async function voegLeadToeAanBellijst(
+  leadId: string,
+): Promise<{ ok: boolean; fout?: string }> {
+  if (!leadId) return { ok: false, fout: "Geen lead gekozen." };
+  const supabase = createClient();
+  const { error } = await supabase.from("leads").update({ bellen: true }).eq("id", leadId);
+  if (error) return { ok: false, fout: error.message };
+  revalidatePath("/bellen");
+  revalidatePath("/leads");
+  return { ok: true };
+}
+
 /** Haalt een lead van de bellijst af (form-actie, geeft niets terug). */
 export async function haalVanBellijst(id: string): Promise<void> {
   const supabase = createClient();

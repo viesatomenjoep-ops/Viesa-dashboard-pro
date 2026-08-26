@@ -2,21 +2,21 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Loader2, Sparkles, Wand2 } from "lucide-react";
+import { Check, Loader2, Search, Wand2 } from "lucide-react";
 import type { Verrijking } from "@/lib/ai/verrijking";
 import { stelVerrijkingVoor, pasVerrijkingToe } from "../acties";
 
 /**
  * Lead-verrijkings-paneel (#2). Eén knop laat de agent een score + kwalificatie
  * (branche, grootte, aanbod, openingszin) voorstellen op basis van de lead en
- * zijn website. De gebruiker kiest per veld wat hij overneemt — de agent schrijft
- * nooit zelf.
+ * zijn website. De gebruiker kiest per kwalificatieveld wat hij overneemt — de
+ * score is daarin een uitzondering: dat is een meetwaarde, geen redactionele
+ * keuze, dus die wordt direct opgeslagen zodra de agent 'm voorstelt.
  */
 
-type VeldKey = "score" | "branche" | "bedrijfsgrootte" | "it_aanbod" | "openingszin";
+type VeldKey = "branche" | "bedrijfsgrootte" | "it_aanbod" | "openingszin";
 
 const VELD_LABEL: Record<VeldKey, string> = {
-  score: "Score",
   branche: "Branche",
   bedrijfsgrootte: "Bedrijfsgrootte",
   it_aanbod: "Passend aanbod",
@@ -30,8 +30,8 @@ export function LeadVerrijking({ leadId }: { leadId: string }) {
   const [fout, setFout] = useState<string | null>(null);
   const [klaar, setKlaar] = useState(false);
   const [v, setV] = useState<Verrijking | null>(null);
+  const [scoreOpgeslagen, setScoreOpgeslagen] = useState(false);
   const [kies, setKies] = useState<Record<VeldKey, boolean>>({
-    score: true,
     branche: true,
     bedrijfsgrootte: true,
     it_aanbod: true,
@@ -42,10 +42,23 @@ export function LeadVerrijking({ leadId }: { leadId: string }) {
     setLaden(true);
     setFout(null);
     setKlaar(false);
+    setScoreOpgeslagen(false);
     try {
       const res = await stelVerrijkingVoor(leadId);
-      if (!res.ok || !res.verrijking) setFout(res.fout ?? "Er ging iets mis.");
-      else setV(res.verrijking);
+      if (!res.ok || !res.verrijking) {
+        setFout(res.fout ?? "Er ging iets mis.");
+        return;
+      }
+      setV(res.verrijking);
+      // De score is een meetwaarde, geen kwalificatiekeuze — die slaan we
+      // direct op, zonder op "Gekozen toepassen" te wachten.
+      const scoreRes = await pasVerrijkingToe(leadId, { score: res.verrijking.score });
+      if (scoreRes.ok) {
+        setScoreOpgeslagen(true);
+        router.refresh();
+      } else {
+        setFout(`Score kon niet opgeslagen worden: ${scoreRes.fout ?? "onbekende fout"}.`);
+      }
     } catch (e) {
       setFout(e instanceof Error ? e.message : "Er ging iets mis.");
     } finally {
@@ -59,7 +72,6 @@ export function LeadVerrijking({ leadId }: { leadId: string }) {
     setFout(null);
     try {
       const velden: Parameters<typeof pasVerrijkingToe>[1] = {};
-      if (kies.score) velden.score = v.score;
       if (kies.branche) velden.branche = v.branche;
       if (kies.bedrijfsgrootte) velden.bedrijfsgrootte = v.bedrijfsgrootte;
       if (kies.it_aanbod) velden.it_aanbod = v.it_aanbod;
@@ -76,7 +88,6 @@ export function LeadVerrijking({ leadId }: { leadId: string }) {
   }
 
   const waarde: Record<VeldKey, string> = {
-    score: v ? String(v.score) : "",
     branche: v?.branche ?? "—",
     bedrijfsgrootte: v?.bedrijfsgrootte ?? "—",
     it_aanbod: v?.it_aanbod ?? "—",
@@ -102,7 +113,7 @@ export function LeadVerrijking({ leadId }: { leadId: string }) {
           disabled={laden}
           className="inline-flex items-center gap-2 rounded-lg bg-navy px-4 py-2 text-sm font-medium text-white hover:bg-navy/90 disabled:opacity-60"
         >
-          {laden ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+          {laden ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
           {laden ? "Analyseren…" : v ? "Opnieuw" : "Verrijk deze lead"}
         </button>
       </div>
@@ -115,6 +126,9 @@ export function LeadVerrijking({ leadId }: { leadId: string }) {
             <div className="text-center">
               <div className="text-3xl font-bold text-navy">{v.score}</div>
               <div className="text-[11px] uppercase tracking-wide text-navy/40">score</div>
+              {scoreOpgeslagen && (
+                <div className="mt-0.5 text-[10px] text-emerald-600">opgeslagen ✓</div>
+              )}
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm text-navy/80">{v.samenvatting}</p>

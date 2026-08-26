@@ -33,6 +33,7 @@ import {
 } from "../acties";
 import { Phone } from "lucide-react";
 import { LeadVerrijking } from "./LeadVerrijking";
+import { WebsitePrototype } from "./WebsitePrototype";
 
 export default async function LeadDetail({
   params,
@@ -135,6 +136,10 @@ export default async function LeadDetail({
 
       {/* AI-verrijking & score — stelt voor, jij past toe */}
       <LeadVerrijking leadId={lead.id} />
+
+      <div className="mb-6">
+        <WebsitePrototype leadId={lead.id} standaardUrl={lead.website ?? ""} />
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Bewerken */}
