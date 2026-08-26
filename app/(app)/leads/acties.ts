@@ -10,6 +10,7 @@ import { zoekLeadsViaGoogleMaps } from "@/lib/apify";
 import { zoekLeadsViaGooglePlaces } from "@/lib/google-places";
 import { verrijkLead } from "@/lib/ai/verrijking";
 import { bouwStatischPrototype, type PrototypeType } from "@/lib/website-sjabloon";
+import { haalEchteContent } from "@/lib/site-scrape";
 import type { ScanRapport } from "@/lib/scan";
 
 /** Snel een lead toevoegen — alleen bedrijf is verplicht. */
@@ -219,16 +220,22 @@ export async function laadSjabloonPrototype(
   const supabase = createClient();
   const { data, error } = await supabase
     .from("leads")
-    .select("bedrijf, plaats, branche")
+    .select("bedrijf, plaats, branche, website")
     .eq("id", leadId)
     .single();
   if (error || !data) return { ok: false, fout: error?.message ?? "Lead niet gevonden." };
+
+  // Best-effort: echte foto/tekst van de bestaande site, nog steeds 0 tokens
+  // (puur een fetch + parsing). Lukt het niet — traag, geen website, blokkeert
+  // bots — dan valt het gewoon terug op het generieke branchesjabloon.
+  const echt = data.website ? await haalEchteContent(data.website) : null;
 
   const html = bouwStatischPrototype({
     bedrijf: data.bedrijf ?? "Dit bedrijf",
     plaats: data.plaats,
     branche: branche?.trim() || data.branche,
     type,
+    echt,
   });
 
   const { data: rij } = await supabase

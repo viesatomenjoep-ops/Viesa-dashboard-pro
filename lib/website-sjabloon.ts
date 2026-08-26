@@ -313,7 +313,7 @@ function beeldOfEmoji(echt: EchtContent | undefined, emoji: string): string {
 
 /* ============================== WEBSHOP (bol.com) ========================= */
 
-function webshopWebsite({ bedrijf, plaats, sj }: Invoer): string {
+function webshopWebsite({ bedrijf, plaats, sj, echt }: Invoer): string {
   const badges = ["SALE", "NIEUW", "TOP", "DEAL"];
   const tinten = ["#fde9d9", "#fdf3d9", "#e3f0fb", "#e9f7ea"];
   const dealEmoji = ["⌚", "👟", "🎒", "🎧"];
@@ -343,7 +343,7 @@ nav{display:flex;gap:1.6rem;flex-wrap:wrap;padding:.8rem 1.5rem;border-bottom:1p
 .hero h1{font-size:clamp(1.8rem,4.5vw,3rem);color:${sj.kleur1};line-height:1.05;font-weight:800}
 .hero p{margin-top:.8rem;color:#374151;font-size:1.05rem}
 .knop{display:inline-block;margin-top:1.4rem;background:${sj.kleur1};color:#fff;font-weight:700;padding:.85rem 1.6rem;border-radius:.6rem;text-decoration:none}
-.hero-beeld{font-size:clamp(3rem,8vw,5.5rem);text-align:center;letter-spacing:.2em}
+.hero-beeld{font-size:clamp(3rem,8vw,5.5rem);text-align:center;letter-spacing:.2em;min-height:11rem;border-radius:.75rem;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .deals{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin:0 1.5rem 2rem}
 .deal{position:relative;border-radius:.9rem;padding:1.4rem;overflow:hidden}
 .deal h3{color:${sj.kleur1};font-size:1.02rem;margin-top:.7rem}
@@ -372,7 +372,7 @@ footer{border-top:1px solid #e6e9ef;padding:1.5rem;text-align:center;font-size:.
       <p>${escapeHtml(sj.subtitel)}</p>
       <a class="knop" href="#cta">${escapeHtml(sj.ctaKnop)}</a>
     </div>
-    <div class="hero-beeld">🛍️📦🎧</div>
+    <div class="hero-beeld">${beeldOfEmoji(echt, "🛍️📦🎧")}</div>
   </section>
   <section class="deals">${kaarten}</section>
   <section class="cta" id="cta">
@@ -387,7 +387,7 @@ footer{border-top:1px solid #e6e9ef;padding:1.5rem;text-align:center;font-size:.
 
 /* ============================ PREMIUM (stephex.com) ======================= */
 
-function premiumWebsite({ bedrijf, plaats, sj }: Invoer): string {
+function premiumWebsite({ bedrijf, plaats, sj, echt }: Invoer): string {
   const kaarten = sj.diensten
     .map(
       (d, i) => `<article class="divisie">
@@ -431,7 +431,7 @@ body{font-family:${FONT_SANS};background:${sj.licht};color:#101828}
 footer{padding:1.4rem;text-align:center;font-size:.8rem;color:#667085}`;
 
   const body = `
-  <section class="held">
+  <section class="held"${heroAchtergrond(sj, echt)}>
     <div class="held-nav">
       <span class="merk"><span class="merk-logo">${initialen(bedrijf)}</span> ${escapeHtml(bedrijf)}</span>
       <div class="held-nav-r"><span>◯ Contact</span><span>NL / EN</span><span class="burger"><i></i><i></i><i></i></span></div>
@@ -457,7 +457,7 @@ footer{padding:1.4rem;text-align:center;font-size:.8rem;color:#667085}`;
 
 /* ============================= HORECA (decafes.nl) ======================== */
 
-function horecaWebsite({ bedrijf, plaats, sj }: Invoer): string {
+function horecaWebsite({ bedrijf, plaats, sj, echt }: Invoer): string {
   const menuKolommen = sj.diensten
     .map(
       (d) => `<div class="kolom">
@@ -497,11 +497,11 @@ footer{border-top:1px solid rgba(255,255,255,.12);padding:1.4rem;text-align:cent
     <span class="logo"><span class="logo-zegel">${initialen(bedrijf)}</span><span class="script">${escapeHtml(bedrijf.split(/\s+/)[0])}</span></span>
     <span class="knoppen"><span class="pil">${escapeHtml(sj.ctaKnop)}</span><span class="rond">≡</span></span>
   </header>
-  <section class="held">
+  <section class="held"${heroAchtergrond(sj, echt, 200)}>
     <span class="watermerk">${escapeHtml(sj.tagline)}</span>
     <p class="script">Welkom bij</p>
     <h1>${escapeHtml(bedrijf)}</h1>
-    <p class="sub">${escapeHtml(sj.tagline)}${plaats ? ` · ${escapeHtml(plaats)}` : ""}</p>
+    <p class="sub">${escapeHtml(sj.subtitel)}${plaats ? ` · ${escapeHtml(plaats)}` : ""}</p>
   </section>
   <section class="menu">${menuKolommen}</section>
   <section class="info">
@@ -517,7 +517,7 @@ footer{border-top:1px solid rgba(255,255,255,.12);padding:1.4rem;text-align:cent
 
 /* ============================ CORPORATE (novar.nl) ======================== */
 
-function corporateWebsite({ bedrijf, plaats, sj }: Invoer): string {
+function corporateWebsite({ bedrijf, plaats, sj, echt }: Invoer): string {
   const kaarten = sj.diensten
     .map(
       (d) => `<article class="kaart">
@@ -579,7 +579,7 @@ footer{padding:1.4rem;text-align:center;font-size:.8rem;color:#667085}
       <p>${escapeHtml(sj.subtitel)}</p>
       <a class="knop" href="#">${escapeHtml(sj.ctaKnop)}</a>
     </div>
-    <div class="held-vlak">${sj.diensten[0]?.icoon ?? "✨"}</div>
+    <div class="held-vlak">${beeldOfEmoji(echt, sj.diensten[0]?.icoon ?? "✨")}</div>
   </section>
   <section class="sectie"><div class="sectie-inner">
     <h2>Wat we doen</h2>
@@ -598,7 +598,7 @@ footer{padding:1.4rem;text-align:center;font-size:.8rem;color:#667085}
 
 /* ============================ VERHAAL (patagonia) ========================= */
 
-function verhaalWebsite({ bedrijf, plaats, sj }: Invoer): string {
+function verhaalWebsite({ bedrijf, plaats, sj, echt }: Invoer): string {
   const blokken = sj.diensten
     .map(
       (d, i) => `<section class="blok${i % 2 ? " blok-om" : ""}">
@@ -636,7 +636,7 @@ footer{padding:1.4rem;text-align:center;font-size:.8rem;color:#667085}
 @media(max-width:640px){.blok{grid-template-columns:1fr}.blok-om .blok-vlak{order:0}}`;
 
   const body = `
-  <section class="held">
+  <section class="held"${heroAchtergrond(sj, echt, 180)}>
     <div class="held-nav"><span>${escapeHtml(bedrijf)}</span><span>≡</span></div>
     <div class="held-midden">
       <h1>${escapeHtml(sj.tagline)}</h1>
@@ -658,7 +658,7 @@ footer{padding:1.4rem;text-align:center;font-size:.8rem;color:#667085}
 
 /* ================================ APP-MOCKUP ============================== */
 
-function appMockup({ bedrijf, plaats, sj }: Invoer): string {
+function appMockup({ bedrijf, plaats, sj, echt }: Invoer): string {
   const kaarten = sj.diensten
     .map(
       (d) => `<article class="app-kaart">
@@ -693,7 +693,7 @@ body{margin:0;background:#e6e9ee;display:flex;align-items:center;justify-content
 
   const body = `
   <div class="telefoon"><div class="scherm">
-    <header class="app-kop">
+    <header class="app-kop"${heroAchtergrond(sj, echt, 150)}>
       <span class="app-logo">${initialen(bedrijf)}</span>
       <h1>${escapeHtml(bedrijf)}</h1>
       <p>${escapeHtml(sj.tagline)}${plaats ? ` · ${escapeHtml(plaats)}` : ""}</p>
@@ -711,15 +711,30 @@ body{margin:0;background:#e6e9ee;display:flex;align-items:center;justify-content
 
 /* ================================ PUBLIEK ================================= */
 
-/** Bouwt direct (0 tokens) een prototype-pagina op basis van het branchesjabloon. */
+/**
+ * Bouwt direct (0 tokens) een prototype-pagina op basis van het branchesjabloon.
+ * `echt` (optioneel) is écht opgehaalde content van de bestaande site van de
+ * lead (lib/site-scrape.ts) — nog steeds geen AI, puur fetch + parsing. Een
+ * bruikbare meta-omschrijving vervangt de generieke subtitel; een eerste foto
+ * vervangt het kleurvlak/de emoji in het beeldvlak van het sjabloon.
+ */
 export function bouwStatischPrototype(input: {
   bedrijf: string;
   plaats: string | null;
   branche: string | null;
   type: PrototypeType;
+  echt?: EchtContent | null;
 }): string {
-  const sj = sjabloonVoor(input.branche);
-  const invoer: Invoer = { bedrijf: input.bedrijf, plaats: input.plaats, sj };
+  const basis = sjabloonVoor(input.branche);
+  const echteSubtitel = input.echt?.beschrijving?.trim();
+  const sj: Sjabloon =
+    echteSubtitel && echteSubtitel.length <= 200 ? { ...basis, subtitel: echteSubtitel } : basis;
+  const invoer: Invoer = {
+    bedrijf: input.bedrijf,
+    plaats: input.plaats,
+    sj,
+    echt: input.echt ?? undefined,
+  };
 
   if (input.type === "app") return appMockup(invoer);
 

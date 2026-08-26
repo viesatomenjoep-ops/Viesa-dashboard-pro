@@ -35,6 +35,23 @@ const horeca2 = bouwStatischPrototype({ bedrijf: "Café Test", plaats: "Breda", 
 test("horeca heeft de menukaart", horeca2.includes("Menukaart"), true);
 const corporate = bouwStatischPrototype({ bedrijf: "Advies BV", plaats: null, branche: "Zakelijke dienstverlening", type: "website" });
 test("corporate heeft een werkwijze-stap", corporate.includes("Kennismaken"), true);
+console.log("\necht (foto + omschrijving van de bestaande site)");
+const metFoto = bouwStatischPrototype({
+  bedrijf: "Foto BV",
+  plaats: null,
+  branche: "Horeca",
+  type: "website",
+  echt: { titel: "Foto BV — Home", beschrijving: "Een gezellig café in het centrum.", afbeeldingen: ["https://example.com/foto.jpg"] },
+});
+test("echte foto komt terug als <img>", metFoto.includes('https://example.com/foto.jpg'), true);
+test("echte omschrijving vervangt de generieke subtitel", metFoto.includes("Een gezellig café in het centrum."), true);
+const zonderFoto = bouwStatischPrototype({ bedrijf: "Geen Foto BV", plaats: null, branche: "Horeca", type: "website", echt: null });
+test("zonder echt blijft de generieke subtitel staan", zonderFoto.includes("Vers bereid, met aandacht voor seizoen en herkomst."), true);
+test("app-mockup verwerkt ook een echte foto", bouwStatischPrototype({
+  bedrijf: "X", plaats: null, branche: "Groothandel", type: "app",
+  echt: { titel: null, beschrijving: null, afbeeldingen: ["https://example.com/a.jpg"] },
+}).includes("https://example.com/a.jpg"), true);
+
 test("elke branche levert geldige, unieke HTML", (() => {
   const gezien = new Set();
   for (const b of SJABLOON_BRANCHES) {
