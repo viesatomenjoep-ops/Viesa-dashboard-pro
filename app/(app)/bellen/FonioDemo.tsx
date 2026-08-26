@@ -1,4 +1,4 @@
-import { ExternalLink, PhoneCall, Sparkles } from "lucide-react";
+import { ExternalLink, PhoneCall, Waypoints } from "lucide-react";
 
 /**
  * Democonsole voor Fonio (AI-telefonie), zichtbaar op de bellijst zodra er op
@@ -25,7 +25,7 @@ export function FonioDemo({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 text-sm font-medium text-navy">
-            <Sparkles size={15} /> Fonio-demo
+            <Waypoints size={15} /> Fonio-demo
           </h2>
           <p className="mt-0.5 text-xs text-navy/50">
             Laat live horen wat een AI-telefoniste doet — bel het demonummer en zet

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
+import { Radar } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { LeadDirectory } from "@/components/LeadDirectory";
 
@@ -23,7 +23,7 @@ export default function LeadDirectoryPagina() {
             href="/audit"
             className="inline-flex items-center gap-1.5 rounded-lg border border-navy/20 px-4 py-2 text-sm font-medium text-navy hover:bg-navy/5"
           >
-            <Sparkles size={16} /> Naar de audit
+            <Radar size={16} /> Naar de audit
           </Link>
         }
       />

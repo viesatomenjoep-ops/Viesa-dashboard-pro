@@ -9,7 +9,7 @@ import {
   Globe,
   Loader2,
   Search,
-  Sparkles,
+  Radar,
   XCircle,
 } from "lucide-react";
 import type { AuditResultaten, Concurrent, ModelUitkomst } from "@/lib/audit";
@@ -91,7 +91,7 @@ export function VisibilityAuditView() {
       <section className="rounded-2xl border border-navy/10 bg-white p-6 shadow-sm">
         <div className="flex items-start gap-3">
           <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-navy/5 text-navy">
-            <Sparkles size={20} />
+            <Radar size={20} />
           </span>
           <div>
             <h2 className="text-base font-semibold text-navy">AI Visibility Audit</h2>
@@ -150,8 +150,8 @@ export function VisibilityAuditView() {
                 </>
               ) : (
                 <>
-                  <Sparkles size={16} />
-                  Start AI Audit
+                  <Radar size={16} />
+                  Start audit
                 </>
               )}
             </button>

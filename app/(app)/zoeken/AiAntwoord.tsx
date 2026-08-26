@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, MessageCircle } from "lucide-react";
 import type { Bron } from "@/lib/ai/kennis";
 import { vraagAiOverData } from "./acties";
 
@@ -36,7 +36,7 @@ export function AiAntwoord({ vraag }: { vraag: string }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-oranje/10 text-oranje">
-            <Sparkles size={18} />
+            <MessageCircle size={18} />
           </span>
           <div>
             <h2 className="text-sm font-semibold text-navy">Vraag het de AI</h2>
@@ -50,7 +50,7 @@ export function AiAntwoord({ vraag }: { vraag: string }) {
           disabled={laden}
           className="inline-flex items-center gap-2 rounded-lg bg-navy px-4 py-2 text-sm font-medium text-white hover:bg-navy/90 disabled:opacity-60"
         >
-          {laden ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+          {laden ? <Loader2 size={16} className="animate-spin" /> : <MessageCircle size={16} />}
           {laden ? "Zoeken…" : antwoord ? "Opnieuw" : "Vraag het de AI"}
         </button>
       </div>

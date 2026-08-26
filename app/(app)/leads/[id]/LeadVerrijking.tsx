@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Loader2, Sparkles, Wand2 } from "lucide-react";
+import { Check, Loader2, Search, Wand2 } from "lucide-react";
 import type { Verrijking } from "@/lib/ai/verrijking";
 import { stelVerrijkingVoor, pasVerrijkingToe } from "../acties";
 
@@ -102,7 +102,7 @@ export function LeadVerrijking({ leadId }: { leadId: string }) {
           disabled={laden}
           className="inline-flex items-center gap-2 rounded-lg bg-navy px-4 py-2 text-sm font-medium text-white hover:bg-navy/90 disabled:opacity-60"
         >
-          {laden ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+          {laden ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
           {laden ? "Analyseren…" : v ? "Opnieuw" : "Verrijk deze lead"}
         </button>
       </div>

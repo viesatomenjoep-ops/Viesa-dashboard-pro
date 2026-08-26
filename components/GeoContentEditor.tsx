@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import ReactMarkdown from "react-markdown";
-import { Check, Copy, Eye, FileText, Loader2, PenLine, Sparkles } from "lucide-react";
+import { Check, Copy, Eye, FileText, Loader2, PenLine } from "lucide-react";
 import {
   bewaarGeoConcept,
   genereerGeoContent,
@@ -158,7 +158,7 @@ export function GeoContentEditor({
             </>
           ) : (
             <>
-              <Sparkles size={16} /> {content ? "Opnieuw genereren" : "Genereer artikel"}
+              <FileText size={16} /> {content ? "Opnieuw genereren" : "Genereer artikel"}
             </>
           )}
         </button>

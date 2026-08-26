@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, Copy, ListPlus, Loader2, Reply, Sparkles } from "lucide-react";
+import { Check, Copy, Lightbulb, ListPlus, Loader2, Reply } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import type { MailTriage as Triage } from "@/lib/ai/mailtriage";
 import { triageMailAgent, maakTaakVanMail } from "./acties";
@@ -83,7 +83,7 @@ export function MailTriage({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-oranje/10 text-oranje">
-            <Sparkles size={18} />
+            <Lightbulb size={18} />
           </span>
           <div>
             <h2 className="text-sm font-semibold text-navy">AI-triage</h2>
@@ -95,7 +95,7 @@ export function MailTriage({
           disabled={laden}
           className="inline-flex items-center gap-2 rounded-lg bg-navy px-4 py-2 text-sm font-medium text-white hover:bg-navy/90 disabled:opacity-60"
         >
-          {laden ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+          {laden ? <Loader2 size={16} className="animate-spin" /> : <Lightbulb size={16} />}
           {laden ? "Analyseren…" : t ? "Opnieuw" : "Analyseer deze mail"}
         </button>
       </div>

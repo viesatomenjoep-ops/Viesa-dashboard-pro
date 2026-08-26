@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { CalendarPlus, Check, ListPlus, Loader2, Mic, MicOff, Sparkles } from "lucide-react";
+import { CalendarPlus, Check, ClipboardList, ListPlus, Loader2, Mic, MicOff } from "lucide-react";
 import type { NotulenResultaat } from "@/lib/ai/notulen";
 import { verwerkNotulenAgent, maakTakenBulk, maakAgendaItems } from "./acties";
 
@@ -130,7 +130,7 @@ export function NotulenWerkbank() {
             disabled={laden || tekst.trim().length < 5}
             className="inline-flex items-center gap-2 rounded-lg bg-navy px-4 py-2 text-sm font-medium text-white hover:bg-navy/90 disabled:opacity-60"
           >
-            {laden ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+            {laden ? <Loader2 size={16} className="animate-spin" /> : <ClipboardList size={16} />}
             {laden ? "Verwerken…" : "Verwerk notities"}
           </button>
           {melding && <span className="text-sm text-emerald-700">{melding}</span>}
