@@ -59,7 +59,17 @@ export function VisibilityAuditView() {
 
   async function startAudit(e: React.FormEvent) {
     e.preventDefault();
-    if (!url.trim() || !niche.trim()) return;
+    // Zeggen wát er mist in plaats van stilletjes niets doen. De knop stond
+    // hiervoor uit zolang een veld leeg was, zonder uitleg — en een grijze knop
+    // zonder reden leest als een kapotte knop.
+    if (!url.trim()) {
+      setFout("Vul de website van het bedrijf in, bijvoorbeeld viesa-automations.nl.");
+      return;
+    }
+    if (!niche.trim()) {
+      setFout("Vul een niche of zoekwoord in — dat is letterlijk de vraag die de vier modellen krijgen.");
+      return;
+    }
 
     setLaden(true);
     setFout(null);
@@ -90,8 +100,8 @@ export function VisibilityAuditView() {
       {/* ---- Sectie 1: invoer ---- */}
       <section className="rounded-2xl border border-navy/10 bg-white p-6 shadow-sm">
         <div className="flex items-start gap-3">
-          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-navy/5 text-navy">
-            <Radar size={20} />
+          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-navy/10 bg-white text-navy/45">
+            <Radar size={21} strokeWidth={1.5} />
           </span>
           <div>
             <h2 className="text-base font-semibold text-navy">AI Visibility Audit</h2>
@@ -108,7 +118,8 @@ export function VisibilityAuditView() {
             <div className="relative">
               <Globe
                 size={16}
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-navy/30"
+                strokeWidth={1.5}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-navy/35"
               />
               <input
                 required
@@ -125,7 +136,8 @@ export function VisibilityAuditView() {
             <div className="relative">
               <Search
                 size={16}
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-navy/30"
+                strokeWidth={1.5}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-navy/35"
               />
               <input
                 required
@@ -140,7 +152,7 @@ export function VisibilityAuditView() {
           <div className="sm:col-span-2">
             <button
               type="submit"
-              disabled={laden || !url.trim() || !niche.trim()}
+              disabled={laden}
               className="inline-flex items-center gap-2 rounded-lg bg-navy px-5 py-2.5 text-sm font-medium text-white hover:bg-navy/90 disabled:opacity-50"
             >
               {laden ? (
@@ -150,7 +162,7 @@ export function VisibilityAuditView() {
                 </>
               ) : (
                 <>
-                  <Radar size={16} />
+                  <Radar size={16} strokeWidth={1.75} />
                   Start audit
                 </>
               )}

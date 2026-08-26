@@ -196,7 +196,13 @@ export function WebsiteScanner({
   }, []);
 
   function scan() {
-    if (!url.trim() || bezig) return;
+    if (bezig) return;
+    // Zeggen wat er mist in plaats van niets doen — zie de toelichting in
+    // VisibilityAuditView.
+    if (!url.trim()) {
+      setFout("Vul een website in, of kies hierboven een bestaande lead.");
+      return;
+    }
     bronRef.current?.close();
 
     setBezig(true);
@@ -473,7 +479,7 @@ export function WebsiteScanner({
         <button
           type="button"
           onClick={scan}
-          disabled={bezig || !url.trim()}
+          disabled={bezig}
           className="mt-4 inline-flex items-center gap-2 rounded-lg bg-navy px-5 py-2.5 text-sm font-medium text-white hover:bg-navy/90 disabled:opacity-50"
         >
           {bezig ? (
