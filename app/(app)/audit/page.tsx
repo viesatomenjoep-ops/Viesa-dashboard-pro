@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { Users } from "lucide-react";
+import { ClipboardCheck, Users } from "lucide-react";
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { VisibilityAuditView } from "@/components/VisibilityAuditView";
 import { GeoContentEditor } from "@/components/GeoContentEditor";
@@ -26,12 +26,20 @@ export default function AuditPagina({
         titel="AI Visibility Audit"
         omschrijving="Word je aanbevolen wanneer een klant het aan ChatGPT, Claude, Gemini of Perplexity vraagt?"
         actie={
-          <Link
-            href="/audit/leads"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-navy/20 px-4 py-2 text-sm font-medium text-navy hover:bg-navy/5"
-          >
-            <Users size={16} /> Lead directory
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href="/audits"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-navy/20 px-4 py-2 text-sm font-medium text-navy hover:bg-navy/5"
+            >
+              <ClipboardCheck size={16} /> Auditverslagen (PDF)
+            </Link>
+            <Link
+              href="/audit/leads"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-navy/20 px-4 py-2 text-sm font-medium text-navy hover:bg-navy/5"
+            >
+              <Users size={16} /> Lead directory
+            </Link>
+          </div>
         }
       />
 

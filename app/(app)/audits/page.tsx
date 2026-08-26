@@ -41,6 +41,9 @@ export default async function AuditsPagina({
 
   return (
     <>
+      <Link href="/audit" className="mb-3 inline-block text-sm text-navy/50 hover:text-navy hover:underline">
+        ← Terug naar AI Audit
+      </Link>
       <PaginaKop
         titel="Audits"
         omschrijving="Auditverslagen in de Viesa-huisstijl — direct te exporteren als PDF."
