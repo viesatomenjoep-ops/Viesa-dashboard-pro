@@ -70,6 +70,10 @@ De middleware (`middleware.ts`) beschermt alle routes.
 - `/zoeken` — globale zoekbalk over leads/projecten/notities/offertes
 - `/design` — markdown-editor voor design_docs met GitHub-sync
   (**bewust niet in de navigatie**; alleen via directe URL)
+- `/audit` — **AI Visibility Audit** (SaaS-module): vraagt ChatGPT, Claude,
+  Gemini en Perplexity parallel wie zij aanraden in een niche, en toont per
+  model of de klant genoemd wordt. Met PDF-rapport voor de prospect en een
+  GEO-artikelgenerator. `/audit/leads` is de bijbehorende prospectlijst.
 - `/brand-factory` — **Brand Factory dashboard**: overzicht van merken,
   concepten, renders en batches. Data komt binnen via `POST /api/brand-factory/sync`
   vanuit het lokale Brand Factory-project op de Mac (na elke batch-render).
@@ -78,7 +82,8 @@ API-routes: `POST /api/prospector` (prospector-ingest), `GET /api/cron/facturen`
 (dagelijkse vervallen-bewaking), `POST /api/genereer-offerte` (Claude),
 `GET /api/google/oauth/{start,callback}` (Gmail), `GET /api/brand-factory`
 (merken-stats), `POST /api/brand-factory/sync` (batch-sync vanuit lokale Mac,
-auth via `BRAND_FACTORY_SECRET`). Cron-config: `vercel.json`.
+auth via `BRAND_FACTORY_SECRET`), `POST /api/audit` (vier LLM's parallel via
+`Promise.allSettled`). Cron-config: `vercel.json`.
 
 ## 7. Datamodel & beveiliging
 
@@ -89,7 +94,13 @@ auth via `BRAND_FACTORY_SECRET`). Cron-config: `vercel.json`.
 - **Migratie 0040** (belgesprekken): `activiteiten.uitkomst` (bereikt, voicemail,
   niet_opgenomen, terugbellen, afspraak, geen_interesse), `leads.belpogingen`, en
   `sjablonen.type` uitgebreid met `'belscript'`.
-  **Migratie 0041**: `sjablonen.lettertype`. Beide erven de RLS van hun tabel.
+  **0041**: `sjablonen.lettertype`. **0042**: herstelt de type-constraint hard
+  (zoekt elke CHECK op `type` op ongeacht de naam). **0043**: `sjablonen.favoriet`
+  — favorieten staan bovenaan in het overzicht en in de sjabloonkiezer. Alle vier
+  erven de RLS van hun tabel.
+- **`supabase/seed-sjablonen.sql`** bevat alle 124 standaardsjablonen als één
+  idempotente INSERT, om ze buiten de app om te laden wanneer de importknop of
+  de deploy dwarsligt. Gegenereerd uit `standaardSjablonen()`.
 - **Auth**: alleen e-mail/wachtwoord-login, single-/gedeelde gebruiker, **registratie
   uitgeschakeld** (Supabase → Authentication → Sign In / Providers: signups uit).
   Geen publieke signup, geen rollenbeheer.
@@ -128,7 +139,7 @@ Bij elke gemelde fout die niet nog eens mag gebeuren: hier bijwerken.
   `@font-face` (en `saniteerHtml()` haalt ze er zelf al uit). Een lettertypekiezer
   voor mail moet dus **font-stacks met een veilige terugval** aanbieden — zie
   `lib/lettertypes.ts`, groep `veilig` (staat op elk apparaat) versus `webfont`
-  (alleen echt zichtbaar in het dashboard-voorbeeld). Standaard is Georgia.
+  (alleen echt zichtbaar in het dashboard-voorbeeld). Standaard is Times New Roman.
 - **CSS-variabele op de buitenste laag, niet op het gememoizeerde veld**: het
   contentEditable in `GroteEditor` is met `useMemo` bevroren. Zet je het gekozen
   lettertype in zijn inline `style`, dan hoort het bij de deps, wordt het veld bij
@@ -139,6 +150,23 @@ Bij elke gemelde fout die niet nog eens mag gebeuren: hier bijwerken.
   `follow_up_datum = vandaag`, dan verdween alles wat gisteren was blijven liggen
   stilletjes uit beeld. Gebruik `.lte(...)` en label oudere items als
   "achterstallig" (`app/(app)/kpi.ts`, `app/(app)/bellen/page.tsx`).
+- **Nooit een bulk-insert waarvan je de fout inslikt**: `importeerStandaard()`
+  voegde alle 124 sjablonen in één INSERT toe en ving alleen een ontbrekende
+  kolom af. Weigerde de database één rij (het type `belscript`), dan kwam er
+  níéts binnen — ook de e-mailsjablonen niet — en meldde de pagina alsnog
+  "geïmporteerd". Een mislukte import was zo niet te onderscheiden van een
+  geslaagde, en dat kostte uren zoeken. Regel: **per groep invoegen, het
+  werkelijk ingevoegde aantal melden, en een fout altijd tonen.**
+- **Een CHECK-constraint op naam droppen is niet betrouwbaar**: migratie 0040
+  deed `drop constraint if exists sjablonen_type_check`. Postgres kiest die naam
+  automatisch, maar bij een tweede check op dezelfde tabel wordt het
+  `..._check1` — en dan doet die drop niets, zónder foutmelding. Zoek de
+  constraint op via `pg_constraint` (zie migratie 0042) in plaats van te gokken.
+- **Een Next.js route-bestand mag alleen HTTP-handlers en config exporteren.**
+  `app/api/audit/route.ts` exporteerde ook types en hulpfuncties; `next build`
+  faalt dan met "does not match the required types of a Next.js Route" — terwijl
+  `tsc --noEmit` gewoon groen is. Zet zulke code in `lib/`; dat is bovendien de
+  enige manier om hem los te testen.
 - **Geen functies van server- naar client-component doorgeven**: een
   `'use client'`-component (bv. `AreaGrafiek`) mag géén functie-prop krijgen
   vanuit een server-component ("Functions cannot be passed directly to Client
@@ -188,3 +216,65 @@ Drie varianten, oplopend in kracht — nu is **A** gebouwd:
 
 Env-variabele (alleen nodig voor variant C):
 - `FONIO_API_KEY` — server-only, nooit met `NEXT_PUBLIC_`-prefix
+
+## 12. AI Visibility Audit (SaaS-module)
+
+Losstaande module die verkoopt: laat een prospect zien dat AI-modellen hem niet
+noemen, en verkoop vervolgens de oplossing.
+
+**Route `/audit`** — `POST /api/audit` bevraagt vier modellen **parallel** met
+`Promise.allSettled`. Dat is de kern: valt Perplexity uit, dan toont de audit de
+andere drie. Elk model krijgt letterlijk dezelfde opdracht; de antwoorden gaan
+door `parseConcurrenten()` in `lib/audit.ts`, die markdown-hekjes, inleidende
+praat en kale arrays opvangt. `doelGevonden()` vergelijkt op hostnaam, niet op
+volledige URL, zodat `https://www.x.nl/diensten` matcht met `x.nl`.
+
+**PDF** — `components/AuditPDFDocument.tsx` (`@react-pdf/renderer`), vier
+pagina's. Wordt **lui geladen** in `AuditPdfKnop.tsx`: die bibliotheek is zwaar
+en hoort niet in de hoofdbundel van een dashboard waar de meeste pagina's er
+niets mee doen.
+
+**GEO** — `actions/generate-geo-content.ts` schrijft het artikel met
+`claude-opus-5`, streamt (anders loopt een lang artikel tegen de HTTP-timeout)
+en slaat het op als concept in `geo_pages`. Publiceren is een aparte handeling.
+
+**Datamodel** — migratie `0044`: `ai_audits`, `geo_pages` (beide per gebruiker
+via `auth.uid()`), `ai_leads` (iedereen leest, alleen admins schrijven) plus
+`app_admins` + `is_admin()`.
+
+Env: `OPENAI_API_KEY`, `GEMINI_API_KEY`, `PERPLEXITY_API_KEY` (`ANTHROPIC_API_KEY`
+bestond al). Model-ID's zijn te overschrijven via `OPENAI_MODEL`, `CLAUDE_MODEL`,
+`GEMINI_MODEL`, `PERPLEXITY_MODEL` — zo hoef je bij een nieuwe modelversie niet
+te deployen.
+
+## 13. Outreach-agents (Claude Code)
+
+Vijf subagents in `.claude/agents/` plus het commando `/outreach` in
+`.claude/commands/`. Ze draaien in Claude Code, niet in het dashboard — het zijn
+Markdown-definities, geen applicatiecode.
+
+De keten: `lead-scout` (domeinen uit gratis, ToS-conforme bronnen) →
+`prospect-dossier` (dossier van één A4, gescoord 0–30) → `belscript-schrijver`
+en `mailscript-schrijver` → `outreach-regisseur` (stuurt de keten aan en levert
+een werklijst).
+
+Volledige ronde:
+
+```
+/outreach "groothandel woninginrichting" "West-Brabant" 40
+```
+
+Twee dingen die in de agents zelf zijn vastgelegd en niet per ongeluk mogen
+verdwijnen:
+
+- **Bronnen**: geen Indeed, geen LinkedIn, geen Maps-scraping. Niet uit
+  voorzichtigheid maar omdat handhaving reëel is — en de careers-pagina van het
+  bedrijf zelf geeft hetzelfde signaal.
+- **Geen persoonsgegevens**: functietitels en afdelingsmailboxen, geen namen.
+  Daarmee blijft gerechtvaardigd belang als AVG-grondslag overeind.
+
+Geen agent verstuurt iets. De laatste meter is menselijk.
+
+Het scoringsmodel is niet opnieuw bedacht: `prospect-dossier` gebruikt de drie
+assen uit de bestaande skill `webshop-prospector` (ouderdom · administratieve
+bezetting · Excel-waarschijnlijkheid), inclusief de tiergrenzen op 24/18/12.

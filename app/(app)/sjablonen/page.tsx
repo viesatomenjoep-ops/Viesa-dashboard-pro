@@ -11,12 +11,19 @@ import { createClient } from "@/lib/supabase/server";
 import {
   SJABLOON_TYPES,
   sjabloonTypeLabel,
+  sorteerMetFavorietenBovenaan,
   type Sjabloon,
   type SjabloonType,
 } from "@/lib/sjablonen";
 import { STANDAARD_LETTERTYPE } from "@/lib/lettertypes";
 import { leesFout } from "@/lib/fout";
-import { maakSjabloon, werkSjabloonBij, verwijderSjabloon, importeerStandaard } from "./acties";
+import {
+  maakSjabloon,
+  werkSjabloonBij,
+  verwijderSjabloon,
+  importeerStandaard,
+  wisselFavoriet,
+} from "./acties";
 
 export const dynamic = "force-dynamic";
 
@@ -51,7 +58,9 @@ export default async function SjablonenPagina({
       .eq("type", type)
       .order("naam");
     if (error) throw error;
-    sjablonen = (data ?? []) as Sjabloon[];
+    // Favorieten bovenaan, daarbinnen op naam — zelfde volgorde als in de
+    // sjabloonkiezer van het mailvenster.
+    sjablonen = sorteerMetFavorietenBovenaan((data ?? []) as Sjabloon[]);
   } catch (e) {
     schemaOntbreekt = true;
     foutmelding = leesFout(e);
@@ -210,7 +219,9 @@ export default async function SjablonenPagina({
                       onderwerp={s.onderwerp}
                       type={type}
                       href={`/sjablonen?type=${type}&id=${s.id}`}
+                      favoriet={s.favoriet}
                       verwijderActie={verwijderSjabloon}
+                      favorietActie={wisselFavoriet}
                     />
                   </li>
                 ))}

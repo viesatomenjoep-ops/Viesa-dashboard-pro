@@ -18,6 +18,8 @@ import { createClient } from "@/lib/supabase/server";
 import { resendGeconfigureerd } from "@/lib/resend";
 import { datumKort } from "@/lib/format";
 import { leesFout } from "@/lib/fout";
+import { sorteerMetFavorietenBovenaan } from "@/lib/sjablonen";
+import { wisselFavoriet } from "../sjablonen/acties";
 import { MailOpstellen, type KlantOptie } from "@/components/MailOpstellen";
 import { VerzondenMelding } from "@/components/VerzondenMelding";
 import { MailLeesPaneel } from "@/components/MailLeesPaneel";
@@ -132,17 +134,19 @@ export default async function MailPagina({
     onderwerp: string | null;
     inhoud_html: string;
     lettertype?: string | null;
+    favoriet?: boolean | null;
   }[] = [];
   try {
     const { data, error } = await supabase
       .from("sjablonen")
-      .select("id, naam, onderwerp, inhoud_html, lettertype")
+      .select("id, naam, onderwerp, inhoud_html, lettertype, favoriet")
       .eq("type", "email")
       .order("naam");
     if (error) throw error;
     mailSjablonen = data ?? [];
   } catch {
-    // Migratie 0041 (lettertype) nog niet gedraaid — dan zonder dat veld.
+    // Migratie 0041 (lettertype) of 0043 (favoriet) nog niet gedraaid — dan
+    // zonder die velden; de kiezer werkt dan gewoon zonder favorieten.
     try {
       const { data } = await supabase
         .from("sjablonen")
@@ -154,6 +158,7 @@ export default async function MailPagina({
       /* sjablonen-tabel nog niet aanwezig */
     }
   }
+  mailSjablonen = sorteerMetFavorietenBovenaan(mailSjablonen);
 
   const inMap = (m: MailMap) => emails.filter((e) => (e.map ?? "inbox") === m);
   const ongelezen = inMap("inbox").filter((e) => !e.gelezen).length;
@@ -218,6 +223,7 @@ export default async function MailPagina({
               geconfigureerd={geconfigureerd}
               klanten={klanten}
               sjablonen={mailSjablonen}
+              favorietActie={wisselFavoriet}
               initieelNaar={searchParams.naar ?? ""}
               initieelOnderwerp={searchParams.onderwerp ?? ""}
             />

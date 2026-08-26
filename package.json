@@ -6,20 +6,25 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:audit": "tsx scripts/test-audit.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.120.0",
     "@azure/msal-node": "^2.16.3",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^8.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "@google/genai": "^2.19.0",
     "@microsoft/microsoft-graph-client": "^3.0.7",
+    "@react-pdf/renderer": "^4.8.1",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.45.4",
     "jszip": "^3.10.1",
     "lucide-react": "^1.24.0",
     "next": "^14.2.35",
     "node-ical": "^0.20.1",
+    "openai": "^7.5.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-markdown": "^9.1.0",
@@ -37,6 +42,7 @@
     "eslint-config-next": "^14.2.35",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.13",
+    "tsx": "^4.23.12",
     "typescript": "^5.6.2"
   }
 }

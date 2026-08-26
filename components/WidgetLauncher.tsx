@@ -20,6 +20,8 @@ const KLEUR: Record<string, string> = {
   "/klanten": "bg-violet-500",
   "/leads": "bg-emerald-500",
   "/bellen": "bg-green-600",
+  "/followups": "bg-yellow-600",
+  "/audit": "bg-slate-700",
   "/audits": "bg-rose-500",
   "/offertes": "bg-cyan-600",
   "/facturen": "bg-indigo-500",

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { outlookOntkoppel } from "@/lib/microsoft";
 import type { IntegratieDienst, IntegratieStatus } from "@/lib/integraties";
+import { controleerSleutels, type SleutelStatus } from "@/lib/ai-status";
 
 /** Ontkoppelt Outlook (verwijdert de opgeslagen tokens). */
 export async function ontkoppelOutlook() {
@@ -56,4 +57,19 @@ export async function bewaarFonio(formData: FormData) {
 
   revalidatePath("/koppelingen");
   revalidatePath("/bellen");
+}
+
+/**
+ * Controleert de AI-sleutels. Alleen voor ingelogde gebruikers: elke controle is
+ * een echte aanroep naar een betaalde dienst.
+ *
+ * Geeft nooit een sleutelwaarde terug — alleen of hij staat en of hij werkt.
+ */
+export async function controleerAiSleutels(): Promise<SleutelStatus[]> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Niet ingelogd.");
+  return controleerSleutels();
 }

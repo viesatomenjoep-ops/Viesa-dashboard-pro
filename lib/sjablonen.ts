@@ -17,9 +17,26 @@ export type Sjabloon = {
   inhoud_html: string;
   /** Sleutel uit lib/lettertypes.ts; leeg = de standaard (migratie 0041). */
   lettertype?: string | null;
+  /** Favoriet: staat bovenaan in het overzicht en de kiezer (migratie 0043). */
+  favoriet?: boolean | null;
   created_at: string;
   updated_at: string;
 };
+
+/**
+ * Sorteert sjablonen met de favorieten bovenaan, daarbinnen op naam.
+ * Eén plek, zodat het overzicht en de sjabloonkiezer dezelfde volgorde tonen.
+ */
+export function sorteerMetFavorietenBovenaan<
+  T extends { naam: string; favoriet?: boolean | null },
+>(lijst: T[]): T[] {
+  return [...lijst].sort((a, b) => {
+    const fa = a.favoriet ? 0 : 1;
+    const fb = b.favoriet ? 0 : 1;
+    if (fa !== fb) return fa - fb;
+    return a.naam.localeCompare(b.naam, "nl");
+  });
+}
 
 export const SJABLOON_TYPES: { key: SjabloonType; label: string }[] = [
   { key: "email", label: "E-mail" },

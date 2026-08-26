@@ -23,6 +23,7 @@ export function BelSuggesties() {
   const [laden, setLaden] = useState(false);
   const [fout, setFout] = useState<string | null>(null);
   const [suggesties, setSuggesties] = useState<BelSuggestie[] | null>(null);
+  const [bron, setBron] = useState<"lokaal" | "ai">("lokaal");
   const [bezigMet, startOvergang] = useTransition();
   const [toegevoegd, setToegevoegd] = useState<Set<string>>(new Set());
 
@@ -31,8 +32,11 @@ export function BelSuggesties() {
     setFout(null);
     try {
       const res = await stelBellijstSamen();
+      // Een mislukte AI is geen mislukte lijst: de rangschikking wordt dan
+      // lokaal berekend. Alleen als er écht niets uitkwam is het een fout.
       if (!res.ok) setFout(res.fout ?? "Er ging iets mis.");
       setSuggesties(res.suggesties);
+      setBron(res.bron);
       setToegevoegd(new Set());
     } catch (e) {
       setFout(e instanceof Error ? e.message : "Er ging iets mis.");
@@ -61,7 +65,14 @@ export function BelSuggesties() {
             <Sparkles size={18} />
           </span>
           <div>
-            <h2 className="text-sm font-semibold text-navy">AI-belsuggesties</h2>
+            <h2 className="text-sm font-semibold text-navy">
+              Belsuggesties
+              {suggesties && (
+                <span className="ml-2 font-normal text-navy/40">
+                  {bron === "ai" ? "· met AI-gesprekspunten" : "· berekend uit je eigen cijfers"}
+                </span>
+              )}
+            </h2>
             <p className="text-xs text-navy/50">
               Wie moeten we vandaag bellen? De agent kiest op score, waarde en laatste contact.
             </p>
