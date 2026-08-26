@@ -9,6 +9,8 @@ import { bewaarCategorieWaarden } from "@/lib/categorieen";
 import { zoekLeadsViaGoogleMaps } from "@/lib/apify";
 import { zoekLeadsViaGooglePlaces } from "@/lib/google-places";
 import { verrijkLead } from "@/lib/ai/verrijking";
+import { genereerPrototype } from "@/lib/ai/prototype";
+import { bouwStatischPrototype, type PrototypeType } from "@/lib/website-sjabloon";
 
 /** Snel een lead toevoegen — alleen bedrijf is verplicht. */
 export async function maakLead(formData: FormData) {
@@ -198,6 +200,51 @@ export async function werkLeadScore(id: string, score: number) {
 export async function stelVerrijkingVoor(leadId: string) {
   const supabase = createClient();
   return verrijkLead(supabase, leadId);
+}
+
+/** Genereert met AI een vernieuwd website- of app-prototype voor een lead (kost tokens). */
+export async function genereerWebsitePrototype(
+  leadId: string,
+  url?: string,
+  type: PrototypeType = "website",
+) {
+  const supabase = createClient();
+  const uitkomst = await genereerPrototype(supabase, leadId, url, type);
+  if (uitkomst.ok) revalidatePath(`/leads/${leadId}`);
+  return uitkomst;
+}
+
+/**
+ * Laadt direct (0 tokens) een prototype op basis van het branchethema — het
+ * standaardpad in de UI. Geen AI-aanroep, dus ook geen wachttijd of kosten.
+ */
+export async function laadSjabloonPrototype(
+  leadId: string,
+  type: PrototypeType = "website",
+): Promise<{ ok: boolean; id?: string; html?: string; fout?: string }> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("leads")
+    .select("bedrijf, plaats, branche")
+    .eq("id", leadId)
+    .single();
+  if (error || !data) return { ok: false, fout: error?.message ?? "Lead niet gevonden." };
+
+  const html = bouwStatischPrototype({
+    bedrijf: data.bedrijf ?? "Dit bedrijf",
+    plaats: data.plaats,
+    branche: data.branche,
+    type,
+  });
+
+  const { data: rij } = await supabase
+    .from("website_prototypes")
+    .insert({ lead_id: leadId, type, bron: "sjabloon", html })
+    .select("id")
+    .single();
+
+  revalidatePath(`/leads/${leadId}`);
+  return { ok: true, id: rij?.id, html };
 }
 
 /** Past gekozen verrijkingsvelden toe op de lead (bevestigingsstap). */
