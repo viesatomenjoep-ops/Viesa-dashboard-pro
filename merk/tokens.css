@@ -10,7 +10,14 @@
 .viesa-merk {
   --navy: #19445B;
   --diepnavy: #111D36;
-  --terracotta: #E2603F;
+  /* Het accent heet 'accent' en niet naar zijn kleur: zo blijft de naam kloppen
+     als de kleur ooit weer wijzigt. Teal-petrol, bewust ver van de amber en het
+     rood hieronder — een merkaccent mag nooit op een waarschuwing lijken. */
+  --accent: #1E9E93;
+  /* Dezelfde kleur, donkerder, voor tekst op een lichte grond. Het accent zelf
+     haalt op zand maar ~3:1 en dat is te weinig voor de kleine bovenkopjes;
+     deze haalt 5,5:1. Vlakken gebruiken --accent, letters --accent-tekst. */
+  --accent-tekst: #146E67;
   --zand: #F3F0E9;
   --zanddiep: #EEEBE2;
   --wit: #FFFFFF;

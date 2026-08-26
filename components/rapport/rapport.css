@@ -38,7 +38,7 @@
   letter-spacing: .16em;
   color: var(--zacht);
 }
-.rap-label-accent { color: var(--terracotta); }
+.rap-label-accent { color: var(--accent-tekst); }
 .rap-klein { font-size: .88rem; color: var(--gedempt); }
 .rap-data { font-family: var(--letter-data); font-variant-numeric: tabular-nums; }
 
@@ -218,18 +218,18 @@
 }
 .rap-knop:hover { background: var(--diepnavy); }
 
-/* De hoofdknop op een navy vlak: terracotta pil, zoals op de site. */
-.rap-knop-accent { background: var(--terracotta); color: var(--zand); }
-.rap-knop-accent:hover { background: #C9522F; }
+/* De hoofdknop op een navy vlak: een gevulde pil in het accent. */
+.rap-knop-accent { background: var(--accent); color: var(--zand); }
+.rap-knop-accent:hover { background: #18847B; }
 
 /* De tweede knop ernaast: omlijnd, niet gevuld — hij hoort niet te concurreren
-   met de terracotta. Op een navy vlak leent hij zijn rand van de tekstkleur. */
+   met de hoofdknop. Op een navy vlak leent hij zijn rand van de tekstkleur. */
 .rap-knop-stil { background: transparent; color: var(--navy); border: 1px solid var(--lijn); }
 .rap-knop-stil:hover { background: var(--zanddiep); }
 #afspraak .rap-knop-stil { color: var(--zand); border-color: rgba(243,240,233,.35); }
 #afspraak .rap-knop-stil:hover { background: rgba(243,240,233,.1); }
 
-.rap :focus-visible { outline: 2px solid var(--terracotta); outline-offset: 2px; }
+.rap :focus-visible { outline: 2px solid var(--accent-tekst); outline-offset: 2px; }
 
 /* ---------- onderdeel ---------- */
 .rap-onderdeel { padding: 52px 0; border-bottom: 1px solid var(--lijn); scroll-margin-top: 76px; }

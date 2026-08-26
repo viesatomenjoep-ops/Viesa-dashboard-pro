@@ -427,6 +427,9 @@ ${css}
 export type EchtContent = {
   titel: string | null;
   beschrijving: string | null;
+  kop: string | null;
+  secties: { titel: string; tekst: string }[];
+  navigatie: string[];
   afbeeldingen: string[];
   logo: string | null;
   merkkleur: string | null;
@@ -442,23 +445,49 @@ function hexRgba(hex: string, alpha: number): string {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
+/**
+ * De n-de echte foto, rondlopend door wat er opgehaald is.
+ *
+ * De scraper haalt er tot zes op; die werden alleen niet gebruikt — elk vlak
+ * kreeg dezelfde eerste foto. Met een index krijgt elk beeldvlak een ander
+ * beeld van de klant, en dat is precies wat een prototype op maat laat lijken.
+ */
+function foto(echt: EchtContent | undefined, index = 0): string | null {
+  const lijst = echt?.afbeeldingen ?? [];
+  if (lijst.length === 0) return null;
+  return lijst[index % lijst.length];
+}
+
 /** Achtergrond-CSS voor een held-sectie: een echte foto onder een kleurovergang, als er één is. */
 function heroAchtergrond(sj: Sjabloon, echt: EchtContent | undefined, hoek = 160): string {
-  const foto = echt?.afbeeldingen[0];
-  if (!foto) return "";
-  return ` style="background-image:linear-gradient(${hoek}deg, ${hexRgba(sj.kleur1, 0.82)}, ${hexRgba(sj.kleur2, 0.9)}), url('${escapeHtml(foto)}');background-size:cover;background-position:center;"`;
+  const beeld = foto(echt, 0);
+  if (!beeld) return "";
+  return ` style="background-image:linear-gradient(${hoek}deg, ${hexRgba(sj.kleur1, 0.82)}, ${hexRgba(sj.kleur2, 0.9)}), url('${escapeHtml(beeld)}');background-size:cover;background-position:center;"`;
 }
 
 /**
  * Voor een los beeldvlak: een echte foto, anders een abstract kleurpatroon
  * (cirkels in de merkkleuren) — bewust geen emoji of illustratie.
  */
-function beeldOfPatroon(sj: Sjabloon, echt: EchtContent | undefined): string {
-  const foto = echt?.afbeeldingen[0];
-  if (foto) {
-    return `<img src="${escapeHtml(foto)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" />`;
+function beeldOfPatroon(sj: Sjabloon, echt: EchtContent | undefined, index = 0): string {
+  const beeld = foto(echt, index);
+  if (beeld) {
+    return `<img src="${escapeHtml(beeld)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" />`;
   }
   return `<span style="position:absolute;inset:0;background:radial-gradient(circle at 30% 30%, ${hexRgba(sj.accent, 0.5)}, transparent 45%),radial-gradient(circle at 75% 65%, ${hexRgba("#ffffff", 0.14)}, transparent 40%),linear-gradient(150deg,${sj.kleur1},${sj.kleur2})"></span>`;
+}
+
+/**
+ * De menubalk: de échte paginanamen van de klant als we ze hebben, anders de
+ * verzonnen items van het sjabloon.
+ *
+ * Dit is een klein detail met een groot effect: een prospect die "Hengsten ·
+ * Africhting · Te koop" in het menu ziet staan, ziet zijn eigen site — niet een
+ * ontwerp dat toevallig ook over hem zou kunnen gaan.
+ */
+function menuItems(echt: EchtContent | undefined, terugval: string[]): string {
+  const items = (echt?.navigatie?.length ?? 0) >= 2 ? echt!.navigatie : terugval;
+  return items.map((n) => `<span>${escapeHtml(n)}</span>`).join("");
 }
 
 /** Het echte logo als <img>, of null als er geen is (dan blijft de initialenbadge staan). */
@@ -489,6 +518,49 @@ function verdonker(hex: string, factor: number): string {
 function metHuisstijl(sj: Sjabloon, echt: EchtContent | null | undefined): Sjabloon {
   if (!echt?.merkkleur) return sj;
   return { ...sj, kleur1: echt.merkkleur, kleur2: verdonker(echt.merkkleur, 0.45) };
+}
+
+/**
+ * Vervangt de verzonnen sjabloonteksten door wat er werkelijk op de site van de
+ * klant staat.
+ *
+ * Dit is het verschil tussen "Graag tot uw dienst" en de kop die het bedrijf
+ * zelf gekozen heeft. De iconen blijven van het sjabloon — die horen bij het
+ * ontwerp, niet bij de inhoud — maar kop, subtitel en de dienstenteksten komen
+ * van de klant zodra we ze hebben. Nog steeds 0 tokens: het is opgehaalde
+ * tekst, geen gegenereerde.
+ *
+ * Alles is per veld optioneel: ontbreekt er iets, dan blijft de sjabloontekst
+ * staan in plaats van dat er een gat valt.
+ */
+function metEchteTeksten(sj: Sjabloon, echt: EchtContent | null | undefined): Sjabloon {
+  if (!echt) return sj;
+  const uit: Sjabloon = { ...sj };
+
+  // De echte h1 als tagline. Een heel lange kop is meestal een zin uit de
+  // lopende tekst en geen kop; die laten we liggen.
+  const kop = echt.kop?.trim();
+  if (kop && kop.length <= 80) uit.tagline = kop;
+
+  // De meta-omschrijving als subtitel — die is voor bezoekers geschreven.
+  const subtitel = echt.beschrijving?.trim();
+  if (subtitel && subtitel.length <= 200) uit.subtitel = subtitel;
+
+  // De echte secties als diensten, met de iconen van het sjabloon. Minder dan
+  // twee bruikbare secties zegt te weinig; dan blijft het branchesjabloon staan.
+  if (echt.secties.length >= 2) {
+    uit.diensten = sj.diensten.map((dienst, i) => {
+      const sectie = echt.secties[i];
+      if (!sectie) return dienst;
+      return {
+        icoon: dienst.icoon,
+        titel: sectie.titel,
+        omschrijving: sectie.tekst,
+      };
+    });
+  }
+
+  return uit;
 }
 
 /* ============================== WEBSHOP (bol.com) ========================= */
@@ -551,7 +623,7 @@ footer{border-top:1px solid #e6e9ef;padding:1.5rem;text-align:center;font-size:.
       <p>${escapeHtml(sj.subtitel)}</p>
       <a class="knop" href="#cta">${escapeHtml(sj.ctaKnop)}</a>
     </div>
-    <div class="hero-beeld">${beeldOfPatroon(sj, echt)}</div>
+    <div class="hero-beeld">${beeldOfPatroon(sj, echt, 1)}</div>
   </section>
   <section class="deals">${kaarten}</section>
   <section class="cta" id="cta">
@@ -750,7 +822,7 @@ footer{padding:1.4rem;text-align:center;font-size:.8rem;color:#667085}
   const body = `
   <header>
     <span class="merk">${merkOfBadge(echt, bedrijf, "merk-logo")}${escapeHtml(bedrijf)}</span>
-    <nav><span>Diensten</span><span>Werkwijze</span><span>Over ons</span><span>Contact</span></nav>
+    <nav>${menuItems(echt, ["Diensten", "Werkwijze", "Over ons", "Contact"])}</nav>
   </header>
   <section class="held">
     <div>
@@ -758,7 +830,7 @@ footer{padding:1.4rem;text-align:center;font-size:.8rem;color:#667085}
       <p>${escapeHtml(sj.subtitel)}</p>
       <a class="knop" href="#">${escapeHtml(sj.ctaKnop)}</a>
     </div>
-    <div class="held-vlak">${beeldOfPatroon(sj, echt)}</div>
+    <div class="held-vlak">${beeldOfPatroon(sj, echt, 1)}</div>
   </section>
   <section class="sectie"><div class="sectie-inner">
     <h2>Wat we doen</h2>
@@ -781,7 +853,7 @@ function verhaalWebsite({ bedrijf, plaats, sj, echt }: Invoer): string {
   const blokken = sj.diensten
     .map(
       (d, i) => `<section class="blok${i % 2 ? " blok-om" : ""}">
-        <div class="blok-vlak"><span class="blok-icoon">${ikoon(d.icoon, 46)}</span>${beeldOfPatroon(sj, i === 0 ? echt : undefined)}</div>
+        <div class="blok-vlak"><span class="blok-icoon">${ikoon(d.icoon, 46)}</span>${beeldOfPatroon(sj, echt, i + 1)}</div>
         <div class="blok-tekst">
           <h2>${escapeHtml(d.titel)}</h2>
           <p>${escapeHtml(d.omschrijving)}</p>
@@ -957,7 +1029,7 @@ footer{padding:1.4rem;text-align:center;font-size:.8rem;color:#78716c}`;
   const body = `
   <header>
     <span class="merk">${merkOfBadge(echt, bedrijf, "merk-logo")}${escapeHtml(bedrijf)}</span>
-    <nav><span>Aanbod</span><span>Diensten</span><span>Over ons</span><span>Contact</span></nav>
+    <nav>${menuItems(echt, ["Aanbod", "Diensten", "Over ons", "Contact"])}</nav>
   </header>
   <section class="held"${heroAchtergrond(sj, echt, 165)}>
     <div class="held-inner">
@@ -1034,7 +1106,7 @@ footer{background:${sj.kleur1};color:#fff9;padding:0 0 1.4rem;text-align:center;
       <div class="usp-lijst">${sj.usps.map((u) => `<span>${ikoon("vink", 17)} ${escapeHtml(u)}</span>`).join("")}</div>
       <a class="knop" href="#cta">${escapeHtml(sj.ctaKnop)}</a>
     </div>
-    <div class="held-vlak">${beeldOfPatroon(sj, echt)}</div>
+    <div class="held-vlak">${beeldOfPatroon(sj, echt, 1)}</div>
   </section>
   <section class="werk">
     <h2>Wat we maken</h2>
@@ -1093,14 +1165,14 @@ footer{padding:1.6rem;text-align:center;font-size:.8rem;color:#b3b3b3}`;
   const body = `
   <header>
     <span class="merk">${merkOfBadge(echt, bedrijf, "merk-logo")}${escapeHtml(bedrijf)}</span>
-    <nav><span>Werk</span><span>Diensten</span><span>Contact</span></nav>
+    <nav>${menuItems(echt, ["Werk", "Diensten", "Contact"])}</nav>
   </header>
   <section class="held">
     <h1><b>${escapeHtml(sj.tagline)}.</b><br>${escapeHtml(bedrijf)}${plaats ? `, ${escapeHtml(plaats)}` : ""}.</h1>
     <p>${escapeHtml(sj.subtitel)}</p>
     <a class="knop" href="#">${escapeHtml(sj.ctaKnop)}</a>
   </section>
-  <div class="beeld"><div class="beeld-vlak">${beeldOfPatroon(sj, echt)}</div></div>
+  <div class="beeld"><div class="beeld-vlak">${beeldOfPatroon(sj, echt, 1)}</div></div>
   <section class="lijst">${rijen}</section>
   <div class="usps">${sj.usps.map((u) => `<span>${escapeHtml(u)}</span>`).join("")}</div>
   <section class="cta">
@@ -1154,14 +1226,14 @@ footer{padding:1.6rem;text-align:center;font-family:${FONT_SANS};font-size:.75re
 
   const body = `
   <header><span class="merk">${merkOfBadge(echt, bedrijf, "merk-logo", "2.4rem")}${escapeHtml(bedrijf)}</span></header>
-  <nav><span>Diensten</span><span>Over ons</span><span>Contact</span></nav>
+  <nav>${menuItems(echt, ["Diensten", "Over ons", "Contact"])}</nav>
   <div class="haarlijn"></div>
   <section class="held">
     <h1>${escapeHtml(sj.tagline)}</h1>
     <p>${escapeHtml(sj.subtitel)}</p>
     <a class="knop" href="#">${escapeHtml(sj.ctaKnop)}</a>
   </section>
-  <div class="beeld"><div class="beeld-vlak">${beeldOfPatroon(sj, echt)}</div></div>
+  <div class="beeld"><div class="beeld-vlak">${beeldOfPatroon(sj, echt, 1)}</div></div>
   <section class="kaarten">${kaarten}</section>
   <div class="usps">${sj.usps.map((u) => `<span>${escapeHtml(u)}</span>`).join(`<span aria-hidden="true" style="color:${goud}">·</span>`)}</div>
   <section class="cta">
@@ -1249,9 +1321,7 @@ export function bouwStatischPrototype(input: {
   const basisSjabloon = sjabloonVoor(input.branche);
   const metStijl: Sjabloon = input.stijl ? { ...basisSjabloon, stijl: input.stijl } : basisSjabloon;
   const basis = metHuisstijl(metStijl, input.echt);
-  const echteSubtitel = input.echt?.beschrijving?.trim();
-  const sj: Sjabloon =
-    echteSubtitel && echteSubtitel.length <= 200 ? { ...basis, subtitel: echteSubtitel } : basis;
+  const sj = metEchteTeksten(basis, input.echt);
   const invoer: Invoer = {
     bedrijf: input.bedrijf,
     plaats: input.plaats,

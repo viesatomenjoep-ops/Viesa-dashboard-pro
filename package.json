@@ -9,11 +9,12 @@
     "lint": "next lint",
     "test:audit": "tsx scripts/test-audit.mjs",
     "test:geo": "tsx scripts/test-geo.mjs",
-    "test": "npm run test:audit && npm run test:geo && npm run test:checks && npm run test:prototype && npm run test:rapport && npm run test:rapport-scan",
+    "test": "npm run test:audit && npm run test:geo && npm run test:checks && npm run test:prototype && npm run test:rapport && npm run test:rapport-scan && npm run test:scrape",
     "test:checks": "tsx scripts/test-checks.mjs",
     "test:prototype": "tsx scripts/test-website-sjabloon.mjs",
     "test:rapport": "tsx scripts/test-rapport.mjs",
-    "test:rapport-scan": "tsx scripts/test-rapport-vanscan.mjs"
+    "test:rapport-scan": "tsx scripts/test-rapport-vanscan.mjs",
+    "test:scrape": "tsx scripts/test-site-scrape.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",

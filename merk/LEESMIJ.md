@@ -17,8 +17,8 @@ bouwstap ertussen zou de Brand Factory afhankelijk maken van deze repo.
 ## Waarom `.viesa-merk` en niet `:root`
 
 Het interne dashboard houdt zijn eigen thema (navy + teal + koel grijs `#F4F6F9`,
-Inter). Dit merkpakket is de **klantgerichte** stijl: warm zand, terracotta als
-enige accent, Archivo. Twee verschillende werelden die niet in elkaars vaarwater
+Inter). Dit merkpakket is de **klantgerichte** stijl: warm zand, teal-petrol
+als enige accent, Archivo. Twee verschillende werelden die niet in elkaars vaarwater
 moeten zitten.
 
 Zet de klasse dus op de buitenste laag van een document:
@@ -37,14 +37,16 @@ import { merkKlassen } from "@/lib/rapport/fonts";
 | ----------- | --------- | ---------------------------------------------------- |
 | Navy        | `#19445B` | Primair — koppen, knoppen, randen                     |
 | Diepnavy    | `#111D36` | Donkere vlakken — omslag, voettekst                   |
-| Terracotta  | `#E2603F` | **Het enige accent.** Betekent "Viesa", nooit "fout". |
+| Accent      | `#1E9E93` | **Het enige accent.** Betekent "Viesa", nooit "fout". |
 | Zand        | `#F3F0E9` | Paginabachtergrond                                    |
 | Zanddiep    | `#EEEBE2` | Ingezonken vlak — tabelkop, oordeelblok               |
 | Lijn        | `#E4E1D8` | Haarlijn. **Geen zebra** in tabellen.                 |
 
 Daarnaast een apart **signaalpalet** (`--goed`, `--beter`, `--nodig`, `--geen`,
-elk met een `-vlak`-variant). Dat staat los van het accent: een rood vlak
-betekent "aandacht nodig", terracotta betekent "Viesa". Die twee door elkaar
+elk met een `-vlak`-variant). Dat staat los van het accent, en het accent is
+bewust gekozen ver van amber en rood: eerder stond hier terracotta, en dat leek
+in een rapport vol statuskleuren te veel op een waarschuwing. Een rood vlak
+betekent "aandacht nodig", het accent betekent "Viesa". Die twee door elkaar
 halen maakt elk rapport onleesbaar.
 
 Op donkere vlakken is de lichte tekstkleur **zand `#F3F0E9`**, niet zuiver wit —
