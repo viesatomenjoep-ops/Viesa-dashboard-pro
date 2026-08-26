@@ -1,0 +1,274 @@
+/* ============================================================================
+   Klantrapport — opmaak
+   ----------------------------------------------------------------------------
+   Eén stijl voor beeldscherm én papier. De PDF is niet een tweede document maar
+   dezelfde pagina, afgedrukt: onderaan staat @media print, en dat is alles wat
+   er tussen het scherm en het papier zit.
+
+   Alle kleuren komen uit merk/tokens.css (klasse .viesa-merk). Hier staan geen
+   losse hexwaarden, zodat een huisstijlwijziging één bestand raakt.
+   ========================================================================== */
+
+@import "../../merk/tokens.css";
+
+.rap {
+  background: var(--zand);
+  color: var(--tekst);
+  font-family: var(--letter-tekst);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.rap-breed { max-width: 940px; margin: 0 auto; padding: 0 24px; }
+.rap-lees { max-width: var(--leesbreedte); }
+
+/* ---------- typografie ---------- */
+.rap h1, .rap h2, .rap h3, .rap h4 { margin: 0; text-wrap: balance; letter-spacing: -0.022em; }
+.rap h1 { font-size: clamp(2.1rem, 5vw, 3.1rem); font-weight: 800; line-height: 1.06; letter-spacing: -0.032em; }
+.rap h2 { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 800; line-height: 1.14; }
+.rap h3 { font-size: 1.16rem; font-weight: 700; line-height: 1.32; }
+.rap p { margin: 0; }
+
+.rap-label {
+  font-family: var(--letter-data);
+  font-size: .7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: .16em;
+  color: var(--zacht);
+}
+.rap-label-accent { color: var(--terracotta); }
+.rap-klein { font-size: .88rem; color: var(--gedempt); }
+.rap-data { font-family: var(--letter-data); font-variant-numeric: tabular-nums; }
+
+/* ---------- ritme ---------- */
+.rap-stapel { display: flex; flex-direction: column; }
+.rap-kaart {
+  background: var(--wit);
+  border: 1px solid var(--lijn);
+  border-radius: var(--radius-kaart);
+  padding: 26px 28px;
+}
+
+/* ---------- omslag ---------- */
+.rap-omslag { background: var(--diepnavy); color: var(--wit); padding: 56px 0 48px; }
+.rap-omslag h1 { color: var(--wit); }
+.rap-merkregel { display: flex; align-items: center; gap: 11px; margin-bottom: 34px; }
+.rap-ruit { width: 14px; height: 14px; background: var(--terracotta); transform: rotate(45deg); flex: none; }
+.rap-merknaam {
+  font-family: var(--letter-data);
+  font-size: .72rem; text-transform: uppercase; letter-spacing: .2em; color: #8FA1BD;
+}
+
+.rap-tegels {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 1px; background: rgba(255,255,255,.14);
+  border: 1px solid rgba(255,255,255,.14); margin-top: 34px;
+}
+.rap-tegel { background: var(--diepnavy); padding: 17px 19px; }
+.rap-tegel b { display: block; font-size: 1.5rem; font-weight: 800; letter-spacing: -0.03em; color: var(--wit); }
+.rap-tegel span {
+  display: block; margin-top: 3px;
+  font-family: var(--letter-data);
+  font-size: .66rem; text-transform: uppercase; letter-spacing: .14em; color: #8FA1BD;
+}
+
+/* ---------- tabbalk ---------- */
+.rap-tabs {
+  position: sticky; top: 0; z-index: 20;
+  background: var(--zand);
+  border-bottom: 1px solid var(--lijn);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.rap-tabs::-webkit-scrollbar { display: none; }
+.rap-tabs-rij { display: flex; gap: 0; min-width: max-content; padding: 0 24px; }
+.rap-tab {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 14px 22px 12px;
+  border-bottom: 2px solid transparent;
+  text-decoration: none; color: var(--zacht);
+  white-space: nowrap;
+}
+.rap-tab-naam { font-size: .95rem; font-weight: 600; }
+.rap-tab-cijfer {
+  display: flex; align-items: center; gap: 7px;
+  font-family: var(--letter-data); font-size: 1.05rem; font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.rap-tab[aria-current="true"] { color: var(--tekst); border-bottom-color: var(--navy); }
+.rap-stip { width: 7px; height: 7px; border-radius: var(--radius-pil); flex: none; }
+
+/* ---------- ringgrafiek ---------- */
+.rap-ring { display: inline-flex; flex-direction: column; align-items: center; gap: 5px; }
+.rap-ring-vlak { position: relative; display: inline-grid; place-items: center; }
+.rap-ring svg { transform: rotate(-90deg); }
+.rap-ring-cijfer { position: absolute; display: flex; align-items: baseline; gap: 2px; }
+.rap-ring-cijfer b { font-family: var(--letter-data); font-weight: 600; letter-spacing: -0.02em; }
+.rap-ring-cijfer span { font-family: var(--letter-data); font-size: .72rem; color: var(--zacht); }
+.rap-ring-oordeel { font-size: .84rem; font-weight: 700; }
+.rap-ring-norm { font-size: .74rem; color: var(--zacht); }
+
+/* ---------- meetbalk ---------- */
+.rap-meting { display: flex; flex-direction: column; gap: 9px; }
+.rap-meting-kop { display: flex; align-items: center; gap: 9px; }
+.rap-meting-kop h3 { font-size: 1.08rem; }
+
+/* Ruimte voor de waardevlag, die bóven de balk uitsteekt: het getal (~17px)
+   plus het steeltje (29px). Te weinig en de vlag landt op de uitleg erboven. */
+.rap-balk { padding-top: 52px; }
+.rap-balk-vlak { position: relative; }
+.rap-balk-spoor { position: relative; }
+.rap-balk-zones { display: flex; height: 9px; border-radius: var(--radius-pil); overflow: hidden; }
+.rap-balk-zone { height: 100%; }
+
+.rap-balk-namen { position: relative; height: 19px; margin-bottom: 6px; }
+.rap-balk-naam {
+  position: absolute; transform: translateX(-50%);
+  font-size: .8rem; font-weight: 600; white-space: nowrap;
+}
+
+/* De vlag staat boven de zonenamen; het steeltje loopt er dwars doorheen tot
+   op de balk. Zonder die hoogte belandt de waarde bovenop de zonenaam waar hij
+   toevallig recht boven staat, en is geen van beide meer te lezen. */
+.rap-balk-vlag { position: absolute; bottom: 100%; transform: translateX(-50%); text-align: center; }
+.rap-balk-vlag b {
+  display: block;
+  font-family: var(--letter-data); font-size: .9rem; font-weight: 600;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.rap-balk-steel { display: block; width: 1px; height: 29px; margin: 1px auto 0; opacity: .75; }
+.rap-balk-punt {
+  position: absolute; top: 50%; width: 15px; height: 15px;
+  border-radius: var(--radius-pil); border: 3px solid var(--zand);
+  transform: translate(-50%, -50%);
+}
+.rap-balk-as { position: relative; height: 17px; margin-top: 7px; }
+.rap-balk-tik {
+  position: absolute; font-family: var(--letter-data); font-size: .72rem;
+  color: var(--zacht); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+
+/* ---------- vaststelling ---------- */
+.rap-vaststelling {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 13px 16px; border-radius: var(--radius-klein);
+}
+.rap-vaststelling-links { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.rap-vinkje {
+  width: 25px; height: 25px; border-radius: var(--radius-pil); flex: none;
+  display: grid; place-items: center;
+}
+.rap-vaststelling-antwoord { font-weight: 600; }
+.rap-vaststelling-stand { font-size: .87rem; font-weight: 600; white-space: nowrap; }
+
+/* ---------- bevinding ---------- */
+.rap-bevinding { display: flex; flex-direction: column; gap: 5px; padding: 15px 0; border-bottom: 1px solid var(--lijn); }
+.rap-bevinding:last-child { border-bottom: 0; }
+.rap-bevinding-kop { display: flex; align-items: baseline; gap: 11px; flex-wrap: wrap; }
+.rap-chip {
+  font-family: var(--letter-data);
+  font-size: .64rem; font-weight: 600; text-transform: uppercase; letter-spacing: .12em;
+  padding: 4px 9px; border-radius: var(--radius-pil); white-space: nowrap;
+}
+
+/* ---------- technologie ---------- */
+.rap-tech-groep { display: flex; flex-direction: column; gap: 8px; }
+.rap-tech-pillen { display: flex; flex-wrap: wrap; gap: 8px; }
+.rap-pil {
+  background: var(--zanddiep); border: 1px solid var(--lijn);
+  border-radius: var(--radius-pil); padding: 6px 14px;
+  font-size: .89rem; font-weight: 500;
+}
+
+/* ---------- oordeel ---------- */
+.rap-oordeel {
+  background: var(--zanddiep); border-radius: var(--radius-kaart);
+  padding: 20px 24px; display: flex; flex-direction: column; gap: 9px;
+}
+
+/* ---------- acties ---------- */
+.rap-acties { display: flex; flex-direction: column; gap: 11px; margin: 0; padding: 0; list-style: none; counter-reset: actie; }
+.rap-actie { display: flex; gap: 13px; align-items: flex-start; }
+.rap-actie-nr {
+  counter-increment: actie; flex: none;
+  width: 25px; height: 25px; border-radius: var(--radius-pil);
+  background: var(--navy); color: var(--wit);
+  display: grid; place-items: center;
+  font-family: var(--letter-data); font-size: .74rem; font-weight: 600;
+}
+.rap-actie-nr::before { content: counter(actie); }
+
+.rap-knop {
+  display: inline-flex; align-items: center; gap: 9px; align-self: flex-start;
+  background: var(--navy); color: var(--wit); text-decoration: none;
+  border: 0; border-radius: var(--radius-pil);
+  padding: 13px 26px; font-family: var(--letter-tekst);
+  font-size: .95rem; font-weight: 600; cursor: pointer;
+}
+.rap-knop:hover { background: var(--diepnavy); }
+.rap-knop-stil { background: transparent; color: var(--navy); border: 1px solid var(--lijn); }
+.rap-knop-stil:hover { background: var(--zanddiep); }
+
+.rap :focus-visible { outline: 2px solid var(--terracotta); outline-offset: 2px; }
+
+/* ---------- onderdeel ---------- */
+.rap-onderdeel { padding: 52px 0; border-bottom: 1px solid var(--lijn); scroll-margin-top: 76px; }
+.rap-onderdeel-kop { display: flex; gap: 26px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; }
+
+/* ---------- herkomst ---------- */
+.rap-herkomst-cijfers {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 22px;
+}
+.rap-herkomst-cijfer b {
+  display: block; font-family: var(--letter-data); font-size: 1.35rem; font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+@media (max-width: 640px) {
+  .rap { font-size: 15px; }
+  .rap-breed { padding: 0 18px; }
+  .rap-tabs-rij { padding: 0 18px; }
+  .rap-kaart { padding: 20px 20px; }
+  .rap-onderdeel { padding: 40px 0; }
+  .rap-onderdeel-kop { gap: 18px; }
+}
+
+/* ============================================================================
+   Papier — dit is de hele PDF-oplossing
+   ========================================================================== */
+@page { size: A4; margin: 16mm 14mm; }
+
+@media print {
+  .rap { background: var(--wit); font-size: 10.5pt; line-height: 1.5; }
+  .rap-breed { max-width: none; padding: 0; }
+
+  /* Schermnavigatie hoort niet op papier. */
+  .rap-tabs, .rap-alleen-scherm { display: none !important; }
+  .rap-alleen-papier { display: block !important; }
+
+  /* Elk onderdeel op een eigen pagina, en nooit een kop los onderaan. */
+  .rap-onderdeel { break-before: page; padding: 0 0 12pt; border-bottom: 0; }
+  .rap-onderdeel:first-of-type { break-before: auto; }
+  .rap-onderdeel-kop, .rap-meting, .rap-bevinding, .rap-vaststelling, .rap-oordeel {
+    break-inside: avoid;
+  }
+  h1, h2, h3 { break-after: avoid; }
+
+  /* De browser laat achtergronden standaard weg; dat maakt van de meetbalken
+     en de omslag lege vlakken. Dit is de enige reden dat print-color-adjust
+     hier staat. */
+  .rap-omslag, .rap-balk-zones, .rap-balk-zone, .rap-balk-punt, .rap-chip,
+  .rap-vaststelling, .rap-vinkje, .rap-oordeel, .rap-actie-nr, .rap-pil,
+  .rap-tegel, .rap-tegels, .rap-ruit, .rap-stip {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .rap-omslag { padding: 0 0 22pt; break-after: page; }
+  .rap-kaart { border-color: var(--lijn); box-shadow: none; }
+  a { text-decoration: none; color: inherit; }
+}
+
+.rap-alleen-papier { display: none; }

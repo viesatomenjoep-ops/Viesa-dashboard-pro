@@ -1,0 +1,42 @@
+/* ============================================================================
+   Viesa Automations — merkpakket 1.0.0
+   ----------------------------------------------------------------------------
+   Handmatig gelijkgehouden met merk/tokens.json (zie merk/LEESMIJ.md).
+   Bewust op .viesa-merk in plaats van :root: het interne dashboard houdt zijn
+   eigen thema (navy + teal + koel grijs), dit is de klantgerichte huisstijl.
+   Zet de klasse op de buitenste laag van een rapport of document.
+   ========================================================================== */
+
+.viesa-merk {
+  --navy: #19445B;
+  --diepnavy: #111D36;
+  --terracotta: #E2603F;
+  --zand: #F3F0E9;
+  --zanddiep: #EEEBE2;
+  --wit: #FFFFFF;
+  --tekst: #1B2434;
+  --gedempt: #55617A;
+  --zacht: #8A8FA0;
+  --lijn: #E4E1D8;
+
+  --goed: #2E7355;
+  --goed-vlak: #E7F0EA;
+  --beter: #B87322;
+  --beter-vlak: #F8EEDF;
+  --nodig: #C0442A;
+  --nodig-vlak: #FAE8E4;
+  --geen: #8A8FA0;
+  --geen-vlak: #EEEBE2;
+
+  /* De lettertypen worden met next/font geladen (lib/rapport/fonts.ts) en als
+     CSS-variabele meegegeven; de terugval staat hier zodat het ook buiten de
+     app klopt, bijvoorbeeld in een Brand Factory-render. */
+  --letter-tekst: var(--font-archivo), 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --letter-data: var(--font-plex-mono), 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+
+  --radius-klein: 12px;
+  --radius-kaart: 20px;
+  --radius-blok: 24px;
+  --radius-pil: 999px;
+  --leesbreedte: 68ch;
+}
