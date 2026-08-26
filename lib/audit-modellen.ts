@@ -6,6 +6,7 @@ import { schoonSleutel } from "@/lib/geheimen";
 import { createClient } from "@/lib/supabase/server";
 import {
   doelGevonden,
+  kiesGeminiModel,
   leesbareModelFout,
   parseConcurrenten,
   systeemOpdracht,
@@ -86,16 +87,72 @@ async function fetchAnthropic(niche: string): Promise<Concurrent[]> {
   return parseConcurrenten(tekst);
 }
 
+/**
+ * De modellen die deze sleutel daadwerkelijk mag gebruiken, één keer per
+ * serverproces opgehaald.
+ *
+ * Nodig omdat Google's modelnamen per account en per API-versie verschillen:
+ * een vast ingebakken `gemini-2.0-flash` gaf op een werkende sleutel toch
+ * "model bestaat niet". In plaats van te blijven gokken vragen we het gewoon —
+ * dat kost geen tokens, alleen een modellenlijst.
+ */
+let geminiModellenCache: Promise<string[]> | null = null;
+
+function beschikbareGeminiModellen(sleutel: string): Promise<string[]> {
+  geminiModellenCache ??= (async () => {
+    try {
+      const res = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models?pageSize=200",
+        { headers: { "x-goog-api-key": sleutel } },
+      );
+      if (!res.ok) return [];
+      const data = (await res.json()) as {
+        models?: { name?: string; supportedGenerationMethods?: string[] }[];
+      };
+      return (data.models ?? [])
+        .filter((m) => m.supportedGenerationMethods?.includes("generateContent"))
+        .map((m) => (m.name ?? "").replace(/^models\//, ""))
+        .filter(Boolean);
+    } catch {
+      return [];
+    }
+  })();
+  return geminiModellenCache;
+}
+
 async function fetchGemini(niche: string): Promise<Concurrent[]> {
-  const client = new GoogleGenAI({
-    apiKey: vereisSleutel("GEMINI_API_KEY", process.env.GEMINI_API_KEY),
-  });
-  const res = await client.models.generateContent({
-    model: MODELLEN.gemini,
-    contents: systeemOpdracht(niche),
-    config: { responseMimeType: "application/json" },
-  });
-  return parseConcurrenten(res.text ?? "");
+  const sleutel = vereisSleutel("GEMINI_API_KEY", process.env.GEMINI_API_KEY);
+  const client = new GoogleGenAI({ apiKey: sleutel });
+
+  const vraag = (model: string) =>
+    client.models.generateContent({
+      model,
+      contents: systeemOpdracht(niche),
+      config: { responseMimeType: "application/json" },
+    });
+
+  try {
+    const res = await vraag(MODELLEN.gemini);
+    return parseConcurrenten(res.text ?? "");
+  } catch (e) {
+    // Alleen bij "model bestaat niet" opnieuw proberen. Een geweigerde sleutel
+    // of een bereikte limiet lost een ander model niet op, en dan hoort de
+    // gebruiker de échte reden te zien.
+    const bericht = e instanceof Error ? e.message : String(e ?? "");
+    const status = (e as { status?: number })?.status;
+    const modelOnbekend = status === 404 || /not found|does not exist|is not supported/i.test(bericht);
+    if (!modelOnbekend) throw e;
+
+    const alternatief = kiesGeminiModel(await beschikbareGeminiModellen(sleutel));
+    if (!alternatief || alternatief === MODELLEN.gemini) throw e;
+
+    console.warn(
+      `[audit] Gemini-model "${MODELLEN.gemini}" bestaat niet voor deze sleutel; ` +
+        `uitgeweken naar "${alternatief}". Zet GEMINI_MODEL op die waarde om de extra aanroep te besparen.`,
+    );
+    const res = await vraag(alternatief);
+    return parseConcurrenten(res.text ?? "");
+  }
 }
 
 async function fetchPerplexity(niche: string): Promise<Concurrent[]> {

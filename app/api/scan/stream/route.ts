@@ -41,7 +41,7 @@ type Event =
   | { type: "stap_klaar"; stap: string; goed: boolean; samenvatting: string; data?: unknown }
   | { type: "totaal"; score: number; oordeel: string; resultaat: ScanRapport }
   | { type: "fout"; melding: string }
-  | { type: "klaar" };
+  | { type: "klaar"; scanId?: string | null };
 
 function sse(event: Event): string {
   return `data: ${JSON.stringify(event)}\n\n`;
@@ -305,20 +305,26 @@ export async function GET(request: Request) {
 
         // Het volledige rapport apart bewaren (los van een lead) zodat /scan
         // een geschiedenis kan tonen om terug te openen of te verwijderen.
-        await supabase.from("website_scans").insert({
-          url,
-          host,
-          niche: niche ?? null,
-          totaal_score: score,
-          rapport: resultaat,
-          // De bedrijfsnaam als die is meegegeven; die leest op de omslag van
-          // het klantrapport een stuk beter dan een hostnaam.
-          bedrijf: params.get("bedrijf")?.trim() || null,
-        });
+        // De id komt mee terug, zodat de scanner meteen een deellink naar het
+        // klantrapport kan maken zonder de lijst opnieuw te hoeven ophalen.
+        const { data: bewaard } = await supabase
+          .from("website_scans")
+          .insert({
+            url,
+            host,
+            niche: niche ?? null,
+            totaal_score: score,
+            rapport: resultaat,
+            // De bedrijfsnaam als die is meegegeven; die leest op de omslag van
+            // het klantrapport een stuk beter dan een hostnaam.
+            bedrijf: params.get("bedrijf")?.trim() || null,
+          })
+          .select("id")
+          .single();
 
         stuur({ type: "stap_klaar", stap: "voorbeeld", goed: true, samenvatting: "", data: { voorbeeld } });
 
-        stuur({ type: "klaar" });
+        stuur({ type: "klaar", scanId: bewaard?.id ?? null });
       } catch (e) {
         stuur({ type: "fout", melding: e instanceof Error ? e.message : "De scan is mislukt." });
       } finally {

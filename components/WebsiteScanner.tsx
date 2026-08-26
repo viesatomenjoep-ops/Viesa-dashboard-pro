@@ -25,7 +25,6 @@ import {
 import type { Bevinding } from "@/lib/geo-analyse";
 import type { ScanRapport } from "@/lib/scan";
 import { ZoekKies } from "@/components/ZoekKies";
-import { ScanPdfKnop } from "@/components/ScanPdfKnop";
 import { pushScanRapportNaarLead } from "@/app/(app)/leads/acties";
 import { deelScan, laadOpgeslagenScan, verwijderScan } from "@/app/(app)/scan/acties";
 
@@ -180,6 +179,8 @@ export function WebsiteScanner({
   const [verwijderBezig, setVerwijderBezig] = useState<string | null>(null);
   const [deelBezig, setDeelBezig] = useState<string | null>(null);
   const [gekopieerd, setGekopieerd] = useState<string | null>(null);
+  /** De zojuist bewaarde scan — om er direct een klantrapport van te openen. */
+  const [laatsteScanId, setLaatsteScanId] = useState<string | null>(null);
   const bronRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
@@ -197,6 +198,7 @@ export function WebsiteScanner({
     setRapport(null);
     setGepusht(false);
     setVoorbeeld(null);
+    setLaatsteScanId(null);
     try {
       setHost(new URL(/^https?:\/\//i.test(url) ? url : `https://${url}`).host);
     } catch {
@@ -226,6 +228,7 @@ export function WebsiteScanner({
       if (event.type === "klaar" || event.type === "fout") {
         bron.close();
         setBezig(false);
+        if (event.type === "klaar" && event.scanId) setLaatsteScanId(event.scanId);
         // De scan is net bewaard (website_scans) — de geschiedenis hieronder
         // bijwerken zodat hij er meteen bij staat.
         if (event.type === "klaar") router.refresh();
@@ -377,6 +380,7 @@ export function WebsiteScanner({
     oordeel?: string;
     resultaat?: ScanRapport;
     melding?: string;
+    scanId?: string | null;
   }) {
     if (event.type === "stap_start" && event.stap) {
       setStappen((v) => ({ ...v, [event.stap!]: { status: "bezig", samenvatting: "" } }));
@@ -636,7 +640,21 @@ export function WebsiteScanner({
                 </p>
                 <p className="mt-0.5 truncate text-sm text-navy/70">{host}</p>
               </div>
-              {rapport && <ScanPdfKnop rapport={rapport} />}
+              {laatsteScanId && (
+                <button
+                  type="button"
+                  onClick={() => deelOpgeslagenScan(laatsteScanId)}
+                  disabled={deelBezig !== null}
+                  className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-navy/20 px-4 py-2 text-sm font-medium text-navy hover:bg-navy/5 disabled:opacity-60"
+                >
+                  {deelBezig === laatsteScanId ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <ExternalLink size={15} />
+                  )}
+                  Klantrapport openen
+                </button>
+              )}
               {gekozenLeadId && (
                 <button
                   type="button"

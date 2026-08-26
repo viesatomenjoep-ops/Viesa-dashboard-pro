@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LayoutTemplate, Loader2, MonitorSmartphone, Smartphone, Trash2 } from "lucide-react";
 import { laadSjabloonPrototype, verwijderPrototype } from "../acties";
-import { DESIGN_SYSTEMS, SJABLOON_BRANCHES, type DesignStijl } from "@/lib/website-sjabloon";
+import { DESIGN_SYSTEMS, type DesignStijl } from "@/lib/website-sjabloon";
 
 type Type = "website" | "app";
 
@@ -18,9 +18,16 @@ export type OpgeslagenPrototype = {
 
 /**
  * Website/app-prototype voor een lead — verkoopmateriaal: "kijk wat we voor je
- * zouden kunnen bouwen". Puur op branchesjablonen: direct, 0 tokens, en elk
- * sjabloon heeft een eigen ontwerp. (De eerdere AI-variant is bewust
- * verwijderd — die kostte tokens en haalde het niet bij de sjablonen.)
+ * zouden kunnen bouwen".
+ *
+ * De inhoud komt van de bestaande site van de klant: hun kop, hun secties, hun
+ * menu, hun foto's, hun logo en hun merkkleur. Er valt dus niets te kiezen aan
+ * de inhoud — alleen aan het ontwerp. De branchesjablonen bestaan nog wél, maar
+ * alleen als vangnet voor wat de site niet prijsgeeft; ze staan daarom niet
+ * meer als keuze in beeld.
+ *
+ * Alles zonder AI: 0 tokens. (De eerdere AI-variant is bewust verwijderd —
+ * die kostte tokens en haalde het niet bij de sjablonen.)
  *
  * Elke generatie wordt bewaard (website_prototypes) — hieronder staat een
  * lijst van eerdere prototypes van deze lead, aan te klikken om terug te zien.
@@ -34,7 +41,6 @@ export function WebsitePrototype({
 }) {
   const router = useRouter();
   const [type, setType] = useState<Type>("website");
-  const [sjabloonBranche, setSjabloonBranche] = useState("");
   const [designStijl, setDesignStijl] = useState("");
   const [bezig, setBezig] = useState(false);
   const [verwijderBezig, setVerwijderBezig] = useState<string | null>(null);
@@ -46,7 +52,7 @@ export function WebsitePrototype({
     setBezig(true);
     setFout(null);
     try {
-      const res = await laadSjabloonPrototype(leadId, type, sjabloonBranche || undefined, (designStijl || undefined) as DesignStijl | undefined);
+      const res = await laadSjabloonPrototype(leadId, type, undefined, (designStijl || undefined) as DesignStijl | undefined);
       if (!res.ok) setFout(res.fout ?? "Kon geen sjabloon laden.");
       else {
         setHtml(res.html ?? null);
@@ -94,9 +100,10 @@ export function WebsitePrototype({
         <div>
           <h2 className="text-sm font-semibold text-navy">Website-prototype</h2>
           <p className="text-xs text-navy/50">
-            Laat zien hoe een vernieuwde website (of app) er voor deze klant uit zou kunnen zien —
-            zonder tokenkosten. Heeft de lead een website, dan haalt hij er een echte foto en
-            omschrijving bij (een paar seconden werk, geen AI).
+            De eigen teksten, foto&apos;s, logo en kleuren van de klant, in een nieuw ontwerp —
+            zonder tokenkosten. Kies alleen het ontwerp; de inhoud komt van hun huidige site
+            (een paar seconden ophalen, geen AI). Heeft de site te weinig bruikbare tekst,
+            dan vult het ontwerp aan op basis van de branche van de lead.
           </p>
         </div>
       </div>
@@ -123,22 +130,6 @@ export function WebsitePrototype({
             <Smartphone size={14} /> App
           </button>
         </div>
-
-        <label className="block min-w-[200px] flex-1 sm:max-w-[240px]">
-          <span className="mb-1 block text-xs font-medium text-navy/50">Inhoud (branche)</span>
-          <select
-            value={sjabloonBranche}
-            onChange={(e) => setSjabloonBranche(e.target.value)}
-            className="w-full rounded-md border border-navy/20 px-2 py-1.5 text-xs text-navy outline-none focus:border-navy"
-          >
-            <option value="">Automatisch (branche van de lead)</option>
-            {SJABLOON_BRANCHES.map((b) => (
-              <option key={b} value={b}>
-                {b}
-              </option>
-            ))}
-          </select>
-        </label>
 
         <label className="block min-w-[200px] flex-1 sm:max-w-[240px]">
           <span className="mb-1 block text-xs font-medium text-navy/50">Design system</span>

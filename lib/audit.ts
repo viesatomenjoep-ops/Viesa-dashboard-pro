@@ -150,3 +150,23 @@ export function doelGevonden(targetUrl: string, concurrenten: Concurrent[]): boo
     );
   });
 }
+
+// ---------------------------------------------------------------------------
+// Modelkeuze
+// ---------------------------------------------------------------------------
+
+/** De eerste beschikbare flash-variant; die is het snelst en het goedkoopst. */
+/**
+ * Kiest een Gemini-model uit wat deze sleutel werkelijk mag gebruiken.
+ *
+ * Bestaat omdat Google's modelnamen per account en per API-versie verschillen:
+ * een vast ingebakken `gemini-2.0-flash` gaf op een werkende sleutel toch
+ * "model bestaat niet". Hier apart, en niet in audit-modellen.ts, omdat dat
+ * bestand `server-only` importeert en dan niet los te testen is.
+ */
+export function kiesGeminiModel(beschikbaar: string[]): string | null {
+  const flash = beschikbaar.filter((m) => m.includes("flash") && !m.includes("thinking"));
+  // Nieuwere versienummers sorteren aflopend, zodat 2.5 vóór 1.5 komt.
+  flash.sort((a, b) => b.localeCompare(a, "en", { numeric: true }));
+  return flash[0] ?? beschikbaar[0] ?? null;
+}

@@ -28,6 +28,8 @@ export type SleutelStatus = {
   melding: string;
   /** Zonder deze sleutel valt alleen dit onderdeel uit. */
   gevolg: string;
+  /** Extra uitleg die pas na de controle bekend is, bv. welke modellen mogen. */
+  detail?: string;
 };
 
 type Controle = {
@@ -36,6 +38,8 @@ type Controle = {
   bron: string;
   gevolg: string;
   test: (sleutel: string) => Promise<Response>;
+  /** Leest extra informatie uit een geslaagd antwoord. Mag falen; dan geen detail. */
+  detail?: (res: Response) => Promise<string | undefined>;
 };
 
 const TIMEOUT_MS = 12_000;
@@ -89,11 +93,30 @@ const CONTROLES: Controle[] = [
     gevolg: "De Gemini-kaart blijft leeg.",
     test: (sleutel) =>
       metTimeout((signal) =>
-        fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=1", {
+        fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", {
           headers: { "x-goog-api-key": sleutel },
           signal,
         }),
       ),
+    // Google's modelnamen verschillen per account. Een werkende sleutel met een
+    // model dat dit account niet heeft geeft "model bestaat niet" — dus tonen
+    // we hier wélke modellen er wél zijn, in plaats van te laten gokken.
+    detail: async (res) => {
+      try {
+        const data = (await res.json()) as {
+          models?: { name?: string; supportedGenerationMethods?: string[] }[];
+        };
+        const namen = (data.models ?? [])
+          .filter((m) => m.supportedGenerationMethods?.includes("generateContent"))
+          .map((m) => (m.name ?? "").replace(/^models\//, ""))
+          .filter((n) => n.includes("flash"))
+          .slice(0, 4);
+        if (namen.length === 0) return undefined;
+        return `Beschikbaar voor deze sleutel: ${namen.join(", ")}. Zet er één van in GEMINI_MODEL.`;
+      } catch {
+        return undefined;
+      }
+    },
   },
   {
     key: "PERPLEXITY_API_KEY",
@@ -181,6 +204,7 @@ export async function controleerSleutels(): Promise<SleutelStatus[]> {
             ingesteld: true,
             werkt: true,
             melding: "Werkt." + waarschuwing,
+            detail: c.detail ? await c.detail(res) : undefined,
           };
         }
         return {

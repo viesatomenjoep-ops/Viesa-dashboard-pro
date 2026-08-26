@@ -4,21 +4,68 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { zoekLeadsGoogleMaps } from "./acties";
 
+/** De bronnen, in volgorde van wat ze kosten: gratis eerst. */
+const BRONNEN = [
+  {
+    key: "osm",
+    naam: "OpenStreetMap",
+    uitleg:
+      "Gratis, geen sleutel nodig. Vindt juist bedrijven die géén Google-vermelding onderhouden.",
+    kosten: "gratis",
+  },
+  {
+    key: "zoeken",
+    naam: "Google Zoeken",
+    uitleg:
+      "Vindt bedrijven zonder Maps-vermelding. Levert naam en website, geen adres of telefoon. 100 opdrachten per dag gratis.",
+    kosten: "gratis tegoed",
+  },
+  {
+    key: "places",
+    naam: "Google Places",
+    uitleg: "Bedrijven van de kaart, met adres en telefoon. Gratis maandelijks tegoed.",
+    kosten: "gratis tegoed",
+  },
+  {
+    key: "apify",
+    naam: "Apify",
+    uitleg: "Kant-en-klaar, optioneel e-mail/LinkedIn erbij.",
+    kosten: "betaald per bedrijf",
+  },
+  {
+    key: "claude",
+    naam: "Claude",
+    uitleg:
+      "Zoekt zelf op het web en beoordeelt wat hij vindt. Voor opdrachten in gewone taal die zich niet in zoekwoorden laten vangen.",
+    kosten: "kost tokens",
+  },
+] as const;
+
+type BronKey = (typeof BRONNEN)[number]["key"];
+
 /**
- * Zoekt bedrijven via Google Maps en slaat ze als lead op.
+ * Zoekt bedrijven en slaat ze als lead op.
  *
- * Twee bronnen naast elkaar, allebei met hetzelfde formulier: Apify (kant-en-
- * klaar, met optionele betaalde contactverrijking) of rechtstreeks de Google
- * Places API (goedkoper — gratis maandelijks tegoed op hetzelfde Google
- * Cloud-project als PAGESPEED_API_KEY, maar zonder e-mail/LinkedIn erbij).
+ * Vijf bronnen met hetzelfde formulier, want ze leveren allemaal dezelfde rij
+ * op. Ze vinden bewust niet hetzelfde: OpenStreetMap en Google Zoeken vinden
+ * juist de bedrijven zónder Google-vermelding — vaak precies het type dat nog
+ * handmatig werkt — terwijl Places en Apify de kaartgegevens hebben. Claude
+ * kan een opdracht in gewone taal aan, maar kost als enige tokens.
  */
 export function GoogleMapsZoeken() {
   const router = useRouter();
-  const [bron, setBron] = useState<"apify" | "places">("apify");
+  const [bron, setBron] = useState<BronKey>("osm");
   const [bezig, setBezig] = useState(false);
   const [melding, setMelding] = useState<string | null>(null);
 
   async function verzend(formData: FormData) {
+    // Dezelfde afspraak als bij de bellijst: wat geld kost, vraagt eerst.
+    if (bron === "claude" && !window.confirm(
+      "Claude zoekt hiervoor zelf meerdere keren op het web. Dat kost tokens.\n\n" +
+        "Voor een gewone zoekterm zijn OpenStreetMap en Google Zoeken gratis én completer.\n\n" +
+        "Weet u het zeker?",
+    )) return;
+
     setBezig(true);
     setMelding(null);
     const res = await zoekLeadsGoogleMaps(formData);
@@ -36,41 +83,46 @@ export function GoogleMapsZoeken() {
   return (
     <form action={verzend} className="space-y-4">
       <p className="text-xs text-navy/60">
-        Zoekt bedrijven op Google Maps en zet nieuwe resultaten om in leads met bron
-        &ldquo;Prospector&rdquo;. Bedrijven met een al bekende Google-plaats worden overgeslagen.
+        Zoekt bedrijven en zet nieuwe resultaten om in leads met bron &ldquo;Prospector&rdquo;.
+        Bedrijven die al in de lijst staan worden overgeslagen. Elke bron vindt net iets anders —
+        draai er gerust twee achter elkaar.
       </p>
 
       <div>
         <span className="mb-1 block text-sm font-medium text-navy">Bron</span>
-        <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
-          <label className="flex items-start gap-2 text-xs text-navy/70">
-            <input
-              type="radio"
-              name="bron"
-              value="apify"
-              checked={bron === "apify"}
-              onChange={() => setBron("apify")}
-              className="mt-0.5"
-            />
-            <span>
-              <span className="font-medium text-navy">Apify</span> — kant-en-klaar, optioneel
-              e-mail/LinkedIn erbij (betaald per bedrijf).
-            </span>
-          </label>
-          <label className="flex items-start gap-2 text-xs text-navy/70">
-            <input
-              type="radio"
-              name="bron"
-              value="places"
-              checked={bron === "places"}
-              onChange={() => setBron("places")}
-              className="mt-0.5"
-            />
-            <span>
-              <span className="font-medium text-navy">Google Places</span> — goedkoper (gratis
-              maandelijks tegoed), geen contactverrijking.
-            </span>
-          </label>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {BRONNEN.map((b) => (
+            <label
+              key={b.key}
+              className={`flex items-start gap-2 rounded-lg border p-2.5 text-xs ${
+                bron === b.key ? "border-navy/40 bg-navy/[0.03]" : "border-navy/10"
+              }`}
+            >
+              <input
+                type="radio"
+                name="bron"
+                value={b.key}
+                checked={bron === b.key}
+                onChange={() => setBron(b.key)}
+                className="mt-0.5"
+              />
+              <span className="text-navy/70">
+                <span className="font-medium text-navy">{b.naam}</span>{" "}
+                <span
+                  className={
+                    b.kosten === "gratis"
+                      ? "text-emerald-700"
+                      : b.kosten === "kost tokens" || b.kosten === "betaald per bedrijf"
+                        ? "text-amber-700"
+                        : "text-navy/45"
+                  }
+                >
+                  · {b.kosten}
+                </span>
+                <span className="mt-0.5 block">{b.uitleg}</span>
+              </span>
+            </label>
+          ))}
         </div>
       </div>
 

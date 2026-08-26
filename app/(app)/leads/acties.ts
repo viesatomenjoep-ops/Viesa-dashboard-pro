@@ -8,6 +8,9 @@ import type { ActiviteitType } from "@/lib/activiteiten";
 import { bewaarCategorieWaarden } from "@/lib/categorieen";
 import { zoekLeadsViaGoogleMaps } from "@/lib/apify";
 import { zoekLeadsViaGooglePlaces } from "@/lib/google-places";
+import { zoekLeadsViaOpenStreetMap } from "@/lib/openstreetmap";
+import { zoekLeadsViaGoogleZoeken } from "@/lib/google-search";
+import { zoekLeadsViaClaude } from "@/lib/ai/lead-zoeker";
 import { verrijkLead } from "@/lib/ai/verrijking";
 import { bouwStatischPrototype, type DesignStijl, type PrototypeType } from "@/lib/website-sjabloon";
 import { haalEchteContent } from "@/lib/site-scrape";
@@ -442,38 +445,77 @@ export async function importeerLeads(
 }
 
 /** Zoekt bedrijven via Google Maps (Apify of Google Places) en slaat nieuwe als lead op. Bestaande place_id's slaat hij over. */
+/**
+ * De prospector-bronnen. Ze leveren allemaal dezelfde rij op (ProspectRij), dus
+ * de rest van deze functie — ontdubbelen, invoegen, loggen — is voor elke bron
+ * gelijk. Een bron erbij zetten raakt alleen deze tabel en zijn eigen bestand.
+ */
+type ProspectorBron = "apify" | "places" | "osm" | "zoeken" | "claude";
+
+const BRON_LABEL: Record<ProspectorBron, string> = {
+  apify: "Apify",
+  places: "Google Places",
+  osm: "OpenStreetMap",
+  zoeken: "Google Zoeken",
+  claude: "Claude",
+};
+
+/** Zoals de bron in prospector_runs wordt vastgelegd. */
+const BRON_SLEUTEL: Record<ProspectorBron, string> = {
+  apify: "google-maps",
+  places: "google-places",
+  osm: "openstreetmap",
+  zoeken: "google-zoeken",
+  claude: "claude-websearch",
+};
+
+function leesBron(waarde: FormDataEntryValue | null): ProspectorBron {
+  const s = String(waarde ?? "");
+  return s in BRON_LABEL ? (s as ProspectorBron) : "apify";
+}
+
 export async function zoekLeadsGoogleMaps(formData: FormData): Promise<{ aantal: number; overgeslagen: number; fout?: string }> {
   const zoekterm = String(formData.get("zoekterm") ?? "").trim();
   const locatie = String(formData.get("locatie") ?? "").trim();
   const maxResultaten = Number(formData.get("max_resultaten") ?? 20);
   const metContactverrijking = formData.get("met_contactverrijking") === "on";
-  const bron = formData.get("bron") === "places" ? "places" : "apify";
+  const bron = leesBron(formData.get("bron"));
 
   if (!zoekterm || !locatie) {
     return { aantal: 0, overgeslagen: 0, fout: "Zoekterm en locatie zijn verplicht." };
   }
 
   const supabase = createClient();
+  const max = Number.isFinite(maxResultaten) ? maxResultaten : 20;
+
   let gevonden;
   try {
-    gevonden =
-      bron === "places"
-        ? await zoekLeadsViaGooglePlaces({
-            zoekterm,
-            locatie,
-            maxResultaten: Number.isFinite(maxResultaten) ? maxResultaten : 20,
-          })
-        : await zoekLeadsViaGoogleMaps({
-            zoekterm,
-            locatie,
-            maxResultaten: Number.isFinite(maxResultaten) ? maxResultaten : 20,
-            metContactverrijking,
-          });
+    switch (bron) {
+      case "osm":
+        gevonden = await zoekLeadsViaOpenStreetMap({ zoekterm, locatie, maxResultaten: max });
+        break;
+      case "zoeken":
+        gevonden = await zoekLeadsViaGoogleZoeken({ zoekterm, locatie, maxResultaten: max });
+        break;
+      case "claude":
+        gevonden = await zoekLeadsViaClaude({ zoekterm, locatie, maxResultaten: max });
+        break;
+      case "places":
+        gevonden = await zoekLeadsViaGooglePlaces({ zoekterm, locatie, maxResultaten: max });
+        break;
+      default:
+        gevonden = await zoekLeadsViaGoogleMaps({
+          zoekterm,
+          locatie,
+          maxResultaten: max,
+          metContactverrijking,
+        });
+    }
   } catch (e) {
     return {
       aantal: 0,
       overgeslagen: 0,
-      fout: e instanceof Error ? e.message : `${bron === "places" ? "Google Places" : "Apify"}-zoekopdracht mislukt.`,
+      fout: e instanceof Error ? e.message : `Zoekopdracht via ${BRON_LABEL[bron]} mislukt.`,
     };
   }
 
@@ -486,7 +528,7 @@ export async function zoekLeadsGoogleMaps(formData: FormData): Promise<{ aantal:
   const nieuw = gevonden.filter((g) => !g.place_id || !bekend.has(g.place_id));
   const overgeslagen = gevonden.length - nieuw.length;
 
-  const bronNaam = bron === "places" ? "google-places" : "google-maps";
+  const bronNaam = BRON_SLEUTEL[bron];
 
   if (nieuw.length === 0) {
     await supabase.from("prospector_runs").insert({
