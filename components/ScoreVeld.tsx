@@ -21,6 +21,18 @@ export function ScoreVeld({
   const [status, setStatus] = useState<"rust" | "bezig" | "gelukt">("rust");
   const eersteRender = useRef(true);
 
+  // Server actions doorgegeven vanuit een server component krijgen bij elke
+  // re-render (bv. een router.refresh() ergens anders op de pagina) een
+  // nieuwe functiereferentie, ook al verandert er functioneel niets. Die
+  // referentie in de dependency-array zetten liet deze effect daardoor
+  // steeds opnieuw starten — de debounce-timer werd telkens gereset en
+  // "Opslaan…" kwam nooit meer tot rust. Een ref omzeilt dat: alleen een
+  // écht gewijzigde score (waarde) mag een nieuwe opslag triggeren.
+  const opslaanActieRef = useRef(opslaanActie);
+  useEffect(() => {
+    opslaanActieRef.current = opslaanActie;
+  }, [opslaanActie]);
+
   useEffect(() => {
     // Niet opslaan bij de allereerste render (alleen bij echte wijzigingen).
     if (eersteRender.current) {
@@ -29,12 +41,12 @@ export function ScoreVeld({
     }
     setStatus("bezig");
     const t = setTimeout(async () => {
-      const res = await opslaanActie(id, waarde);
+      const res = await opslaanActieRef.current(id, waarde);
       setStatus(res.ok ? "gelukt" : "rust");
       if (res.ok) setTimeout(() => setStatus("rust"), 1800);
     }, 600);
     return () => clearTimeout(t);
-  }, [waarde, id, opslaanActie]);
+  }, [waarde, id]);
 
   const kleur =
     waarde >= 70 ? "text-emerald-600" : waarde >= 40 ? "text-amber-600" : "text-navy/60";

@@ -33,9 +33,28 @@ import {
 } from "../acties";
 import { Phone } from "lucide-react";
 import { LeadVerrijking } from "./LeadVerrijking";
-import { WebsitePrototype } from "./WebsitePrototype";
+import { WebsitePrototype, type OpgeslagenPrototype } from "./WebsitePrototype";
 import { ScanPdfKnop } from "@/components/ScanPdfKnop";
 import type { ScanRapport } from "@/lib/scan";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+/** Eerder gegenereerde prototypes voor deze lead — best effort (migratie 0045). */
+async function haalPrototypes(
+  supabase: SupabaseClient,
+  leadId: string,
+): Promise<OpgeslagenPrototype[]> {
+  try {
+    const { data, error } = await supabase
+      .from("website_prototypes")
+      .select("id, type, bron, html, created_at")
+      .eq("lead_id", leadId)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return data ?? [];
+  } catch {
+    return [];
+  }
+}
 
 export default async function LeadDetail({
   params,
@@ -53,7 +72,7 @@ export default async function LeadDetail({
   if (error || !data) notFound();
   const lead = data as Lead;
 
-  const [{ data: aData }, { data: nData }, categorieen] = await Promise.all([
+  const [{ data: aData }, { data: nData }, categorieen, prototypes] = await Promise.all([
     supabase
       .from("activiteiten")
       .select("*")
@@ -65,6 +84,7 @@ export default async function LeadDetail({
       .eq("lead_id", lead.id)
       .order("created_at", { ascending: false }),
     haalCategorieen(supabase),
+    haalPrototypes(supabase, lead.id),
   ]);
   const activiteiten = (aData ?? []) as Activiteit[];
   const notities = (nData ?? []) as Notitie[];
@@ -140,7 +160,7 @@ export default async function LeadDetail({
       <LeadVerrijking leadId={lead.id} />
 
       <div className="mb-6">
-        <WebsitePrototype leadId={lead.id} standaardUrl={lead.website ?? ""} />
+        <WebsitePrototype leadId={lead.id} standaardUrl={lead.website ?? ""} opgeslagen={prototypes} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
