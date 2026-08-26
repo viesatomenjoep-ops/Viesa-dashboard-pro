@@ -71,7 +71,7 @@ export function Zijbalk({
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-navy px-4 pb-4 pt-6">
+    <div className="flex h-full flex-col overflow-y-auto bg-navy px-4 pb-4 pt-6">
       <WidgetLauncher
         variant="donker"
         kolommen={4}
