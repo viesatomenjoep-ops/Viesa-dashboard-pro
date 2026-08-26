@@ -98,6 +98,7 @@ export function heelScan(ruw: unknown): ScanRapport {
     scripts: s.scripts ?? undefined,
     vindbaarheid: s.vindbaarheid ?? undefined,
     voorbeeld: tekstOfNull(s.voorbeeld),
+    schermafdruk: tekstOfNull(s.schermafdruk),
     audits: (s.audits ?? undefined) as ScanRapport["audits"],
     lighthouseVersie: tekstOfNull(s.lighthouseVersie),
     paginas: (lijst(s.paginas) as ScanRapport["paginas"]) ?? [],

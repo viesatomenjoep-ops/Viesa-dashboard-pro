@@ -1,9 +1,12 @@
 /* ============================================================================
    Samenvatting — de korte versie van het rapport
    ----------------------------------------------------------------------------
-   Bouwt voort op rapport.css; hier staat alleen wat afwijkt. De kaarten zijn
-   donker in plaats van wit: dit is één blok dat je in één keer doorleest, geen
-   reeks losse metingen om na te lopen.
+   Bouwt voort op rapport.css; hier staat alleen wat afwijkt.
+
+   Het uitgangspunt is kijken in plaats van lezen. Elke kaart heeft een rang,
+   een cijfer, een gekleurde rand en een strook die de verhouding goed/te-doen
+   toont — samen zeggen die vier meer dan de alinea's die er eerst stonden. Wat
+   overbleef aan tekst is één regel per kaart.
 
    Alles is ontworpen om af te drukken. Op papier valt het raster in twee
    kolommen en krijgt elke kaart `break-inside: avoid`, zodat er nooit een kaart
@@ -11,104 +14,196 @@
    onleesbaar maakt.
    ========================================================================== */
 
-.sam-omslag { padding: 56px 0 46px; }
-.sam-kop { display: flex; gap: 32px; align-items: center; flex-wrap: wrap; margin-top: 26px; }
+.sam-omslag { padding: 50px 0 42px; }
 
-.sam-blok { padding: 54px 0; }
+/* ---------- saldo: wat staat goed, wat is er te winnen ---------- */
+.sam-saldo {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 26px;
+  align-items: center;
+  margin-top: 38px;
+  padding-top: 26px;
+  border-top: 1px solid rgba(243, 240, 233, 0.16);
+}
+.sam-saldo-vak b {
+  display: block;
+  font-family: var(--letter-data);
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.sam-saldo-vak span {
+  display: block;
+  margin-top: 5px;
+  font-family: var(--letter-data);
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #8FA1BD;
+}
+.sam-saldo-balk {
+  display: flex;
+  height: 11px;
+  border-radius: var(--radius-pil);
+  overflow: hidden;
+  min-width: 120px;
+}
+.sam-saldo-goed { background: var(--goed); }
+.sam-saldo-open { background: var(--beter); }
+
+/* ---------- de matrix, hier op zand ---------- */
+.sam-matrix { background: var(--zanddiep); padding: 44px 0; border-bottom: 1px solid var(--lijn); }
+
+/* ---------- de kaarten ---------- */
+.sam-blok { padding: 46px 0; }
 
 .sam-raster {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px;
 }
 
 .sam-kaart {
-  background: var(--diepnavy);
-  color: var(--zand);
-  border-radius: var(--radius-blok);
-  padding: 28px 30px 24px;
+  background: var(--wit);
+  border: 1px solid var(--lijn);
+  border-top: 4px solid var(--lijn);
+  border-radius: var(--radius-kaart);
+  padding: 18px 20px 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 11px;
 }
+/* De kleur komt uit de meting, niet uit de prioriteit — zie de toelichting in
+   Samenvatting.tsx. */
+.sam-goed  { border-top-color: var(--goed); }
+.sam-beter { border-top-color: var(--beter); }
+.sam-nodig { border-top-color: var(--nodig); }
+.sam-geen  { border-top-color: var(--geen); }
 
-.sam-vraag { color: #8FA1BD; font-size: .95rem; }
-.sam-titel { font-size: 1.34rem; font-weight: 800; line-height: 1.2; color: var(--zand); }
-.sam-verhaal { font-size: .95rem; line-height: 1.6; color: #C3D0DE; }
-
-.sam-waarom-label {
+.sam-kaart-kop { display: flex; align-items: flex-start; gap: 12px; }
+.sam-rang {
+  flex: none;
+  width: 26px; height: 26px;
+  border-radius: var(--radius-pil);
+  background: var(--navy); color: var(--zand);
+  display: grid; place-items: center;
+  font-family: var(--letter-data); font-size: 0.76rem; font-weight: 600;
+}
+.sam-kaart-titel { min-width: 0; flex: 1; }
+.sam-vraag {
+  display: block;
   font-family: var(--letter-data);
-  font-size: .66rem; text-transform: uppercase; letter-spacing: .16em;
-  color: #7C8AA3; margin-top: 6px;
+  font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.13em;
+  color: var(--zacht); margin-bottom: 4px;
 }
-.sam-waarom { font-size: .9rem; line-height: 1.55; color: #A9B6C9; }
+.sam-titel { font-size: 1.06rem; font-weight: 700; line-height: 1.28; }
+.sam-score {
+  flex: none;
+  font-family: var(--letter-data);
+  font-size: 1.5rem; font-weight: 600; letter-spacing: -0.04em; line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.sam-verdeling {
+  display: flex; height: 7px; border-radius: var(--radius-pil); overflow: hidden;
+  background: var(--zanddiep);
+}
+.sam-verdeling-goed { background: var(--goed); }
+.sam-verdeling-open { background: var(--nodig); }
+
+.sam-telling {
+  display: flex; align-items: center; gap: 9px;
+  font-size: 0.78rem; color: var(--zacht);
+}
+.sam-telling b { font-weight: 700; }
+.sam-telling-scheiding {
+  width: 3px; height: 3px; border-radius: var(--radius-pil); background: var(--lijn);
+}
 
 .sam-voet {
-  margin-top: auto; padding-top: 16px;
-  border-top: 1px solid rgba(243,240,233,.14);
+  margin-top: auto; padding-top: 12px;
+  border-top: 1px solid var(--lijn);
   display: flex; align-items: center; justify-content: space-between;
-  gap: 14px; flex-wrap: wrap;
+  gap: 12px; flex-wrap: wrap;
 }
-.sam-slot { font-weight: 700; color: var(--zand); font-size: .97rem; }
+.sam-slot { font-weight: 600; font-size: 0.88rem; }
 
-.sam-weging { display: flex; align-items: center; gap: 9px; }
-.sam-bollen { display: flex; gap: 4px; }
+.sam-weging { display: flex; align-items: center; gap: 8px; }
+.sam-bollen { display: flex; gap: 3px; }
 .sam-bol {
-  width: 7px; height: 7px; border-radius: var(--radius-pil);
-  background: rgba(243,240,233,.22);
+  width: 6px; height: 6px; border-radius: var(--radius-pil);
+  background: var(--lijn);
 }
 /* Het accent, niet rood: hoe zwaar iets weegt is geen storing. */
 .sam-bol-aan { background: var(--accent); }
 .sam-weging-label {
   font-family: var(--letter-data);
-  font-size: .68rem; text-transform: uppercase; letter-spacing: .12em; color: #8FA1BD;
+  font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--zacht);
 }
 
 .sam-slotblok { background: var(--navy); color: var(--zand); }
-.sam-slotblok .rap-breed { padding-top: 52px; padding-bottom: 52px; }
+.sam-slotblok .rap-breed { padding-top: 48px; padding-bottom: 48px; }
 
-.sam-voetregel { background: var(--diepnavy); color: #8FA1BD; padding: 30px 0; }
+.sam-voetregel { background: var(--diepnavy); color: #8FA1BD; padding: 28px 0; }
 
-@media (max-width: 640px) {
+@media (max-width: 760px) {
   .sam-raster { grid-template-columns: 1fr; }
-  .sam-kaart { padding: 22px 22px 20px; }
-  .sam-blok { padding: 40px 0; }
+  .sam-saldo { grid-template-columns: 1fr 1fr; }
+  .sam-saldo-balk { grid-column: 1 / -1; }
+  .sam-blok, .sam-matrix { padding: 34px 0; }
 }
 
 /* ---------------------------------------------------------------------------
    Papier
    ------------------------------------------------------------------------- */
 @media print {
-  .sam-blok { padding: 16pt 0 0; }
+  .sam-omslag { padding: 0 0 12pt; break-after: auto; }
+  .sam-saldo { margin-top: 14pt; padding-top: 12pt; gap: 16pt; }
+  .sam-saldo-vak b { font-size: 17pt; }
+  .sam-saldo-vak span { font-size: 6.2pt; }
+
+  .sam-matrix { padding: 12pt 0; break-inside: avoid; }
+
+  /* Zelfde reden als bij het volledige rapport: op papier zijn de kolommen
+     terug, want een A4 valt onder de regel voor smalle schermen. */
+  .sam-saldo { grid-template-columns: auto auto minmax(0, 1fr); }
+  .sam-saldo-balk { grid-column: auto; height: 8pt; }
+  .sam-blok { padding: 12pt 0 0; }
+  /* De kop hoort bij de kaarten eronder: los onderaan een vel is hij ruis. */
+  .sam-blok > .rap-breed > .rap-stapel { break-after: avoid; break-inside: avoid; }
 
   /* Twee kolommen op A4; drie wordt onleesbaar smal. */
-  .sam-raster { grid-template-columns: 1fr 1fr; gap: 10pt; }
+  .sam-raster { grid-template-columns: 1fr 1fr; gap: 8pt; }
 
   /* Een kaart die over een paginarand valt is precies wat een samenvatting
      onbruikbaar maakt — dus liever een gat onderaan de pagina. */
   .sam-kaart {
     break-inside: avoid;
-    padding: 12pt 13pt 10pt;
+    padding: 10pt 11pt 9pt;
     gap: 6pt;
-    border-radius: 8pt;
+    border-radius: 7pt;
   }
-  .sam-titel { font-size: 12pt; }
-  .sam-verhaal, .sam-waarom { font-size: 8.6pt; line-height: 1.42; }
-  .sam-vraag { font-size: 8.6pt; }
-  .sam-slot { font-size: 9pt; }
-  .sam-voet { padding-top: 8pt; }
-
-  .sam-omslag { padding: 0 0 16pt; break-after: auto; }
-  .sam-kop { gap: 20pt; margin-top: 12pt; }
+  .sam-titel { font-size: 10pt; }
+  .sam-vraag { font-size: 6.2pt; }
+  .sam-score { font-size: 13pt; }
+  .sam-slot { font-size: 8.4pt; }
+  .sam-telling { font-size: 7.2pt; }
+  .sam-rang { width: 16pt; height: 16pt; font-size: 7pt; }
+  .sam-voet { padding-top: 6pt; }
 
   /* De afsluiter hoort onder de kaarten, niet op een eigen vel. */
   .sam-slotblok { break-before: avoid; }
-  .sam-slotblok .rap-breed { padding-top: 16pt; padding-bottom: 16pt; }
-  .sam-voetregel { padding: 10pt 0; }
+  .sam-slotblok .rap-breed { padding-top: 14pt; padding-bottom: 14pt; }
+  .sam-voetregel { padding: 9pt 0; }
 
   /* Zonder dit laat de browser elk gekleurd vlak weg en blijft er van de
-     donkere kaarten niets over dan zwarte tekst op wit. */
-  .sam-kaart, .sam-slotblok, .sam-voetregel, .sam-bol, .sam-bol-aan {
+     kaarten niets over dan zwarte tekst op wit. */
+  .sam-kaart, .sam-slotblok, .sam-voetregel, .sam-bol, .sam-bol-aan,
+  .sam-rang, .sam-verdeling, .sam-verdeling-goed, .sam-verdeling-open,
+  .sam-saldo-balk, .sam-saldo-goed, .sam-saldo-open, .sam-matrix {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }

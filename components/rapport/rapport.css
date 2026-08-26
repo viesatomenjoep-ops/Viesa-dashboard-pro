@@ -257,6 +257,196 @@
   letter-spacing: -0.02em;
 }
 
+/* ---------- omslag: laptop naast het cijfer ---------- */
+.rap-omslag-raster {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.06fr);
+  gap: 40px;
+  align-items: center;
+  margin-top: 30px;
+}
+.rap-omslag-cijfer { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+.rap-omslag-stand { font-size: 1.32rem; font-weight: 800; letter-spacing: -0.02em; }
+.rap-omslag-link { color: #B9C2D4; font-size: .92rem; text-decoration: underline; }
+.rap-omslag-beeld { display: flex; flex-direction: column; gap: 12px; align-items: flex-end; }
+.rap-omslag-bijschrift {
+  font-family: var(--letter-data);
+  font-size: .64rem; text-transform: uppercase; letter-spacing: .14em; color: #7D8CA6;
+  text-align: right;
+}
+
+/* ---------- scorematrix ----------
+   Zeven balken naast elkaar, elk met zijn norm als streep erop. Dit is het blad
+   waar de klant tijdens het gesprek naar wijst: waar de balk de streep niet
+   haalt, is werk. Een tabel met cijfers zou hetzelfde zeggen en niets tonen. */
+.rap-matrixblok { background: var(--zanddiep); padding: 52px 0; border-bottom: 1px solid var(--lijn); }
+
+.mtx { display: flex; flex-direction: column; gap: 2px; }
+.mtx-rij {
+  display: grid;
+  grid-template-columns: minmax(150px, 1.15fr) minmax(120px, 2.4fr) 88px minmax(140px, 1fr);
+  gap: 18px;
+  align-items: center;
+  background: var(--wit);
+  border: 1px solid var(--lijn);
+  border-left: 4px solid var(--lijn);
+  border-radius: var(--radius-klein);
+  padding: 13px 18px;
+}
+.mtx-goed  { border-left-color: var(--goed); }
+.mtx-beter { border-left-color: var(--beter); }
+.mtx-nodig { border-left-color: var(--nodig); }
+.mtx-geen  { border-left-color: var(--geen); }
+
+.mtx-naam { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.mtx-nr {
+  font-family: var(--letter-data); font-size: .74rem; font-weight: 600;
+  color: var(--zacht); font-variant-numeric: tabular-nums; flex: none;
+}
+.mtx-titel { font-weight: 700; font-size: 1.02rem; }
+
+.mtx-spoor {
+  position: relative; height: 11px; border-radius: var(--radius-pil);
+  background: var(--zanddiep); overflow: hidden;
+}
+.mtx-vul { position: absolute; inset: 0 auto 0 0; border-radius: var(--radius-pil); }
+/* Niet gemeten krijgt een arcering en geen kleur: een ontbrekende meting mag
+   nooit lezen als een slechte uitslag. */
+.mtx-ongemeten {
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(138, 143, 160, .34) 0 5px,
+    transparent 5px 10px
+  );
+}
+.mtx-norm {
+  position: absolute; top: -2px; bottom: -2px; width: 2px;
+  background: var(--tekst); opacity: .55; border-radius: 2px;
+}
+
+.mtx-cijfer { text-align: right; }
+.mtx-cijfer b {
+  display: block; font-family: var(--letter-data); font-size: 1.42rem; font-weight: 600;
+  letter-spacing: -0.035em; font-variant-numeric: tabular-nums; line-height: 1.05;
+}
+.mtx-norm-tekst {
+  display: block; font-family: var(--letter-data); font-size: .62rem;
+  text-transform: uppercase; letter-spacing: .1em; color: var(--zacht); margin-top: 2px;
+}
+
+.mtx-stand { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
+.mtx-chip {
+  font-family: var(--letter-data); font-size: .63rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .11em;
+  padding: 4px 10px; border-radius: var(--radius-pil); white-space: nowrap;
+}
+.mtx-telling { font-size: .76rem; color: var(--zacht); white-space: nowrap; }
+.mtx-telling b { font-weight: 700; }
+
+.rap-legenda {
+  display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 22px;
+  font-size: .78rem; color: var(--zacht);
+}
+.rap-legenda-item { display: inline-flex; align-items: center; gap: 7px; }
+.rap-legenda-arcering {
+  width: 20px; height: 9px; border-radius: var(--radius-pil);
+  background: repeating-linear-gradient(-45deg, rgba(138,143,160,.4) 0 4px, transparent 4px 8px);
+}
+.rap-legenda-norm { width: 2px; height: 13px; background: var(--tekst); opacity: .55; border-radius: 2px; }
+
+/* ---------- onderdeel: band, nummer, stand ---------- */
+.rap-ond-band { display: block; height: 5px; width: 100%; }
+.rap-ond-nr { display: flex; align-items: center; gap: 11px; flex-wrap: wrap; }
+.rap-ond-nr b {
+  font-family: var(--letter-data); font-size: 1.02rem; font-weight: 600;
+  color: var(--zacht); font-variant-numeric: tabular-nums;
+}
+.rap-ond-stand {
+  font-family: var(--letter-data); font-size: .63rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .11em;
+  padding: 4px 10px; border-radius: var(--radius-pil);
+}
+
+/* De methode is verantwoording, geen leestekst — dus kleiner, en in een eigen
+   kader zodat hij niet net zo zwaar weegt als het oordeel eronder. */
+.rap-methode {
+  border-left: 2px solid var(--lijn);
+  padding: 2px 0 2px 16px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.rap-methode p { font-size: .86rem; line-height: 1.55; color: var(--gedempt); max-width: var(--leesbreedte); }
+
+/* ---------- groepskoppen ---------- */
+.rap-groepkop { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rap-groepstip { width: 9px; height: 9px; border-radius: var(--radius-pil); flex: none; }
+.rap-groeptal {
+  font-family: var(--letter-data); font-size: .68rem; font-weight: 600;
+  padding: 2px 9px; border-radius: var(--radius-pil); font-variant-numeric: tabular-nums;
+}
+
+/* ---------- bevindingen als kaarten ----------
+   Een lijst van vijftien regels leest een klant niet; vijftien kaartjes scant
+   hij wél. De kleur zit in de rand en het teken, nooit in het vlak — anders
+   wordt een pagina met veel bevindingen één bonte lap. */
+.bev-raster {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  gap: 12px; margin: 0; padding: 0; list-style: none;
+}
+.bev {
+  background: var(--wit);
+  border: 1px solid var(--lijn);
+  border-top: 3px solid var(--lijn);
+  border-radius: var(--radius-klein);
+  padding: 15px 17px 16px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.bev-goed  { border-top-color: var(--goed); }
+.bev-beter { border-top-color: var(--beter); }
+.bev-nodig { border-top-color: var(--nodig); }
+.bev-geen  { border-top-color: var(--geen); }
+
+.bev-kop { display: flex; align-items: flex-start; gap: 10px; }
+.bev-teken {
+  width: 19px; height: 19px; border-radius: var(--radius-pil); flex: none;
+  display: grid; place-items: center; margin-top: 1px;
+}
+.bev-titel { font-size: .98rem; font-weight: 700; line-height: 1.3; }
+.bev-aantal {
+  align-self: flex-start;
+  font-family: var(--letter-data); font-size: .64rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .1em;
+  padding: 3px 9px; border-radius: var(--radius-pil);
+}
+.bev-uitleg { font-size: .86rem; line-height: 1.5; color: var(--gedempt); }
+.bev-advies {
+  font-size: .86rem; line-height: 1.5; color: var(--tekst);
+  border-top: 1px solid var(--lijn); padding-top: 9px; margin-top: auto;
+}
+.bev-advies-label {
+  display: block; font-family: var(--letter-data);
+  font-size: .6rem; text-transform: uppercase; letter-spacing: .13em;
+  color: var(--accent-tekst); margin-bottom: 3px;
+}
+
+/* ---------- knoppenrij ---------- */
+.rap-knoppen { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
+.rap-knop-whatsapp { background: #25D366; color: #06301A; }
+.rap-knop-whatsapp:hover { background: #1FBE5B; }
+
+/* Staat alleen op papier — op het scherm zijn de knoppen zelf de uitweg. */
+.rap-alleen-papier { display: none; }
+
+@media (max-width: 900px) {
+  .rap-omslag-raster { grid-template-columns: 1fr; gap: 30px; }
+  .rap-omslag-beeld { align-items: stretch; }
+  .rap-omslag-bijschrift { text-align: left; }
+  .mtx-rij { grid-template-columns: 1fr auto; gap: 8px 14px; }
+  .mtx-spoor { grid-column: 1 / -1; order: 3; }
+  .mtx-cijfer { text-align: right; }
+  .mtx-stand { grid-column: 1 / -1; order: 4; flex-direction: row; align-items: center; gap: 12px; }
+}
+
 @media (max-width: 640px) {
   .rap { font-size: 15px; }
   .rap-breed { padding: 0 18px; }
@@ -310,6 +500,9 @@
     break-inside: avoid;
   }
   h1, h2, h3 { break-after: avoid; }
+  /* Een bovenkopje met zijn h2 hoort bij elkaar; los onderaan een vel leest een
+     label als een afgekapte zin. */
+  .rap-label { break-after: avoid; }
 
   /* De browser laat achtergronden standaard weg; dat maakt van de meetbalken
      en de omslag lege vlakken. Dit is de enige reden dat print-color-adjust
@@ -317,15 +510,71 @@
   .rap-omslag, .rap-balk-zones, .rap-balk-zone, .rap-balk-punt, .rap-chip,
   .rap-vaststelling, .rap-vinkje, .rap-oordeel, .rap-actie-nr, .rap-pil,
   .rap-tegel, .rap-tegels, .rap-stip, .rap-knop, .rap-knop-accent,
+  .rap-knop-whatsapp, .rap-matrixblok, .mtx-rij, .mtx-spoor, .mtx-vul,
+  .mtx-ongemeten, .mtx-norm, .mtx-chip, .rap-ond-band, .rap-ond-stand,
+  .rap-groepstip, .rap-groeptal, .bev, .bev-teken, .bev-aantal,
+  .rap-legenda-arcering, .rap-legenda-norm,
   .sam-kaart, .sam-slotblok, .sam-voetregel, .sam-bol, .sam-bol-aan,
   .sam-balk, .sam-balk-vul {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
+  /* De scorematrix is het blad waar in het gesprek naar gewezen wordt: die
+     hoort in zijn geheel op één vel te staan, niet half. */
+  .rap-matrixblok { padding: 12pt 0; break-inside: avoid; break-after: page; }
+  .mtx-rij { padding: 7pt 10pt; gap: 10pt; break-inside: avoid; }
+  .mtx-titel { font-size: 9.4pt; }
+  .mtx-cijfer b { font-size: 13pt; }
+  .rap-legenda { margin-top: 10pt; font-size: 7.4pt; gap: 5pt 14pt; }
+
+  /* Een kaart die over een paginarand valt is precies wat een rapport
+     slordig maakt — liever een gat onderaan het vel. */
+  .bev { break-inside: avoid; padding: 9pt 11pt 10pt; gap: 5pt; }
+  .bev-raster { grid-template-columns: 1fr 1fr; gap: 7pt; }
+  .bev-titel { font-size: 9.2pt; }
+  .bev-uitleg, .bev-advies { font-size: 8.2pt; line-height: 1.4; }
+
+  .rap-methode { break-inside: avoid; padding-left: 10pt; }
+  .rap-methode p { font-size: 8.2pt; }
+
+  /* De omslag: laptop naast het cijfer, maar smaller — op A4 is de kolom
+     krapper dan op een scherm.
+
+     De twee kolommen worden hier expliciet teruggezet. Een A4 is ~794 CSS-px
+     breed, dus de regel voor smalle schermen (max-width: 900px) slaat op papier
+     ook aan — en dan stapelt de omslag, staat de laptop paginabreed, en past er
+     verder niets meer op het eerste vel. Papier is geen telefoon. */
+  .rap-omslag-raster {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 9mm;
+    margin-top: 6mm;
+    align-items: center;
+    break-inside: avoid;
+  }
+  .rap-omslag-beeld { align-items: flex-end; }
+  .rap-omslag-beeld .lap { max-width: 76mm; }
+  .rap-omslag-cijfer { gap: 10pt; }
+  .rap-omslag-stand { font-size: 12pt; }
+  .rap-omslag-bijschrift { font-size: 6pt; text-align: right; }
+
+  /* Ook de matrix moet op papier zijn volle indeling houden. */
+  .mtx-rij {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 2fr) 64pt minmax(0, 1fr);
+  }
+  .mtx-spoor { grid-column: auto; order: 0; }
+  .mtx-stand { grid-column: auto; order: 0; flex-direction: column; align-items: flex-start; gap: 2pt; }
+  .mtx-telling { font-size: 6.6pt; }
+  .mtx-chip { font-size: 5.8pt; padding: 2pt 6pt; }
+
+  .rap-tegels { margin-top: 7mm; }
+  .rap-tegel { padding: 8pt 12pt 3pt 0; }
+  .rap-tegel b { font-size: 13pt; }
+  .rap-tegel span { font-size: 5.8pt; }
+
   /* De omslag van rand tot rand, met eigen witruimte erbinnen. */
-  .rap-omslag { padding: 16mm 0 12mm; break-after: avoid; }
-  .rap-omslag h1 { font-size: 26pt; }
+  .rap-omslag { padding: 12mm 0 9mm; break-after: avoid; }
+  .rap-omslag h1 { font-size: 22pt; }
 
   .rap-kaart { border-color: var(--lijn); box-shadow: none; }
   a { text-decoration: none; color: inherit; }
@@ -334,5 +583,3 @@
   #afspraak, .sam-slotblok { break-before: avoid; }
   #afspraak .rap-breed { padding-top: 14pt; padding-bottom: 14pt; }
 }
-
-.rap-alleen-papier { display: none; }

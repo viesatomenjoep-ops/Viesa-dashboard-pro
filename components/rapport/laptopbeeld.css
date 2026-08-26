@@ -1,0 +1,155 @@
+/* ============================================================================
+   Laptopbeeld — de site van de klant, bovenaan het rapport
+   ----------------------------------------------------------------------------
+   Volledig in CSS getekend. Een PNG van een laptop zou op papier zacht worden,
+   niet meeschalen met de kolom, en de PDF onnodig zwaarder maken. Dit blijft
+   scherp op elk formaat en kost niets.
+   ========================================================================== */
+
+.lap {
+  width: 100%;
+  max-width: 620px;
+  margin: 0;
+}
+
+/* Het scherm: de rand van het deksel. */
+.lap-scherm {
+  border-radius: 12px 12px 4px 4px;
+  padding: 9px 9px 0;
+  overflow: hidden;
+}
+.lap-donker .lap-scherm {
+  background: #0B1526;
+  border: 1px solid rgba(243, 240, 233, 0.16);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+.lap-licht .lap-scherm {
+  background: #C9CDD6;
+  border: 1px solid rgba(25, 68, 91, 0.18);
+  box-shadow: 0 18px 44px rgba(17, 29, 54, 0.16);
+}
+
+/* De browserrand. Zonder deze rand leest de afdruk als een losse foto in
+   plaats van als "zo opent een bezoeker uw site". */
+.lap-balk {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 7px 7px 0 0;
+  background: var(--zanddiep, #EEEBE2);
+  border-bottom: 1px solid var(--lijn, #E4E1D8);
+}
+.lap-stip {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex: none;
+}
+.lap-adres {
+  flex: 1;
+  min-width: 0;
+  margin-left: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(25, 68, 91, 0.07);
+  font-family: var(--letter-data, ui-monospace, monospace);
+  font-size: 0.66rem;
+  letter-spacing: 0.02em;
+  color: #55697C;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Het venster zelf. Een vaste verhouding, zodat de omslag niet verspringt
+   naargelang de hoogte van de schermafdruk. */
+.lap-venster {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: var(--wit, #fff);
+  overflow: hidden;
+}
+.lap-foto {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Bovenaan uitlijnen: de kop van een homepage is wat telt, niet het midden
+     van de pagina. */
+  object-fit: cover;
+  object-position: top center;
+}
+.lap-leeg {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(25, 68, 91, 0.04) 0 10px,
+    transparent 10px 20px
+  );
+  color: #8A96A6;
+  font-size: 0.8rem;
+}
+
+/* De voet: scharnier plus het uitsparinkje waar je 'm openklapt. */
+.lap-voet {
+  position: relative;
+  height: 13px;
+  margin: 0 auto;
+  width: 112%;
+  max-width: none;
+  transform: translateX(-5.35%);
+  border-radius: 0 0 12px 12px;
+}
+.lap-donker .lap-voet {
+  background: linear-gradient(#1B2A40, #0B1526);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+}
+.lap-licht .lap-voet {
+  background: linear-gradient(#D7DAE1, #B7BCC7);
+  box-shadow: 0 10px 20px rgba(17, 29, 54, 0.14);
+}
+.lap-gleuf {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 78px;
+  height: 5px;
+  transform: translateX(-50%);
+  border-radius: 0 0 6px 6px;
+}
+.lap-donker .lap-gleuf { background: rgba(0, 0, 0, 0.45); }
+.lap-licht .lap-gleuf { background: rgba(17, 29, 54, 0.16); }
+
+@media (max-width: 640px) {
+  .lap-scherm { padding: 6px 6px 0; border-radius: 9px 9px 3px 3px; }
+  .lap-adres { font-size: 0.6rem; }
+  .lap-voet { height: 10px; }
+}
+
+/* ---------------------------------------------------------------------------
+   Papier
+   ------------------------------------------------------------------------- */
+@media print {
+  /* Het beeld mag nooit over een paginarand vallen: een halve laptop bovenaan
+     vel twee is precies het soort slordigheid dat een rapport goedkoop maakt. */
+  .lap { break-inside: avoid; max-width: 150mm; }
+  .lap-scherm { box-shadow: none; padding: 5pt 5pt 0; }
+  .lap-voet { box-shadow: none; height: 7pt; }
+  .lap-balk { padding: 4pt 6pt; }
+  .lap-adres { font-size: 6.5pt; }
+
+  /* Zonder dit laat de browser elk gekleurd vlak weg en blijft er van de
+     laptop niets over dan een kader. */
+  .lap-scherm,
+  .lap-voet,
+  .lap-balk,
+  .lap-stip,
+  .lap-gleuf,
+  .lap-adres {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

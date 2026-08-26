@@ -450,6 +450,12 @@ function samenvattingVan(onderdelen: Onderdeel[]): SamenvattingKaart[] {
   return [...onderdelen]
     .sort((a, b) => b.prioriteit - a.prioriteit)
     .map((o) => ({
+      sleutel: o.sleutel,
+      naam: o.naam,
+      score: o.score,
+      norm: o.norm,
+      goed: o.bevindingen.filter((b) => b.goed).length,
+      teDoen: o.bevindingen.filter((b) => !b.goed).length,
       vraag: vragen[o.sleutel] ?? o.naam,
       kop: o.oordeelKop,
       verhaal: o.oordeel,
@@ -511,7 +517,9 @@ export function rapportVanScan(
     host: scan.host,
     url: scan.url,
     totaalScore: scan.totaalScore,
-    schermafdruk: scan.voorbeeld ?? null,
+    // De echte laptopafdruk als die er is; anders de og:image van de site.
+    schermafdruk: scan.schermafdruk ?? scan.voorbeeld ?? null,
+    ogAfbeelding: scan.voorbeeld ?? null,
     onderdelen,
     samenvatting: samenvattingVan(onderdelen),
     herkomst: {

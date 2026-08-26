@@ -5,6 +5,7 @@ import {
   analyseerGeo,
   haalSite,
   meetPagespeed,
+  haalSchermafdruk,
   normaliseerUrl,
   techniekScore,
   totaalScore,
@@ -129,6 +130,12 @@ export async function GET(request: Request) {
           controller.close();
           return;
         }
+
+        // De schermafdruk van de homepage loopt vanaf hier naast de rest mee.
+        // Lighthouse doet er een halve minuut over; serieel zou dat de scan
+        // merkbaar vertragen, en hij is bijzaak: mislukt hij, dan valt het
+        // rapport terug op de og:image van de site.
+        const afdrukBelofte = haalSchermafdruk(url).catch(() => null);
 
         // 2. Alles wat al in huis is, kost niets meer — dus meteen na elkaar.
         const geo = await stap(
@@ -256,6 +263,7 @@ export async function GET(request: Request) {
         });
         const oordeel = score >= 75 ? "Goed zichtbaar" : score >= 50 ? "Matig zichtbaar" : "Vrijwel onzichtbaar";
         const voorbeeld = voorbeeldAfbeelding(site.html, url);
+        const schermafdruk = await afdrukBelofte;
 
         const waarschuwingen = [...site.waarschuwingen];
         if (zichtbaarheidHergebruikt) {
@@ -303,6 +311,7 @@ export async function GET(request: Request) {
           scripts,
           vindbaarheid: geo,
           voorbeeld,
+          schermafdruk,
           // Alles wat fase 3 nodig heeft om toegankelijkheid, werking en
           // techniek als eigen onderdeel te tonen.
           audits: pagespeed?.audits ?? {},
