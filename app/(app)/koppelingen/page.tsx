@@ -10,7 +10,13 @@ import {
   type Integratie,
 } from "@/lib/integraties";
 import { outlookStatus } from "@/lib/microsoft";
-import { wijzigIntegratieStatus, ontkoppelOutlook, bewaarFonio } from "./acties";
+import {
+  wijzigIntegratieStatus,
+  ontkoppelOutlook,
+  bewaarFonio,
+  controleerAiSleutels,
+} from "./acties";
+import { SleutelStatusPaneel } from "./SleutelStatusPaneel";
 import { voegAgendaBronToe, verwijderAgendaBron } from "../agenda/acties";
 
 const inputCls =
@@ -236,6 +242,11 @@ export default async function KoppelingenPagina({
             ))}
           </ul>
         )}
+      </Kaart>
+
+      {/* AI-sleutels: staan ze goed in Vercel? */}
+      <Kaart className="mt-8">
+        <SleutelStatusPaneel controleerActie={controleerAiSleutels} />
       </Kaart>
 
       {/* Fonio — AI-telefonie, democonsole op de bellijst */}
