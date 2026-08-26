@@ -47,7 +47,13 @@ function sse(event: Event): string {
   return `data: ${JSON.stringify(event)}\n\n`;
 }
 
-export async function POST(request: Request) {
+// GET in plaats van POST: de browser praat hiermee via EventSource, niet via
+// een handmatige fetch + ReadableStream-reader. Reden: Safari/iOS leest een
+// gestreamde fetch-response onbetrouwbaar (soms pas na afloop, soms nooit) —
+// EventSource is het native, beproefde mechanisme voor precies dit protocol
+// (text/event-stream) en werkt overal hetzelfde. Kan dus geen POST-body
+// meesturen; url/niche gaan als query-parameters mee.
+export async function GET(request: Request) {
   const supabase = createClient();
   const {
     data: { user },
@@ -56,12 +62,8 @@ export async function POST(request: Request) {
     return new Response(sse({ type: "fout", melding: "Niet ingelogd." }), { status: 401 });
   }
 
-  let body: { url?: string; niche?: string };
-  try {
-    body = await request.json();
-  } catch {
-    return new Response(sse({ type: "fout", melding: "Ongeldige aanvraag." }), { status: 400 });
-  }
+  const params = new URL(request.url).searchParams;
+  const body = { url: params.get("url") ?? "", niche: params.get("niche") ?? "" };
 
   const url = normaliseerUrl(String(body.url ?? ""));
   if (!url) {

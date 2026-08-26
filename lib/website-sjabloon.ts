@@ -282,7 +282,34 @@ ${css}
 </html>`;
 }
 
-type Invoer = { bedrijf: string; plaats: string | null; sj: Sjabloon };
+/** Echte content van de bestaande site van de lead (lib/site-scrape.ts) — optioneel. */
+export type EchtContent = { titel: string | null; beschrijving: string | null; afbeeldingen: string[] };
+
+type Invoer = { bedrijf: string; plaats: string | null; sj: Sjabloon; echt?: EchtContent };
+
+function hexRgba(hex: string, alpha: number): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.substring(0, 2), 16);
+  const g = parseInt(h.substring(2, 4), 16);
+  const b = parseInt(h.substring(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+/** Achtergrond-CSS voor een held-sectie: een echte foto onder een kleurovergang, als er één is. */
+function heroAchtergrond(sj: Sjabloon, echt: EchtContent | undefined, hoek = 160): string {
+  const foto = echt?.afbeeldingen[0];
+  if (!foto) return "";
+  return ` style="background-image:linear-gradient(${hoek}deg, ${hexRgba(sj.kleur1, 0.82)}, ${hexRgba(sj.kleur2, 0.9)}), url('${escapeHtml(foto)}');background-size:cover;background-position:center;"`;
+}
+
+/** Voor een los beeldvlak (geen tekst erover): een echte foto, anders de emoji-placeholder. */
+function beeldOfEmoji(echt: EchtContent | undefined, emoji: string): string {
+  const foto = echt?.afbeeldingen[0];
+  if (foto) {
+    return `<img src="${escapeHtml(foto)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" />`;
+  }
+  return emoji;
+}
 
 /* ============================== WEBSHOP (bol.com) ========================= */
 

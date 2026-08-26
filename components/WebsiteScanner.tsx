@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
   Bot,
@@ -158,13 +158,15 @@ export function WebsiteScanner({
   const [host, setHost] = useState<string>("");
   const [pushBezig, setPushBezig] = useState(false);
   const [gepusht, setGepusht] = useState(false);
-  const controllerRef = useRef<AbortController | null>(null);
+  const bronRef = useRef<EventSource | null>(null);
 
-  async function scan() {
+  useEffect(() => {
+    return () => bronRef.current?.close();
+  }, []);
+
+  function scan() {
     if (!url.trim() || bezig) return;
-    controllerRef.current?.abort();
-    const ac = new AbortController();
-    controllerRef.current = ac;
+    bronRef.current?.close();
 
     setBezig(true);
     setFout(null);
@@ -179,50 +181,38 @@ export function WebsiteScanner({
       setHost(url.trim());
     }
 
-    try {
-      const res = await fetch("/api/scan/stream", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: url.trim(), niche: niche.trim() || undefined }),
-        signal: ac.signal,
-      });
+    // EventSource in plaats van fetch + ReadableStream-reader: dat laatste
+    // leest Safari/iOS onbetrouwbaar (soms pas na afloop, soms helemaal niet).
+    // EventSource is het native mechanisme voor text/event-stream en werkt
+    // overal hetzelfde — alleen GET met query-parameters, geen POST-body.
+    const params = new URLSearchParams({ url: url.trim() });
+    if (niche.trim()) params.set("niche", niche.trim());
+    const bron = new EventSource(`/api/scan/stream?${params}`);
+    bronRef.current = bron;
 
-      if (!res.ok || !res.body) {
-        const data = await res.json().catch(() => null);
-        setFout(data?.fout ?? "De scan kon niet starten.");
+    bron.onmessage = (ev) => {
+      let event: ReturnType<typeof JSON.parse>;
+      try {
+        event = JSON.parse(ev.data);
+      } catch {
         return;
       }
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      // Server-Sent Events lezen: elk blok is "data: {...}\n\n". Een chunk kan
-      // midden in een event afbreken, dus alles vóór de laatste \n\n is klaar
-      // om te verwerken en de rest blijft in de buffer staan voor de volgende
-      // read.
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-
-        const blokken = buffer.split("\n\n");
-        buffer = blokken.pop() ?? "";
-
-        for (const blok of blokken) {
-          const regel = blok.split("\n").find((r) => r.startsWith("data: "));
-          if (!regel) continue;
-          const event = JSON.parse(regel.slice(6));
-          verwerk(event);
-        }
+      verwerk(event);
+      if (event.type === "klaar" || event.type === "fout") {
+        bron.close();
+        setBezig(false);
       }
-    } catch (e) {
-      if (e instanceof Error && e.name !== "AbortError") {
-        setFout(e.message || "De verbinding met de scanner viel weg.");
+    };
+
+    bron.onerror = () => {
+      // EventSource probeert zelf te reconnecten; bij een écht kapotte
+      // verbinding sluiten we 'm en melden we dat, in plaats van te blijven
+      // hangen op "Scannen…".
+      if (bron.readyState === EventSource.CLOSED) {
+        setFout("De verbinding met de scanner viel weg.");
+        setBezig(false);
       }
-    } finally {
-      setBezig(false);
-    }
+    };
   }
 
   async function pushNaarLead() {

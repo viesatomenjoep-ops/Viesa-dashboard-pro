@@ -28,6 +28,9 @@ export function BelSuggesties() {
   const [toegevoegd, setToegevoegd] = useState<Set<string>>(new Set());
 
   async function genereer() {
+    if (!window.confirm("Dit stuurt je belbare leads naar Claude en kost tokens. Weet u het zeker?")) {
+      return;
+    }
     setLaden(true);
     setFout(null);
     try {
