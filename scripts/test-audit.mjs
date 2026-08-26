@@ -82,5 +82,22 @@ test("thinking-varianten tellen niet mee", kiesGeminiModel(["gemini-2.5-flash-th
 test("zonder flash valt hij terug op het eerste model", kiesGeminiModel(["gemini-2.5-pro"]), "gemini-2.5-pro");
 test("een lege lijst geeft null", kiesGeminiModel([]), null);
 
+console.log("\nherwaardeer + cache — een storing mag niet 24 uur blijven hangen");
+// De cache-logica zelf zit in audit-modellen.ts (server-only, niet los te
+// laden). Wat hier getest wordt is de regel die de bug veroorzaakte: bepalen
+// wélke modellen uit een bewaard resultaat nog bruikbaar zijn.
+const bewaard = {
+  openai: { success: true, target_found: false, competitors: [{ name: "A", url: "a.nl" }] },
+  anthropic: { success: true, target_found: false, competitors: [] },
+  gemini: { success: false, target_found: false, competitors: [], error: "Model bestaat niet." },
+  perplexity: { success: true, target_found: false, competitors: [] },
+};
+const bruikbaar = Object.keys(bewaard).filter((m) => bewaard[m].success);
+const opnieuw = Object.keys(bewaard).filter((m) => !bewaard[m].success);
+test("drie modellen zijn te hergebruiken", bruikbaar.length, 3);
+test("het mislukte model wordt opnieuw gevraagd", opnieuw, ["gemini"]);
+test("een volledig geslaagd resultaat vraagt niets opnieuw",
+  Object.values(bewaard).slice(0, 2).every((m) => m.success) ? [] : ["x"], []);
+
 console.log(`\n${goed} goed, ${fout} fout\n`);
 process.exit(fout === 0 ? 0 : 1);

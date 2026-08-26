@@ -194,30 +194,45 @@ export function naarUitkomst(
   };
 }
 
+/** De vier aanroepen, op sleutel — zodat we er ook een deelverzameling van kunnen doen. */
+const FETCHERS: Record<ModelSleutel, (niche: string) => Promise<Concurrent[]>> = {
+  openai: fetchOpenAI,
+  anthropic: fetchAnthropic,
+  gemini: fetchGemini,
+  perplexity: fetchPerplexity,
+};
+
+type ModelSleutel = keyof AuditResultaten;
+
+const ALLE_MODELLEN = ["openai", "anthropic", "gemini", "perplexity"] as const;
+
 /**
- * Vraagt alle vier de modellen tegelijk wie zij aanraden in deze niche.
+ * Vraagt de opgegeven modellen tegelijk wie zij aanraden in deze niche.
  *
  * `allSettled` en niet `all`: als Perplexity traag is of Gemini een timeout
  * geeft, hoort de audit nog steeds de andere drie te tonen. Een half antwoord
  * is bruikbaar, een mislukte audit niet.
  */
+export async function vraagModellen(
+  sleutels: readonly ModelSleutel[],
+  niche: string,
+  targetUrl: string,
+): Promise<Partial<AuditResultaten>> {
+  const uitslagen = await Promise.allSettled(sleutels.map((s) => FETCHERS[s](niche)));
+
+  const uit: Partial<AuditResultaten> = {};
+  sleutels.forEach((sleutel, i) => {
+    uit[sleutel] = naarUitkomst(uitslagen[i], targetUrl, sleutel);
+  });
+  return uit;
+}
+
+/** Alle vier tegelijk. */
 export async function vraagAlleModellen(
   niche: string,
   targetUrl: string,
 ): Promise<AuditResultaten> {
-  const [openai, anthropic, gemini, perplexity] = await Promise.allSettled([
-    fetchOpenAI(niche),
-    fetchAnthropic(niche),
-    fetchGemini(niche),
-    fetchPerplexity(niche),
-  ]);
-
-  return {
-    openai: naarUitkomst(openai, targetUrl, "openai"),
-    anthropic: naarUitkomst(anthropic, targetUrl, "anthropic"),
-    gemini: naarUitkomst(gemini, targetUrl, "gemini"),
-    perplexity: naarUitkomst(perplexity, targetUrl, "perplexity"),
-  };
+  return (await vraagModellen(ALLE_MODELLEN, niche, targetUrl)) as AuditResultaten;
 }
 
 // ---------------------------------------------------------------------------
@@ -270,12 +285,27 @@ export async function vraagAlleModellenMetCache(
     .limit(1)
     .maybeSingle();
 
-  if (data?.llm_results) {
-    return {
-      resultaten: herwaardeer(data.llm_results as AuditResultaten, targetUrl),
-      hergebruikt: true,
-    };
+  const gecached = (data?.llm_results ?? null) as AuditResultaten | null;
+  if (!gecached) {
+    return { resultaten: await vraagAlleModellen(niche, targetUrl), hergebruikt: false };
   }
 
-  return { resultaten: await vraagAlleModellen(niche, targetUrl), hergebruikt: false };
+  // Alleen gelúkte antwoorden zijn het hergebruiken waard.
+  //
+  // Een mislukking bewaren en opnieuw serveren zou een storing 24 uur lang
+  // bevriezen: een verkeerd modelnaam, een verlopen sleutel of een korte
+  // onderbreking blijft dan zichtbaar ook nadat hij verholpen is. Precies dat
+  // gebeurde met Gemini. Dus vragen we de modellen die het niet deden gewoon
+  // opnieuw, en hergebruiken we de rest.
+  const bruikbaar = ALLE_MODELLEN.filter((m) => gecached[m]?.success);
+  const opnieuw = ALLE_MODELLEN.filter((m) => !gecached[m]?.success);
+
+  if (opnieuw.length === 0) {
+    return { resultaten: herwaardeer(gecached, targetUrl), hergebruikt: true };
+  }
+
+  const verse = await vraagModellen(opnieuw, niche, targetUrl);
+  const samen = { ...herwaardeer(gecached, targetUrl), ...verse } as AuditResultaten;
+
+  return { resultaten: samen, hergebruikt: bruikbaar.length > 0 };
 }
