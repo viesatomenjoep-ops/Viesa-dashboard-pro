@@ -9,7 +9,6 @@ import { bewaarCategorieWaarden } from "@/lib/categorieen";
 import { zoekLeadsViaGoogleMaps } from "@/lib/apify";
 import { zoekLeadsViaGooglePlaces } from "@/lib/google-places";
 import { verrijkLead } from "@/lib/ai/verrijking";
-import { genereerPrototype } from "@/lib/ai/prototype";
 import { bouwStatischPrototype, type PrototypeType } from "@/lib/website-sjabloon";
 import type { ScanRapport } from "@/lib/scan";
 
@@ -203,25 +202,19 @@ export async function stelVerrijkingVoor(leadId: string) {
   return verrijkLead(supabase, leadId);
 }
 
-/** Genereert met AI een vernieuwd website- of app-prototype voor een lead (kost tokens). */
-export async function genereerWebsitePrototype(
-  leadId: string,
-  url?: string,
-  type: PrototypeType = "website",
-) {
-  const supabase = createClient();
-  const uitkomst = await genereerPrototype(supabase, leadId, url, type);
-  if (uitkomst.ok) revalidatePath(`/leads/${leadId}`);
-  return uitkomst;
-}
+// De AI-prototypegenerator is bewust verwijderd: hij kostte tokens en het
+// resultaat haalde het niet bij de branchesjablonen hieronder (0 tokens).
 
 /**
- * Laadt direct (0 tokens) een prototype op basis van het branchethema — het
+ * Laadt direct (0 tokens) een prototype op basis van het branchesjabloon — het
  * standaardpad in de UI. Geen AI-aanroep, dus ook geen wachttijd of kosten.
+ * `branche` overschrijft desgewenst de branche van de lead, zodat je per lead
+ * elk sjabloon kunt uitproberen.
  */
 export async function laadSjabloonPrototype(
   leadId: string,
   type: PrototypeType = "website",
+  branche?: string,
 ): Promise<{ ok: boolean; id?: string; html?: string; fout?: string }> {
   const supabase = createClient();
   const { data, error } = await supabase
@@ -234,7 +227,7 @@ export async function laadSjabloonPrototype(
   const html = bouwStatischPrototype({
     bedrijf: data.bedrijf ?? "Dit bedrijf",
     plaats: data.plaats,
-    branche: data.branche,
+    branche: branche?.trim() || data.branche,
     type,
   });
 

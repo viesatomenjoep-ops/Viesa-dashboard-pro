@@ -1,7 +1,7 @@
 /**
  * Tests voor lib/website-sjabloon.ts. Draaien: npm run test:prototype
  */
-import { bouwStatischPrototype } from "../lib/website-sjabloon.ts";
+import { bouwStatischPrototype, SJABLOON_BRANCHES } from "../lib/website-sjabloon.ts";
 
 let goed = 0, fout = 0;
 function test(naam, echt, verwacht) {
@@ -25,6 +25,25 @@ test("onbekende/lege branche valt terug op Overig", app.includes("Graag tot uw d
 console.log("\nbouwStatischPrototype — onbekende branche");
 const onbekend = bouwStatischPrototype({ bedrijf: "X", plaats: null, branche: "Iets Onbekends", type: "website" });
 test("onbekende branche valt terug op Overig", onbekend.includes("Graag tot uw dienst"), true);
+
+console.log("\narchetypes per branche");
+const webshop = bouwStatischPrototype({ bedrijf: "Shop BV", plaats: null, branche: "E-commerce / webshop", type: "website" });
+test("webshop heeft een zoekbalk", webshop.includes("Waar ben je naar op zoek?"), true);
+const groothandel = bouwStatischPrototype({ bedrijf: "Bulk BV", plaats: null, branche: "Groothandel", type: "website" });
+test("premium-stijl heeft genummerde kaarten", groothandel.includes(">01<"), true);
+const horeca2 = bouwStatischPrototype({ bedrijf: "Café Test", plaats: "Breda", branche: "Horeca", type: "website" });
+test("horeca heeft de menukaart", horeca2.includes("Menukaart"), true);
+const corporate = bouwStatischPrototype({ bedrijf: "Advies BV", plaats: null, branche: "Zakelijke dienstverlening", type: "website" });
+test("corporate heeft een werkwijze-stap", corporate.includes("Kennismaken"), true);
+test("elke branche levert geldige, unieke HTML", (() => {
+  const gezien = new Set();
+  for (const b of SJABLOON_BRANCHES) {
+    const html = bouwStatischPrototype({ bedrijf: "Test", plaats: null, branche: b, type: "website" });
+    if (!html.startsWith("<!doctype html>") || /<script/i.test(html)) return `ongeldig: ${b}`;
+    gezien.add(html);
+  }
+  return gezien.size === SJABLOON_BRANCHES.length ? true : "duplicaten";
+})(), true);
 
 console.log(`\n${goed} goed, ${fout} fout\n`);
 process.exit(fout === 0 ? 0 : 1);
