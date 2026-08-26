@@ -160,7 +160,7 @@ export default async function LeadDetail({
       <LeadVerrijking leadId={lead.id} />
 
       <div className="mb-6">
-        <WebsitePrototype leadId={lead.id} standaardUrl={lead.website ?? ""} opgeslagen={prototypes} />
+        <WebsitePrototype leadId={lead.id} opgeslagen={prototypes} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

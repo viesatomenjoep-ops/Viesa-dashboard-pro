@@ -2,15 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  LayoutTemplate,
-  Loader2,
-  MonitorSmartphone,
-  Smartphone,
-  Trash2,
-  Wand2,
-} from "lucide-react";
-import { genereerWebsitePrototype, laadSjabloonPrototype, verwijderPrototype } from "../acties";
+import { LayoutTemplate, Loader2, MonitorSmartphone, Smartphone, Trash2 } from "lucide-react";
+import { laadSjabloonPrototype, verwijderPrototype } from "../acties";
+import { SJABLOON_BRANCHES } from "@/lib/website-sjabloon";
 
 type Type = "website" | "app";
 
@@ -24,39 +18,34 @@ export type OpgeslagenPrototype = {
 
 /**
  * Website/app-prototype voor een lead — verkoopmateriaal: "kijk wat we voor je
- * zouden kunnen bouwen". Twee paden naast elkaar:
- *  - Sjabloon (standaard): direct, 0 tokens, gebaseerd op het branchethema.
- *  - AI: maatwerk op basis van de bestaande website, kost een klein aantal
- *    tokens (getoond na afloop) — voor als het sjabloon niet specifiek genoeg is.
+ * zouden kunnen bouwen". Puur op branchesjablonen: direct, 0 tokens, en elk
+ * sjabloon heeft een eigen ontwerp. (De eerdere AI-variant is bewust
+ * verwijderd — die kostte tokens en haalde het niet bij de sjablonen.)
  *
  * Elke generatie wordt bewaard (website_prototypes) — hieronder staat een
  * lijst van eerdere prototypes van deze lead, aan te klikken om terug te zien.
  */
 export function WebsitePrototype({
   leadId,
-  standaardUrl,
   opgeslagen,
 }: {
   leadId: string;
-  standaardUrl: string;
   opgeslagen: OpgeslagenPrototype[];
 }) {
   const router = useRouter();
   const [type, setType] = useState<Type>("website");
-  const [url, setUrl] = useState(standaardUrl);
-  const [bezig, setBezig] = useState<"sjabloon" | "ai" | null>(null);
+  const [sjabloonBranche, setSjabloonBranche] = useState("");
+  const [bezig, setBezig] = useState(false);
   const [verwijderBezig, setVerwijderBezig] = useState<string | null>(null);
   const [fout, setFout] = useState<string | null>(null);
   const [html, setHtml] = useState<string | null>(null);
   const [weergaveType, setWeergaveType] = useState<Type>("website");
-  const [tokens, setTokens] = useState<{ in: number; uit: number } | null>(null);
 
   async function sjabloon() {
-    setBezig("sjabloon");
+    setBezig(true);
     setFout(null);
-    setTokens(null);
     try {
-      const res = await laadSjabloonPrototype(leadId, type);
+      const res = await laadSjabloonPrototype(leadId, type, sjabloonBranche || undefined);
       if (!res.ok) setFout(res.fout ?? "Kon geen sjabloon laden.");
       else {
         setHtml(res.html ?? null);
@@ -64,35 +53,18 @@ export function WebsitePrototype({
         router.refresh();
       }
     } finally {
-      setBezig(null);
-    }
-  }
-
-  async function metAi() {
-    setBezig("ai");
-    setFout(null);
-    try {
-      const res = await genereerWebsitePrototype(leadId, url, type);
-      if (!res.ok) setFout(res.fout);
-      else {
-        setHtml(res.html);
-        setWeergaveType(type);
-        setTokens({ in: res.tokensIn, uit: res.tokensUit });
-        router.refresh();
-      }
-    } finally {
-      setBezig(null);
+      setBezig(false);
     }
   }
 
   function bekijk(p: OpgeslagenPrototype) {
     setHtml(p.html);
     setWeergaveType(p.type);
-    setTokens(null);
     setFout(null);
   }
 
   async function verwijder(id: string) {
+    if (!window.confirm("Weet u zeker dat u dit prototype wilt verwijderen?")) return;
     setVerwijderBezig(id);
     try {
       const res = await verwijderPrototype(id, leadId);
@@ -112,76 +84,65 @@ export function WebsitePrototype({
         <div>
           <h2 className="text-sm font-semibold text-navy">Website-prototype</h2>
           <p className="text-xs text-navy/50">
-            Laat zien hoe een vernieuwde website (of app) er voor deze klant uit zou kunnen zien.
+            Laat zien hoe een vernieuwde website (of app) er voor deze klant uit zou kunnen zien —
+            direct en zonder tokenkosten.
           </p>
         </div>
       </div>
 
-      {/* Website of app */}
-      <div className="mt-4 inline-flex rounded-lg border border-navy/15 p-0.5">
-        <button
-          type="button"
-          onClick={() => setType("website")}
-          className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium ${
-            type === "website" ? "bg-navy text-white" : "text-navy/60 hover:bg-navy/5"
-          }`}
-        >
-          <MonitorSmartphone size={14} /> Website
-        </button>
-        <button
-          type="button"
-          onClick={() => setType("app")}
-          className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium ${
-            type === "app" ? "bg-navy text-white" : "text-navy/60 hover:bg-navy/5"
-          }`}
-        >
-          <Smartphone size={14} /> App
-        </button>
-      </div>
-
-      {/* Twee paden */}
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <div className="rounded-lg border border-navy/10 p-3">
-          <p className="text-xs font-medium text-navy">Sjabloon — direct, 0 tokens</p>
-          <p className="mt-0.5 text-xs text-navy/50">Gebaseerd op de branche van deze lead.</p>
+      {/* Keuzes: website of app, en welk branchesjabloon */}
+      <div className="mt-4 flex flex-wrap items-end gap-3">
+        <div className="inline-flex rounded-lg border border-navy/15 p-0.5">
           <button
             type="button"
-            onClick={sjabloon}
-            disabled={bezig !== null}
-            className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-navy px-3 py-1.5 text-xs font-medium text-white hover:bg-navy/90 disabled:opacity-60"
+            onClick={() => setType("website")}
+            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium ${
+              type === "website" ? "bg-navy text-white" : "text-navy/60 hover:bg-navy/5"
+            }`}
           >
-            {bezig === "sjabloon" ? <Loader2 size={13} className="animate-spin" /> : <LayoutTemplate size={13} />}
-            Laad sjabloon
+            <MonitorSmartphone size={14} /> Website
+          </button>
+          <button
+            type="button"
+            onClick={() => setType("app")}
+            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium ${
+              type === "app" ? "bg-navy text-white" : "text-navy/60 hover:bg-navy/5"
+            }`}
+          >
+            <Smartphone size={14} /> App
           </button>
         </div>
 
-        <div className="rounded-lg border border-navy/10 p-3">
-          <p className="text-xs font-medium text-navy">Met AI — maatwerk op basis van de site</p>
-          <input
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="huidige-website.nl"
-            className="mt-1.5 w-full rounded-md border border-navy/20 px-2 py-1.5 text-xs text-navy outline-none focus:border-navy"
-          />
-          <button
-            type="button"
-            onClick={metAi}
-            disabled={bezig !== null}
-            className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-navy/20 px-3 py-1.5 text-xs font-medium text-navy hover:bg-navy/5 disabled:opacity-60"
+        <label className="block min-w-[220px] flex-1 sm:max-w-xs">
+          <span className="mb-1 block text-xs font-medium text-navy/50">
+            Branchesjabloon — elk met een eigen ontwerp
+          </span>
+          <select
+            value={sjabloonBranche}
+            onChange={(e) => setSjabloonBranche(e.target.value)}
+            className="w-full rounded-md border border-navy/20 px-2 py-1.5 text-xs text-navy outline-none focus:border-navy"
           >
-            {bezig === "ai" ? <Loader2 size={13} className="animate-spin" /> : <Wand2 size={13} />}
-            Genereer met AI
-          </button>
-        </div>
+            <option value="">Automatisch (branche van de lead)</option>
+            {SJABLOON_BRANCHES.map((b) => (
+              <option key={b} value={b}>
+                {b}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <button
+          type="button"
+          onClick={sjabloon}
+          disabled={bezig}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-navy px-4 py-2 text-xs font-medium text-white hover:bg-navy/90 disabled:opacity-60"
+        >
+          {bezig ? <Loader2 size={13} className="animate-spin" /> : <LayoutTemplate size={13} />}
+          Laad sjabloon
+        </button>
       </div>
 
       {fout && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{fout}</p>}
-
-      {tokens && (
-        <p className="mt-2 text-xs text-navy/40">
-          Tokens gebruikt: {tokens.in} in / {tokens.uit} uit.
-        </p>
-      )}
 
       {/* Eerder gemaakte prototypes van deze lead */}
       {opgeslagen.length > 0 && (
