@@ -26,6 +26,14 @@ import {
 import type { Bevinding } from "@/lib/geo-analyse";
 import type { ScanRapport } from "@/lib/scan";
 import { heelScan } from "@/lib/rapport/heelScan";
+import {
+  STAP_SLEUTELS,
+  beginStappen,
+  stappenVanRapport,
+  type StapSleutel,
+  type StapState,
+  type StapStatus,
+} from "@/lib/scan-stappen";
 import { ZoekKies } from "@/components/ZoekKies";
 import { pushScanRapportNaarLead } from "@/app/(app)/leads/acties";
 import { deelScan, laadOpgeslagenScan, verwijderScan } from "@/app/(app)/scan/acties";
@@ -41,25 +49,27 @@ import { deelScan, laadOpgeslagenScan, verwijderScan } from "@/app/(app)/scan/ac
  * regels binnen een seconde vol, en zie je waar het wachten 'm in zit.
  */
 
-const STAPPEN: { key: string; label: string; icoon: typeof Gauge }[] = [
-  { key: "ophalen", label: "Pagina ophalen", icoon: Globe },
-  { key: "vindbaarheid", label: "Vindbaarheid", icoon: Search },
-  { key: "structured_data", label: "Structured data", icoon: FileSearch },
-  { key: "content", label: "Content-analyse", icoon: FileSearch },
-  { key: "beveiliging", label: "Beveiliging", icoon: ShieldCheck },
-  { key: "scripts", label: "Scripts & tracking", icoon: Lock },
-  { key: "technologie", label: "Technologie", icoon: Cpu },
-  { key: "snelheid", label: "Snelheidsmeting", icoon: Gauge },
-  { key: "zichtbaarheid", label: "AI-zichtbaarheid", icoon: Bot },
-];
-
-type StapStatus = "wachtend" | "bezig" | "goed" | "aandacht";
-
-type StapState = {
-  status: StapStatus;
-  samenvatting: string;
-  data?: unknown;
+/**
+ * De stappen zoals ze op het scherm staan: label en icoon per sleutel.
+ *
+ * De sleutels zelf komen uit lib/scan-stappen.ts en staan daar in volgorde. Zo
+ * kan deze lijst niet meer uit de pas lopen met de lijst die een bewaarde scan
+ * terugzet — precies wat er misging toen `technologie` erbij kwam.
+ */
+const STAP_WEERGAVE: Record<StapSleutel, { label: string; icoon: typeof Gauge }> = {
+  ophalen: { label: "Pagina ophalen", icoon: Globe },
+  vindbaarheid: { label: "Vindbaarheid", icoon: Search },
+  structured_data: { label: "Structured data", icoon: FileSearch },
+  content: { label: "Content-analyse", icoon: FileSearch },
+  beveiliging: { label: "Beveiliging", icoon: ShieldCheck },
+  scripts: { label: "Scripts & tracking", icoon: Lock },
+  technologie: { label: "Technologie", icoon: Cpu },
+  snelheid: { label: "Snelheidsmeting", icoon: Gauge },
+  zichtbaarheid: { label: "AI-zichtbaarheid", icoon: Bot },
 };
+
+const STAPPEN = STAP_SLEUTELS.map((key) => ({ key, ...STAP_WEERGAVE[key] }));
+
 
 const MODEL_LABEL: Record<string, string> = {
   openai: "ChatGPT",
@@ -68,11 +78,6 @@ const MODEL_LABEL: Record<string, string> = {
   perplexity: "Perplexity",
 };
 
-function beginState(): Record<string, StapState> {
-  return Object.fromEntries(
-    STAPPEN.map((s) => [s.key, { status: "wachtend" as StapStatus, samenvatting: "" }]),
-  );
-}
 
 function StapIcoon({ status }: { status: StapStatus }) {
   if (status === "bezig") return <Loader2 size={16} className="animate-spin text-navy/50" />;
@@ -171,7 +176,7 @@ export function WebsiteScanner({
   const [gekozenLeadId, setGekozenLeadId] = useState<string | null>(null);
   const [bezig, setBezig] = useState(false);
   const [fout, setFout] = useState<string | null>(null);
-  const [stappen, setStappen] = useState<Record<string, StapState>>(beginState());
+  const [stappen, setStappen] = useState<Record<string, StapState>>(beginStappen());
   const [totaal, setTotaal] = useState<{ score: number; oordeel: string } | null>(null);
   const [rapport, setRapport] = useState<ScanRapport | null>(null);
   const [voorbeeld, setVoorbeeld] = useState<string | null>(null);
@@ -196,7 +201,7 @@ export function WebsiteScanner({
 
     setBezig(true);
     setFout(null);
-    setStappen(beginState());
+    setStappen(beginStappen());
     setTotaal(null);
     setRapport(null);
     setGepusht(false);
@@ -285,42 +290,7 @@ export function WebsiteScanner({
     setTotaal({ score: r.totaalScore, oordeel: oordeelVan(r.totaalScore).label });
     setRapport(r);
 
-    const vindbaarheid = r.vindbaarheid as { bevindingen?: Bevinding[] } | undefined;
-    const beveiliging = r.beveiliging as { percentage?: number } | undefined;
-
-    setStappen({
-      ophalen: { status: "goed", samenvatting: "" },
-      vindbaarheid: {
-        status: vindbaarheid?.bevindingen?.every((b) => b.goed) ?? true ? "goed" : "aandacht",
-        samenvatting: "",
-        data: r.vindbaarheid,
-      },
-      structured_data: {
-        status: r.geo.score >= 70 ? "goed" : "aandacht",
-        samenvatting: `${r.geo.score}/100`,
-        data: r.geo,
-      },
-      content: { status: "goed", samenvatting: "" },
-      beveiliging: {
-        status: (beveiliging?.percentage ?? 100) >= 70 ? "goed" : "aandacht",
-        samenvatting: "",
-        data: r.beveiliging,
-      },
-      scripts: { status: "goed", samenvatting: "", data: r.scripts },
-      snelheid: {
-        status: (r.techniek.score ?? 0) >= 70 ? "goed" : "aandacht",
-        samenvatting: r.techniek.score !== null ? `${r.techniek.score}/100` : (r.techniek.fout ?? "Niet gemeten"),
-        data: r.techniek,
-      },
-      zichtbaarheid: {
-        status: r.zichtbaarheid.score !== null && r.zichtbaarheid.score >= 50 ? "goed" : "aandacht",
-        samenvatting:
-          r.zichtbaarheid.getest > 0
-            ? `${r.zichtbaarheid.gevonden} van ${r.zichtbaarheid.getest} modellen noemt dit bedrijf`
-            : "Geen niche gemeten",
-        data: r.zichtbaarheid.resultaten,
-      },
-    });
+    setStappen(stappenVanRapport(r));
   }
 
   async function bekijkOpgeslagenScan(id: string) {
@@ -594,7 +564,10 @@ export function WebsiteScanner({
               </div>
               <ul className="divide-y divide-navy/5">
                 {STAPPEN.map((s) => {
-                  const st = stappen[s.key];
+                  // Een stap die (nog) geen staat heeft is "wachtend", geen
+                  // crash: de stappenlijst mag nooit de reden zijn dat een
+                  // scan niet te openen is.
+                  const st = stappen[s.key] ?? { status: "wachtend" as const, samenvatting: "" };
                   return (
                     <li key={s.key} className="flex items-center gap-3 px-5 py-3">
                       <StapIcoon status={st.status} />
