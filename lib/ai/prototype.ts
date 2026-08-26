@@ -91,7 +91,11 @@ export async function genereerPrototype(
   // Afgekapt tot 3000 tekens — genoeg om de kern van het bedrijf te begrijpen,
   // zonder de hele site als context mee te sturen (dat kost alleen maar tokens).
   const websiteTekst = await haalWebsiteTekst(url, 3000);
-  const model = process.env.CLAUDE_MODEL ?? "claude-opus-5";
+  // Bewust op Sonnet 5 in plaats van de gedeelde CLAUDE_MODEL: dit is de
+  // AI-uitzondering naast het gratis sjabloon, dus kosten drukken weegt hier
+  // zwaarder dan bij de audit of de GEO-generator, die wél de gedeelde
+  // (doorgaans zwaardere) modelkeuze gebruiken.
+  const model = process.env.PROTOTYPE_MODEL ?? "claude-sonnet-5";
 
   let html = "";
   let tokensIn = 0;
