@@ -50,10 +50,13 @@ function Weging({ prioriteit }: { prioriteit: Prioriteit }) {
 export function Samenvatting({
   rapport,
   volledigUrl,
+  voorstelUrl,
 }: {
   rapport: RapportData;
   /** Waar het volledige rapport staat — null als dat er niet is. */
   volledigUrl?: string | null;
+  /** Het voorstel: wat wij hieraan zouden doen, en wat we verder aanbieden. */
+  voorstelUrl?: string | null;
 }) {
   const { totaalScore, host, bedrijf, herkomst, onderdelen, samenvatting, schermafdruk } = rapport;
   const stand = standVanScore(totaalScore, 80);
@@ -218,7 +221,13 @@ export function Samenvatting({
                 ? "Een half uur, en u weet wat er moet gebeuren en wat het kost. Alle metingen met de norm en het bewijs eronder staan in het volledige rapport."
                 : "Een half uur, en u weet wat er moet gebeuren en wat het kost. We lopen de punten hierboven langs op volgorde van wat het meeste oplevert."
             }
-            eerste={volledigUrl ? { label: "Naar het volledige rapport", href: volledigUrl } : null}
+            eerste={
+              volledigUrl
+                ? { label: "Naar het volledige rapport", href: volledigUrl }
+                : voorstelUrl
+                  ? { label: "Wat wij verder aanbieden", href: voorstelUrl }
+                  : null
+            }
           />
           <span className="rap-alleen-scherm" style={{ display: "inline-block", marginTop: 18 }}>
             <AfdrukKnop label="Samenvatting als PDF" />

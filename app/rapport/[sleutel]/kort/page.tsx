@@ -49,5 +49,11 @@ export default async function KorteSamenvatting({ params }: { params: { sleutel:
     gemetenOp: data.created_at as string,
   });
 
-  return <Samenvatting rapport={rapport} volledigUrl={`/rapport/${params.sleutel}`} />;
+  return (
+    <Samenvatting
+      rapport={rapport}
+      volledigUrl={`/rapport/${params.sleutel}`}
+      voorstelUrl={`/rapport/${params.sleutel}/voorstel`}
+    />
+  );
 }

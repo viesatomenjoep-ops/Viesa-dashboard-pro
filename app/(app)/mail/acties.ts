@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { verstuurMail, mailHtml, mailHtmlRijk, saniteerHtml } from "@/lib/resend";
 import { BEDRIJF } from "@/lib/bedrijf";
 import { triageMail } from "@/lib/ai/mailtriage";
+import { voorstelOpzet } from "@/lib/mail/voorstel-opzet";
 
 type MailMap = "inbox" | "verzonden" | "concepten" | "prullenbak" | "archief";
 
@@ -159,4 +160,85 @@ export async function verwijderMail(id: string) {
   await supabase.from("emails").update({ map: "prullenbak" }).eq("id", id);
   revalidatePath("/mail");
   redirect("/mail");
+}
+
+/**
+ * Verstuurt de voorstelmail: het volledige Viesa-aanbod in de huisstijl, met
+ * één knop om een gratis audit in te plannen.
+ *
+ * Aparte actie en niet de gewone `verstuurBericht`, om één reden: die wikkelt
+ * de inhoud in `mailHtmlRijk()` — briefhoofd, titel, voettekst. Dat is precies
+ * goed voor een geschreven bericht en precies verkeerd voor een mail die zelf
+ * al een compleet ontwerp is. Dubbel briefhoofd, dubbele voettekst, en de
+ * opmaak die eromheen valt.
+ *
+ * De HTML wordt hier gebouwd en niet in de browser, zodat de mail die de
+ * ontvanger krijgt letterlijk uit `promotieMail()` komt en niet uit een editor
+ * die er onderweg nog iets aan verandert.
+ */
+export async function verstuurVoorstel(formData: FormData): Promise<void> {
+  const naar = String(formData.get("naar") ?? "").trim();
+  const bedrijf = String(formData.get("bedrijf") ?? "").trim() || null;
+  const scanId = String(formData.get("scan_id") ?? "").trim() || null;
+  const klantId = String(formData.get("klant_id") ?? "").trim() || null;
+
+  if (!naar) {
+    redirect("/mail?fout=" + encodeURIComponent("Vul een ontvanger in."));
+  }
+
+  const supabase = createClient();
+  const opzet = await voorstelOpzet(supabase, { bedrijf, scanId });
+
+  try {
+    const { id } = await verstuurMail({
+      naar,
+      onderwerp: opzet.onderwerp,
+      html: opzet.html,
+      tekst: opzet.tekst,
+    });
+    await supabase.from("emails").insert({
+      richting: "uitgaand",
+      map: "verzonden",
+      van: BEDRIJF.email,
+      van_naam: BEDRIJF.naam,
+      naar,
+      onderwerp: opzet.onderwerp,
+      html: opzet.html,
+      tekst: opzet.tekst,
+      snippet: opzet.tekst.replace(/\s+/g, " ").slice(0, 140),
+      gelezen: true,
+      status: "verzonden",
+      provider_id: id,
+      klant_id: klantId,
+      heeft_bijlagen: false,
+    });
+  } catch (e) {
+    redirect(
+      "/mail?fout=" +
+        encodeURIComponent(e instanceof Error ? e.message : "Versturen mislukt."),
+    );
+  }
+
+  revalidatePath("/mail");
+  redirect("/mail?verzonden=1");
+}
+
+/**
+ * Bouwt de voorstelmail op — dezelfde weg als het versturen, maar dan om 'm
+ * eerst te laten zien.
+ *
+ * Bestaat zodat het voorbeeldvenster exact toont wat er verstuurd wordt. Een
+ * voorbeeld dat op een ander pad tot stand komt dan de echte mail is geen
+ * voorbeeld maar een gok.
+ */
+export async function voorbeeldVoorstel(invoer: {
+  bedrijf?: string | null;
+  scanId?: string | null;
+}): Promise<{ onderwerp: string; html: string }> {
+  const supabase = createClient();
+  const opzet = await voorstelOpzet(supabase, {
+    bedrijf: invoer.bedrijf ?? null,
+    scanId: invoer.scanId ?? null,
+  });
+  return { onderwerp: opzet.onderwerp, html: opzet.html };
 }

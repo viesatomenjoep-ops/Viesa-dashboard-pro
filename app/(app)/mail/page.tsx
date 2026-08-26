@@ -21,6 +21,7 @@ import { leesFout } from "@/lib/fout";
 import { sorteerMetFavorietenBovenaan } from "@/lib/sjablonen";
 import { wisselFavoriet } from "../sjablonen/acties";
 import { MailOpstellen, type KlantOptie, type MailRapport } from "@/components/MailOpstellen";
+import { VoorstelMail, type VoorstelScan } from "@/components/VoorstelMail";
 import type { ScanRapport } from "@/lib/scan";
 import { VerzondenMelding } from "@/components/VerzondenMelding";
 import { MailLeesPaneel } from "@/components/MailLeesPaneel";
@@ -28,6 +29,8 @@ import { MailTriage } from "./MailTriage";
 import { VolScherm } from "@/components/ui/VolScherm";
 import {
   verstuurBericht,
+  verstuurVoorstel,
+  voorbeeldVoorstel,
   wisselSter,
   verplaatsMail,
   verwijderMail,
@@ -128,6 +131,21 @@ export default async function MailPagina({
   } catch {
     /* klanten-tabel nog niet aanwezig */
   }
+  // Bewaarde Deep Scans, om er een voorstelmail omheen te sturen. Best effort:
+  // de tabel bestaat pas na migratie 0047, en de mailpagina hoort daar niet op
+  // te wachten.
+  let scans: VoorstelScan[] = [];
+  try {
+    const { data } = await supabase
+      .from("website_scans")
+      .select("id, host, bedrijf, totaal_score, created_at, deelsleutel")
+      .order("created_at", { ascending: false })
+      .limit(25);
+    scans = (data ?? []) as VoorstelScan[];
+  } catch {
+    /* website_scans nog niet aanwezig */
+  }
+
   // E-mailsjablonen uit de sjablonen-machine (best effort — tabel kan ontbreken).
   let mailSjablonen: {
     id: string;
@@ -239,6 +257,21 @@ export default async function MailPagina({
       <PaginaKop
         titel="E-mail"
         actie={
+          <div className="flex flex-wrap items-center gap-2">
+          <VolScherm
+            label="Voorstel versturen"
+            titel="Viesa-voorstel — ons aanbod in één mail"
+            breed="6xl"
+            toon="navy"
+          >
+            <VoorstelMail
+              verstuurActie={verstuurVoorstel}
+              voorbeeldActie={voorbeeldVoorstel}
+              geconfigureerd={geconfigureerd}
+              klanten={klanten.map((k) => ({ bedrijf: k.bedrijf, email: k.email }))}
+              scans={scans}
+            />
+          </VolScherm>
           <VolScherm
             label="Nieuwe e-mail"
             titel="Nieuwe e-mail"
@@ -256,6 +289,7 @@ export default async function MailPagina({
               initieelOnderwerp={searchParams.onderwerp ?? ""}
             />
           </VolScherm>
+          </div>
         }
       />
 

@@ -50,5 +50,11 @@ export default async function GedeeldRapport({ params }: { params: { sleutel: st
     gemetenOp: data.created_at as string,
   });
 
-  return <Rapport rapport={rapport} korteUrl={`/rapport/${params.sleutel}/kort`} />;
+  return (
+    <Rapport
+      rapport={rapport}
+      korteUrl={`/rapport/${params.sleutel}/kort`}
+      voorstelUrl={`/rapport/${params.sleutel}/voorstel`}
+    />
+  );
 }

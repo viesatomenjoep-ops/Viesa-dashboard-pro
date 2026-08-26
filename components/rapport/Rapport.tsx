@@ -31,10 +31,13 @@ import "./laptopbeeld.css";
 export function Rapport({
   rapport,
   korteUrl,
+  voorstelUrl,
 }: {
   rapport: RapportData;
   /** De korte versie, als die er is — bovenaan als tweede ingang. */
   korteUrl?: string | null;
+  /** Het voorstel: wat wij hieraan zouden doen, en wat we verder aanbieden. */
+  voorstelUrl?: string | null;
 }) {
   return (
     <div className={`rap ${merkKlassen}`}>
@@ -87,6 +90,7 @@ export function Rapport({
             host={rapport.host}
             kop="Zullen we dit samen doornemen?"
             lees="Een half uur, en u weet wat er moet gebeuren en wat het kost. We lopen de punten hierboven langs op volgorde van wat het meeste oplevert."
+            eerste={voorstelUrl ? { label: "Wat wij verder aanbieden", href: voorstelUrl } : null}
           />
           <span className="rap-alleen-scherm" style={{ display: "inline-block", marginTop: 18 }}>
             <AfdrukKnop />
