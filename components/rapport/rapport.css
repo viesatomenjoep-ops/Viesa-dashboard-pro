@@ -113,9 +113,18 @@
 .rap-ring { display: inline-flex; flex-direction: column; align-items: center; gap: 5px; }
 .rap-ring-vlak { position: relative; display: inline-grid; place-items: center; }
 .rap-ring svg { transform: rotate(-90deg); }
-.rap-ring-cijfer { position: absolute; display: flex; align-items: baseline; gap: 2px; }
-.rap-ring-cijfer b { font-family: var(--letter-data); font-weight: 600; letter-spacing: -0.02em; }
-.rap-ring-cijfer span { font-family: var(--letter-data); font-size: .72rem; color: var(--zacht); }
+/* Het cijfer met zijn noemer. `gap: 1px` en de smalle letterafstand houden de
+   twee bij elkaar; de lettergroottes komen uit de component, want die hangen af
+   van het aantal cijfers én van de maat van de ring. */
+.rap-ring-cijfer { position: absolute; display: flex; align-items: baseline; gap: 1px; }
+.rap-ring-cijfer b {
+  font-family: var(--letter-data); font-weight: 600;
+  letter-spacing: -0.04em; line-height: 1;
+}
+.rap-ring-cijfer span {
+  font-family: var(--letter-data); color: var(--zacht);
+  line-height: 1; letter-spacing: -0.02em;
+}
 .rap-ring-oordeel { font-size: .84rem; font-weight: 700; }
 .rap-ring-norm { font-size: .74rem; color: var(--zacht); }
 
