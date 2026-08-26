@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   Bot,
   Check,
   CheckCircle2,
   Circle,
+  Clock,
   FileSearch,
   Gauge,
   Globe,
@@ -16,6 +18,7 @@ import {
   Search,
   Send,
   ShieldCheck,
+  Trash2,
   XCircle,
 } from "lucide-react";
 import type { Bevinding } from "@/lib/geo-analyse";
@@ -23,6 +26,7 @@ import type { ScanRapport } from "@/lib/scan";
 import { ZoekKies } from "@/components/ZoekKies";
 import { ScanPdfKnop } from "@/components/ScanPdfKnop";
 import { pushScanRapportNaarLead } from "@/app/(app)/leads/acties";
+import { laadOpgeslagenScan, verwijderScan } from "@/app/(app)/scan/acties";
 
 /**
  * Websitescanner: één URL erin, en de controles komen er live één voor één
@@ -137,14 +141,27 @@ function BevindingRij({ b }: { b: Bevinding }) {
 
 export type ScanLead = { id: string; bedrijf: string; website: string | null; branche?: string | null };
 
+export type OpgeslagenScan = {
+  id: string;
+  url: string;
+  host: string;
+  niche: string | null;
+  totaal_score: number;
+  created_at: string;
+};
+
 export function WebsiteScanner({
   beginUrl = "",
   leads = [],
+  opgeslagenScans = [],
 }: {
   beginUrl?: string;
   /** Bestaande leads met een ingevulde website — voor de kieslijst hieronder. */
   leads?: ScanLead[];
+  /** Eerder voltooide scans — om terug te openen of te verwijderen. */
+  opgeslagenScans?: OpgeslagenScan[];
 }) {
+  const router = useRouter();
   const [url, setUrl] = useState(beginUrl);
   const [niche, setNiche] = useState("");
   const [leadZoek, setLeadZoek] = useState("");
@@ -158,6 +175,8 @@ export function WebsiteScanner({
   const [host, setHost] = useState<string>("");
   const [pushBezig, setPushBezig] = useState(false);
   const [gepusht, setGepusht] = useState(false);
+  const [openBezig, setOpenBezig] = useState<string | null>(null);
+  const [verwijderBezig, setVerwijderBezig] = useState<string | null>(null);
   const bronRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
@@ -201,6 +220,9 @@ export function WebsiteScanner({
       if (event.type === "klaar" || event.type === "fout") {
         bron.close();
         setBezig(false);
+        // De scan is net bewaard (website_scans) — de geschiedenis hieronder
+        // bijwerken zodat hij er meteen bij staat.
+        if (event.type === "klaar") router.refresh();
       }
     };
 
@@ -225,6 +247,87 @@ export function WebsiteScanner({
       else setFout(res.fout ?? "Push naar lead mislukt.");
     } finally {
       setPushBezig(false);
+    }
+  }
+
+  /**
+   * Zet een bewaard rapport rechtstreeks in de weergave — zonder de scan
+   * opnieuw te draaien. Bouwt de stappenlijst na uit de al bewaarde
+   * bevindingen, in plaats van live gebeurtenissen te volgen.
+   */
+  function laadRapport(r: ScanRapport) {
+    bronRef.current?.close();
+    setBezig(false);
+    setFout(null);
+    setUrl(r.url);
+    setNiche(r.niche ?? "");
+    setHost(r.host);
+    setVoorbeeld(r.voorbeeld ?? null);
+    setGepusht(false);
+    setGekozenLeadId(null);
+    setTotaal({ score: r.totaalScore, oordeel: oordeelVan(r.totaalScore).label });
+    setRapport(r);
+
+    const vindbaarheid = r.vindbaarheid as { bevindingen?: Bevinding[] } | undefined;
+    const beveiliging = r.beveiliging as { percentage?: number } | undefined;
+
+    setStappen({
+      ophalen: { status: "goed", samenvatting: "" },
+      vindbaarheid: {
+        status: vindbaarheid?.bevindingen?.every((b) => b.goed) ?? true ? "goed" : "aandacht",
+        samenvatting: "",
+        data: r.vindbaarheid,
+      },
+      structured_data: {
+        status: r.geo.score >= 70 ? "goed" : "aandacht",
+        samenvatting: `${r.geo.score}/100`,
+        data: r.geo,
+      },
+      content: { status: "goed", samenvatting: "" },
+      beveiliging: {
+        status: (beveiliging?.percentage ?? 100) >= 70 ? "goed" : "aandacht",
+        samenvatting: "",
+        data: r.beveiliging,
+      },
+      scripts: { status: "goed", samenvatting: "", data: r.scripts },
+      snelheid: {
+        status: (r.techniek.score ?? 0) >= 70 ? "goed" : "aandacht",
+        samenvatting: r.techniek.score !== null ? `${r.techniek.score}/100` : (r.techniek.fout ?? "Niet gemeten"),
+        data: r.techniek,
+      },
+      zichtbaarheid: {
+        status: r.zichtbaarheid.score !== null && r.zichtbaarheid.score >= 50 ? "goed" : "aandacht",
+        samenvatting:
+          r.zichtbaarheid.getest > 0
+            ? `${r.zichtbaarheid.gevonden} van ${r.zichtbaarheid.getest} modellen noemt dit bedrijf`
+            : "Geen niche gemeten",
+        data: r.zichtbaarheid.resultaten,
+      },
+    });
+  }
+
+  async function bekijkOpgeslagenScan(id: string) {
+    if (openBezig) return;
+    setOpenBezig(id);
+    setFout(null);
+    try {
+      const res = await laadOpgeslagenScan(id);
+      if (res.ok && res.rapport) laadRapport(res.rapport);
+      else setFout(res.fout ?? "Kon de scan niet laden.");
+    } finally {
+      setOpenBezig(null);
+    }
+  }
+
+  async function verwijderOpgeslagenScan(id: string) {
+    if (!window.confirm("Weet u zeker dat u deze scan wilt verwijderen?")) return;
+    setVerwijderBezig(id);
+    try {
+      const res = await verwijderScan(id);
+      if (res.ok) router.refresh();
+      else setFout(res.fout ?? "Verwijderen mislukt.");
+    } finally {
+      setVerwijderBezig(null);
     }
   }
 
@@ -368,6 +471,51 @@ export function WebsiteScanner({
 
         {fout && (
           <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{fout}</p>
+        )}
+
+        {opgeslagenScans.length > 0 && (
+          <div className="mt-5 border-t border-navy/10 pt-4">
+            <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-navy/50">
+              <Clock size={13} /> Eerdere scans ({opgeslagenScans.length})
+            </p>
+            <ul className="flex flex-wrap gap-2">
+              {opgeslagenScans.map((s) => (
+                <li
+                  key={s.id}
+                  className="flex items-center gap-1.5 rounded-lg border border-navy/15 bg-navy/[0.02] py-1 pl-2.5 pr-1.5 text-xs"
+                >
+                  <button
+                    type="button"
+                    onClick={() => bekijkOpgeslagenScan(s.id)}
+                    disabled={openBezig !== null}
+                    className="inline-flex items-center gap-1.5 text-navy hover:underline disabled:opacity-50"
+                  >
+                    {openBezig === s.id ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <span className={`font-semibold ${oordeelVan(s.totaal_score).kleur}`}>
+                        {s.totaal_score}
+                      </span>
+                    )}
+                    {s.host} · {s.created_at.slice(0, 10)}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => verwijderOpgeslagenScan(s.id)}
+                    disabled={verwijderBezig !== null}
+                    aria-label="Scan verwijderen"
+                    className="text-navy/30 hover:text-red-600 disabled:opacity-50"
+                  >
+                    {verwijderBezig === s.id ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <Trash2 size={12} />
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </section>
 

@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
 import { GoogleGenAI } from "@google/genai";
 import { schoonSleutel } from "@/lib/geheimen";
+import { createClient } from "@/lib/supabase/server";
 import {
   doelGevonden,
   leesbareModelFout,
@@ -23,9 +24,16 @@ import {
 
 // Model-ID's uit de omgeving, met een werkende standaard. Zo hoef je bij een
 // nieuwe modelversie niet te deployen — alleen een env-variabele te wijzigen.
+//
+// Bewust de goedkoopste bruikbare laag per aanbieder: deze vraag ("noem vijf
+// bedrijven in deze niche") vraagt geen diep redeneerwerk, alleen een
+// betrouwbare opsomming — precies waar een klein/snel model goed in is. Een
+// zwaarder model (Opus, gpt-4o) kost hier veelvoud zonder betere antwoorden.
+// Vindt u de kwaliteit van de genoemde concurrenten tegenvallen, zet dan de
+// bijbehorende env-variabele hoger — dat kost geen deploy.
 const MODELLEN = {
-  openai: process.env.OPENAI_MODEL ?? "gpt-4o",
-  anthropic: process.env.CLAUDE_MODEL ?? "claude-opus-5",
+  openai: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
+  anthropic: process.env.CLAUDE_MODEL ?? "claude-haiku-4-5-20251001",
   gemini: process.env.GEMINI_MODEL ?? "gemini-2.0-flash",
   perplexity: process.env.PERPLEXITY_MODEL ?? "sonar",
 } as const;
@@ -65,10 +73,10 @@ async function fetchAnthropic(niche: string): Promise<Concurrent[]> {
   const res = await client.messages.create({
     model: MODELLEN.anthropic,
     max_tokens: 2000,
-    // Opsommen wat je weet vraagt geen diep redeneerwerk. Thinking staat aan
-    // (standaard op Opus 5) maar op lage effort: scheelt kosten en tijd zonder
-    // de bekende problemen van thinking helemaal uitzetten.
-    output_config: { effort: "low" },
+    // Geen output_config/thinking: dat bestaat pas vanaf Sonnet/Opus. Het
+    // standaardmodel hier is bewust Haiku (goedkoopste laag, geen diep
+    // redeneerwerk nodig om vijf bedrijfsnamen op te sommen) — Haiku wijst
+    // effort/thinking-parameters af met een fout, dus die blijven weg.
     messages: [{ role: "user", content: systeemOpdracht(niche) }],
   });
   const tekst = res.content
@@ -153,4 +161,64 @@ export async function vraagAlleModellen(
     gemini: naarUitkomst(gemini, targetUrl, "gemini"),
     perplexity: naarUitkomst(perplexity, targetUrl, "perplexity"),
   };
+}
+
+// ---------------------------------------------------------------------------
+// Hergebruik per niche — het overgrote deel van de kosten weg zonder dat de
+// uitkomst voor de klant verandert
+// ---------------------------------------------------------------------------
+
+/** Hoelang een eerdere meting voor dezelfde niche hergebruikt mag worden. */
+const CACHE_UUR = 24;
+
+/**
+ * Herberekent alleen "staat dit bedrijf ertussen" op een hergebruikt
+ * resultaat — de concurrentenlijst zelf blijft ongewijzigd.
+ */
+function herwaardeer(resultaten: AuditResultaten, targetUrl: string): AuditResultaten {
+  const opnieuw = (u: ModelUitkomst): ModelUitkomst =>
+    u.success ? { ...u, target_found: doelGevonden(targetUrl, u.competitors) } : u;
+  return {
+    openai: opnieuw(resultaten.openai),
+    anthropic: opnieuw(resultaten.anthropic),
+    gemini: opnieuw(resultaten.gemini),
+    perplexity: opnieuw(resultaten.perplexity),
+  };
+}
+
+/**
+ * Zoals `vraagAlleModellen`, maar hergebruikt een meting van dezelfde niche
+ * van de laatste 24 uur in plaats van de vier modellen opnieuw te bevragen.
+ *
+ * De opdracht aan elk model is exact dezelfde nichetekst, dus twee scans in
+ * dezelfde niche binnen een dag krijgen sowieso hetzelfde antwoord — alleen
+ * "staat déze klant ertussen" verschilt, en dat wordt hierboven opnieuw
+ * berekend op de bewaarde concurrentenlijst. Zo verdwijnt het grootste deel
+ * van de kosten (vier LLM-aanroepen per scan) bij herhaalde scans in dezelfde
+ * branche, zonder dat de uitkomst voor de klant verandert.
+ */
+export async function vraagAlleModellenMetCache(
+  niche: string,
+  targetUrl: string,
+): Promise<{ resultaten: AuditResultaten; hergebruikt: boolean }> {
+  const supabase = createClient();
+  const grens = new Date(Date.now() - CACHE_UUR * 3600_000).toISOString();
+
+  const { data } = await supabase
+    .from("ai_audits")
+    .select("llm_results")
+    .ilike("niche_keyword", niche.trim())
+    .gte("created_at", grens)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (data?.llm_results) {
+    return {
+      resultaten: herwaardeer(data.llm_results as AuditResultaten, targetUrl),
+      hergebruikt: true,
+    };
+  }
+
+  return { resultaten: await vraagAlleModellen(niche, targetUrl), hergebruikt: false };
 }

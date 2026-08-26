@@ -26,13 +26,23 @@ export default async function ScanPagina({
     .neq("website", "")
     .order("bedrijf", { ascending: true });
 
+  const { data: scans } = await supabase
+    .from("website_scans")
+    .select("id, url, host, niche, totaal_score, created_at")
+    .order("created_at", { ascending: false })
+    .limit(50);
+
   return (
     <>
       <PaginaKop
         titel="Websitescan"
         omschrijving="Plak een URL en zie in één oordeel hoe zichtbaar dit bedrijf is voor AI-modellen — en wat eraan te doen is."
       />
-      <WebsiteScanner beginUrl={searchParams.url ?? ""} leads={leads ?? []} />
+      <WebsiteScanner
+        beginUrl={searchParams.url ?? ""}
+        leads={leads ?? []}
+        opgeslagenScans={scans ?? []}
+      />
     </>
   );
 }

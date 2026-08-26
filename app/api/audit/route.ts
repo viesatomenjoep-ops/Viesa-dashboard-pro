@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { vraagAlleModellen } from "@/lib/audit-modellen";
+import { vraagAlleModellenMetCache } from "@/lib/audit-modellen";
 import type { AuditResultaten } from "@/lib/audit";
 
 /**
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const resultaten: AuditResultaten = await vraagAlleModellen(niche, targetUrl);
+  const { resultaten, hergebruikt } = await vraagAlleModellenMetCache(niche, targetUrl);
 
   // Opslaan, maar de audit niet laten mislukken als dat niet lukt — de klant
   // zit op het resultaat te wachten, niet op onze administratie.
@@ -65,6 +65,7 @@ export async function POST(request: Request) {
     target_url: targetUrl,
     niche_keyword: niche,
     ...resultaten,
+    hergebruikt,
     samenvatting: {
       gelukt: modellen.filter((m) => resultaten[m].success).length,
       gevonden: modellen.filter((m) => resultaten[m].target_found).length,

@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { vraagAlleModellen } from "@/lib/audit-modellen";
+import { vraagAlleModellenMetCache } from "@/lib/audit-modellen";
 import type { AuditResultaten } from "@/lib/audit";
 import {
   analyseerGeo,
@@ -192,24 +192,28 @@ export async function GET(request: Request) {
 
         const niche = String(body.niche ?? "").trim() || structured?.voorgesteldeNiche || null;
         let zichtbaarheid: AuditResultaten | null = null;
+        let zichtbaarheidHergebruikt = false;
         if (niche) {
-          zichtbaarheid = await stap(
+          const uitkomst = await stap(
             "zichtbaarheid",
-            () => vraagAlleModellen(niche, url),
+            () => vraagAlleModellenMetCache(niche, url),
             (r) => {
-              const modellen = Object.values(r);
+              const modellen = Object.values(r.resultaten);
               const gelukt = modellen.filter((m) => m.success);
               const gevonden = gelukt.filter((m) => m.target_found).length;
+              const basis =
+                gelukt.length > 0
+                  ? `${gevonden} van ${gelukt.length} modellen noemt dit bedrijf`
+                  : "Geen model bereikbaar";
               return {
                 goed: gelukt.length > 0 && gevonden === gelukt.length,
-                samenvatting:
-                  gelukt.length > 0
-                    ? `${gevonden} van ${gelukt.length} modellen noemt dit bedrijf`
-                    : "Geen model bereikbaar",
-                data: r,
+                samenvatting: r.hergebruikt ? `${basis} (hergebruikt, geen kosten)` : basis,
+                data: r.resultaten,
               };
             },
           );
+          zichtbaarheid = uitkomst?.resultaten ?? null;
+          zichtbaarheidHergebruikt = uitkomst?.hergebruikt ?? false;
         } else {
           stuur({
             type: "stap_klaar",
@@ -237,6 +241,13 @@ export async function GET(request: Request) {
         });
         const oordeel = score >= 75 ? "Goed zichtbaar" : score >= 50 ? "Matig zichtbaar" : "Vrijwel onzichtbaar";
         const voorbeeld = voorbeeldAfbeelding(site.html, url);
+
+        const waarschuwingen = [...site.waarschuwingen];
+        if (zichtbaarheidHergebruikt) {
+          waarschuwingen.push(
+            "AI-zichtbaarheid hergebruikt van een eerdere meting in dezelfde niche (< 24u oud) — geen nieuwe modelkosten.",
+          );
+        }
 
         // Het volledige rapport — dit is wat "push naar lead" en de PDF
         // gebruiken, zonder de scan opnieuw te hoeven draaien.
@@ -272,7 +283,7 @@ export async function GET(request: Request) {
             getest: zichtbaarheid ? Object.values(zichtbaarheid).filter((m) => m.success).length : 0,
             resultaten: zichtbaarheid,
           },
-          waarschuwingen: site.waarschuwingen,
+          waarschuwingen,
           beveiliging,
           scripts,
           vindbaarheid: geo,
@@ -291,6 +302,16 @@ export async function GET(request: Request) {
             llm_results: zichtbaarheid,
           });
         }
+
+        // Het volledige rapport apart bewaren (los van een lead) zodat /scan
+        // een geschiedenis kan tonen om terug te openen of te verwijderen.
+        await supabase.from("website_scans").insert({
+          url,
+          host,
+          niche: niche ?? null,
+          totaal_score: score,
+          rapport: resultaat,
+        });
 
         stuur({ type: "stap_klaar", stap: "voorbeeld", goed: true, samenvatting: "", data: { voorbeeld } });
 
