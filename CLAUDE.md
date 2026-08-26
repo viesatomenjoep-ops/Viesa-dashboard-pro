@@ -179,6 +179,14 @@ Bij elke gemelde fout die niet nog eens mag gebeuren: hier bijwerken.
   faalt dan met "does not match the required types of a Next.js Route" — terwijl
   `tsc --noEmit` gewoon groen is. Zet zulke code in `lib/`; dat is bovendien de
   enige manier om hem los te testen.
+- **Twee lijsten die hetzelfde moeten dekken, lopen uit elkaar.** De scanner had
+  een `STAPPEN`-lijst voor de weergave en een tweede opsomming in `laadRapport`
+  die een bewaarde scan terugzette. Toen `technologie` erbij kwam, kreeg alleen
+  de eerste die stap; de weergave las `st.status` van niets en de pagina klapte
+  eruit met "undefined is not an object". Een `Record<string, …>` accepteert elke
+  sleutelverzameling, dus de typecontrole zweeg. Nu komen beide uit
+  `lib/scan-stappen.ts`, en `scripts/test-scan-stappen.mjs` eist dat elke stap
+  een staat krijgt.
 - **Een JSON-kolom is geen type.** `website_scans.rapport` is geschreven door de
   scanner van *toen*; `JSON.stringify` laat bovendien elke `undefined` sleutel
   weg. `rapportVanScan` controleerde op `scores.lcp === null`, een ontbrekende
