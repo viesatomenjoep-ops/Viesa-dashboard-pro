@@ -41,7 +41,7 @@ const metFoto = bouwStatischPrototype({
   plaats: null,
   branche: "Horeca",
   type: "website",
-  echt: { titel: "Foto BV — Home", beschrijving: "Een gezellig café in het centrum.", afbeeldingen: ["https://example.com/foto.jpg"], logo: null, merkkleur: null },
+  echt: { titel: "Foto BV — Home", beschrijving: "Een gezellig café in het centrum.", kop: null, secties: [], navigatie: [], afbeeldingen: ["https://example.com/foto.jpg"], logo: null, merkkleur: null },
 });
 test("echte foto komt terug als <img>", metFoto.includes('https://example.com/foto.jpg'), true);
 test("echte omschrijving vervangt de generieke subtitel", metFoto.includes("Een gezellig café in het centrum."), true);
@@ -49,7 +49,7 @@ const zonderFoto = bouwStatischPrototype({ bedrijf: "Geen Foto BV", plaats: null
 test("zonder echt blijft de generieke subtitel staan", zonderFoto.includes("Vers bereid, met aandacht voor seizoen en herkomst."), true);
 test("app-mockup verwerkt ook een echte foto", bouwStatischPrototype({
   bedrijf: "X", plaats: null, branche: "Groothandel", type: "app",
-  echt: { titel: null, beschrijving: null, afbeeldingen: ["https://example.com/a.jpg"], logo: null, merkkleur: null },
+  echt: { titel: null, beschrijving: null, kop: null, secties: [], navigatie: [], afbeeldingen: ["https://example.com/a.jpg"], logo: null, merkkleur: null },
 }).includes("https://example.com/a.jpg"), true);
 
 console.log("\nnieuwe archetypes");
@@ -63,7 +63,7 @@ test("studio-stijl heeft schuine kaarten", studio.includes("rotate(-4deg)"), tru
 console.log("\nlogo + huisstijl van de klant");
 const metLogo = bouwStatischPrototype({
   bedrijf: "Logo BV", plaats: null, branche: "Groothandel", type: "website",
-  echt: { titel: null, beschrijving: null, afbeeldingen: [], logo: "https://example.com/logo.png", merkkleur: "#123456" },
+  echt: { titel: null, beschrijving: null, kop: null, secties: [], navigatie: [], afbeeldingen: [], logo: "https://example.com/logo.png", merkkleur: "#123456" },
 });
 test("echt logo vervangt de initialenbadge", metLogo.includes("https://example.com/logo.png") && !metLogo.includes(">LB<"), true);
 test("merkkleur van de klant vervangt de archetypekleur", metLogo.includes("#123456"), true);
@@ -104,6 +104,74 @@ test("geen emoji in de output (professioneel, niet AI-achtig)", (() => {
     if (emojiRegex.test(html)) return `emoji in app: ${b}`;
   }
   return true;
+})(), true);
+
+console.log("\nechte teksten van de site vervangen de sjabloontekst");
+const leegEcht = { titel: null, beschrijving: null, kop: null, secties: [], navigatie: [], afbeeldingen: [], logo: null, merkkleur: null };
+const metTeksten = bouwStatischPrototype({
+  bedrijf: "Stoeterij Test", plaats: null, branche: "Overig", type: "website",
+  echt: { ...leegEcht,
+    kop: "Professionele paardenfokkerij sinds 1978",
+    secties: [
+      { titel: "Onze hengsten", tekst: "Wij fokken al ruim veertig jaar springpaarden van internationaal niveau, met eigen hengsten op stal." },
+      { titel: "Africhting", tekst: "Van jong paard tot wedstrijdklaar: onze ruiters begeleiden elk paard stap voor stap door de opleiding." },
+    ],
+  },
+});
+test("de echte h1 vervangt de generieke tagline", metTeksten.includes("Professionele paardenfokkerij sinds 1978"), true);
+test("de generieke tagline is weg", metTeksten.includes("Graag tot uw dienst"), false);
+test("echte sectietitels komen in het prototype", metTeksten.includes("Onze hengsten") && metTeksten.includes("Africhting"), true);
+test("de bijbehorende tekst komt mee", metTeksten.includes("springpaarden van internationaal niveau"), true);
+
+test("één sectie is te weinig — dan blijft het branchesjabloon staan", (() => {
+  const html = bouwStatischPrototype({
+    bedrijf: "X", plaats: null, branche: "Overig", type: "website",
+    echt: { ...leegEcht, secties: [{ titel: "Alleen deze", tekst: "Een enkele sectie zegt te weinig over wat een bedrijf doet." }] },
+  });
+  return !html.includes("Alleen deze");
+})(), true);
+
+test("een veel te lange kop wordt genegeerd", (() => {
+  const html = bouwStatischPrototype({
+    bedrijf: "X", plaats: null, branche: "Overig", type: "website",
+    echt: { ...leegEcht, kop: "A".repeat(120) },
+  });
+  return !html.includes("A".repeat(120));
+})(), true);
+
+test("zonder echte content blijft alles bij het sjabloon", (() => {
+  const met = bouwStatischPrototype({ bedrijf: "X", plaats: null, branche: "Overig", type: "website", echt: leegEcht });
+  const zonder = bouwStatischPrototype({ bedrijf: "X", plaats: null, branche: "Overig", type: "website" });
+  return met === zonder;
+})(), true);
+
+// Het verhaal-sjabloon heeft meerdere beeldvlakken; premium heeft er maar één,
+// dus daar valt niets te roteren.
+test("elk beeldvlak krijgt een andere echte foto", (() => {
+  const html = bouwStatischPrototype({
+    bedrijf: "X", plaats: null, branche: "Overig", type: "website", stijl: "verhaal",
+    echt: { ...leegEcht, afbeeldingen: ["https://x.nl/1.jpg", "https://x.nl/2.jpg", "https://x.nl/3.jpg"] },
+  });
+  // Minstens twee verschillende foto's moeten voorkomen; eerder werd overal
+  // dezelfde eerste foto gebruikt.
+  const gebruikt = ["1.jpg", "2.jpg", "3.jpg"].filter((f) => html.includes(f));
+  return gebruikt.length >= 2 ? true : `slechts ${gebruikt.length} foto gebruikt`;
+})(), true);
+
+test("de echte menu-items vervangen het verzonnen menu", (() => {
+  const html = bouwStatischPrototype({
+    bedrijf: "X", plaats: null, branche: "Overig", type: "website", stijl: "corporate",
+    echt: { ...leegEcht, navigatie: ["Hengsten", "Africhting", "Te koop"] },
+  });
+  return html.includes("Hengsten") && html.includes("Africhting") && !html.includes("<span>Werkwijze</span>");
+})(), true);
+
+test("één menu-item is te weinig — dan blijft het sjabloonmenu staan", (() => {
+  const html = bouwStatischPrototype({
+    bedrijf: "X", plaats: null, branche: "Overig", type: "website", stijl: "corporate",
+    echt: { ...leegEcht, navigatie: ["Home"] },
+  });
+  return html.includes("<span>Werkwijze</span>");
 })(), true);
 
 console.log(`\n${goed} goed, ${fout} fout\n`);

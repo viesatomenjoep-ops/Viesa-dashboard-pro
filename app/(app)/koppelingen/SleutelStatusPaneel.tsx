@@ -99,6 +99,7 @@ export function SleutelStatusPaneel({
                   >
                     {s.melding}
                   </p>
+                  {s.detail && <p className="mt-0.5 text-xs text-navy/50">{s.detail}</p>}
                   {s.werkt !== true && (
                     <p className="mt-0.5 text-xs text-navy/40">
                       {s.gevolg} Ophalen bij: {s.bron}

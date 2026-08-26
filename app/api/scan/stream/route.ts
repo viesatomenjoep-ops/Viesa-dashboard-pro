@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { vraagAlleModellen } from "@/lib/audit-modellen";
+import { vraagAlleModellenMetCache } from "@/lib/audit-modellen";
 import type { AuditResultaten } from "@/lib/audit";
 import {
   analyseerGeo,
@@ -16,6 +16,7 @@ import {
   controleerVindbaarheid,
   voorbeeldAfbeelding,
 } from "@/lib/site-checks";
+import { herkenTechnologie } from "@/lib/rapport/technologie";
 
 /**
  * Streamende websitescan — dezelfde meting als /api/scan, maar dan als een
@@ -41,7 +42,7 @@ type Event =
   | { type: "stap_klaar"; stap: string; goed: boolean; samenvatting: string; data?: unknown }
   | { type: "totaal"; score: number; oordeel: string; resultaat: ScanRapport }
   | { type: "fout"; melding: string }
-  | { type: "klaar" };
+  | { type: "klaar"; scanId?: string | null };
 
 function sse(event: Event): string {
   return `data: ${JSON.stringify(event)}\n\n`;
@@ -80,6 +81,7 @@ export async function GET(request: Request) {
 
   const stream = new ReadableStream({
     async start(controller) {
+      const begonnenOp = Date.now();
       const stuur = (e: Event) => controller.enqueue(encoder.encode(sse(e)));
       // Voert een stap uit, meldt start en einde, en laat een fout in één stap
       // de rest van de scan niet meeslepen — precies zoals Promise.allSettled
@@ -175,6 +177,19 @@ export async function GET(request: Request) {
           (r) => ({ goed: true, samenvatting: r.samenvatting, data: r }),
         );
 
+        const technologie = await stap(
+          "technologie",
+          async () => herkenTechnologie(site.html, site.headers),
+          (groepen) => {
+            const n = groepen.reduce((s, g) => s + g.namen.length, 0);
+            return {
+              goed: true,
+              samenvatting: n === 0 ? "Niets herkend" : `${n} herkend`,
+              data: groepen,
+            };
+          },
+        );
+
         // 3. De trage, externe metingen — pas hierna, want ze kosten tijd en
         //    (bij PageSpeed en de modellen) geld.
         const pagespeed = await stap(
@@ -192,24 +207,28 @@ export async function GET(request: Request) {
 
         const niche = String(body.niche ?? "").trim() || structured?.voorgesteldeNiche || null;
         let zichtbaarheid: AuditResultaten | null = null;
+        let zichtbaarheidHergebruikt = false;
         if (niche) {
-          zichtbaarheid = await stap(
+          const uitkomst = await stap(
             "zichtbaarheid",
-            () => vraagAlleModellen(niche, url),
+            () => vraagAlleModellenMetCache(niche, url),
             (r) => {
-              const modellen = Object.values(r);
+              const modellen = Object.values(r.resultaten);
               const gelukt = modellen.filter((m) => m.success);
               const gevonden = gelukt.filter((m) => m.target_found).length;
+              const basis =
+                gelukt.length > 0
+                  ? `${gevonden} van ${gelukt.length} modellen noemt dit bedrijf`
+                  : "Geen model bereikbaar";
               return {
                 goed: gelukt.length > 0 && gevonden === gelukt.length,
-                samenvatting:
-                  gelukt.length > 0
-                    ? `${gevonden} van ${gelukt.length} modellen noemt dit bedrijf`
-                    : "Geen model bereikbaar",
-                data: r,
+                samenvatting: r.hergebruikt ? `${basis} (hergebruikt, geen kosten)` : basis,
+                data: r.resultaten,
               };
             },
           );
+          zichtbaarheid = uitkomst?.resultaten ?? null;
+          zichtbaarheidHergebruikt = uitkomst?.hergebruikt ?? false;
         } else {
           stuur({
             type: "stap_klaar",
@@ -237,6 +256,13 @@ export async function GET(request: Request) {
         });
         const oordeel = score >= 75 ? "Goed zichtbaar" : score >= 50 ? "Matig zichtbaar" : "Vrijwel onzichtbaar";
         const voorbeeld = voorbeeldAfbeelding(site.html, url);
+
+        const waarschuwingen = [...site.waarschuwingen];
+        if (zichtbaarheidHergebruikt) {
+          waarschuwingen.push(
+            "AI-zichtbaarheid hergebruikt van een eerdere meting in dezelfde niche (< 24u oud) — geen nieuwe modelkosten.",
+          );
+        }
 
         // Het volledige rapport — dit is wat "push naar lead" en de PDF
         // gebruiken, zonder de scan opnieuw te hoeven draaien.
@@ -272,11 +298,18 @@ export async function GET(request: Request) {
             getest: zichtbaarheid ? Object.values(zichtbaarheid).filter((m) => m.success).length : 0,
             resultaten: zichtbaarheid,
           },
-          waarschuwingen: site.waarschuwingen,
+          waarschuwingen,
           beveiliging,
           scripts,
           vindbaarheid: geo,
           voorbeeld,
+          // Alles wat fase 3 nodig heeft om toegankelijkheid, werking en
+          // techniek als eigen onderdeel te tonen.
+          audits: pagespeed?.audits ?? {},
+          lighthouseVersie: pagespeed?.lighthouseVersie ?? null,
+          paginas: site.paginas,
+          technologie: technologie ?? [],
+          rekentijdMs: Date.now() - begonnenOp,
         };
 
         stuur({ type: "totaal", score, oordeel, resultaat });
@@ -292,9 +325,28 @@ export async function GET(request: Request) {
           });
         }
 
+        // Het volledige rapport apart bewaren (los van een lead) zodat /scan
+        // een geschiedenis kan tonen om terug te openen of te verwijderen.
+        // De id komt mee terug, zodat de scanner meteen een deellink naar het
+        // klantrapport kan maken zonder de lijst opnieuw te hoeven ophalen.
+        const { data: bewaard } = await supabase
+          .from("website_scans")
+          .insert({
+            url,
+            host,
+            niche: niche ?? null,
+            totaal_score: score,
+            rapport: resultaat,
+            // De bedrijfsnaam als die is meegegeven; die leest op de omslag van
+            // het klantrapport een stuk beter dan een hostnaam.
+            bedrijf: params.get("bedrijf")?.trim() || null,
+          })
+          .select("id")
+          .single();
+
         stuur({ type: "stap_klaar", stap: "voorbeeld", goed: true, samenvatting: "", data: { voorbeeld } });
 
-        stuur({ type: "klaar" });
+        stuur({ type: "klaar", scanId: bewaard?.id ?? null });
       } catch (e) {
         stuur({ type: "fout", melding: e instanceof Error ? e.message : "De scan is mislukt." });
       } finally {

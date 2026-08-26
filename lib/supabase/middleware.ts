@@ -47,10 +47,16 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
   // /api-routes doen hun eigen authenticatie (gedeeld geheim / CRON_SECRET),
   // dus die niet naar /login omleiden.
+  //
+  // /rapport is het klantrapport: een buitenstaander opent dat met de
+  // deelsleutel uit de URL. De toegang zit daar in de RLS-policy (migratie
+  // 0048, anon mag alleen rijen lezen met een deelsleutel), niet in een
+  // sessie — een klant heeft immers geen account.
   const isPubliek =
     pathname.startsWith("/login") ||
     pathname.startsWith("/auth") ||
-    pathname.startsWith("/api");
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/rapport");
 
   if (!user && !isPubliek) {
     const url = request.nextUrl.clone();

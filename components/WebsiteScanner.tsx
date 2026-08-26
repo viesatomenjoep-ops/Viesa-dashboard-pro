@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   Bot,
   Check,
   CheckCircle2,
   Circle,
+  Clock,
+  Cpu,
+  ExternalLink,
   FileSearch,
   Gauge,
   Globe,
@@ -16,13 +20,14 @@ import {
   Search,
   Send,
   ShieldCheck,
+  Trash2,
   XCircle,
 } from "lucide-react";
 import type { Bevinding } from "@/lib/geo-analyse";
 import type { ScanRapport } from "@/lib/scan";
 import { ZoekKies } from "@/components/ZoekKies";
-import { ScanPdfKnop } from "@/components/ScanPdfKnop";
 import { pushScanRapportNaarLead } from "@/app/(app)/leads/acties";
+import { deelScan, laadOpgeslagenScan, verwijderScan } from "@/app/(app)/scan/acties";
 
 /**
  * Websitescanner: één URL erin, en de controles komen er live één voor één
@@ -42,6 +47,7 @@ const STAPPEN: { key: string; label: string; icoon: typeof Gauge }[] = [
   { key: "content", label: "Content-analyse", icoon: FileSearch },
   { key: "beveiliging", label: "Beveiliging", icoon: ShieldCheck },
   { key: "scripts", label: "Scripts & tracking", icoon: Lock },
+  { key: "technologie", label: "Technologie", icoon: Cpu },
   { key: "snelheid", label: "Snelheidsmeting", icoon: Gauge },
   { key: "zichtbaarheid", label: "AI-zichtbaarheid", icoon: Bot },
 ];
@@ -137,14 +143,27 @@ function BevindingRij({ b }: { b: Bevinding }) {
 
 export type ScanLead = { id: string; bedrijf: string; website: string | null; branche?: string | null };
 
+export type OpgeslagenScan = {
+  id: string;
+  url: string;
+  host: string;
+  niche: string | null;
+  totaal_score: number;
+  created_at: string;
+};
+
 export function WebsiteScanner({
   beginUrl = "",
   leads = [],
+  opgeslagenScans = [],
 }: {
   beginUrl?: string;
   /** Bestaande leads met een ingevulde website — voor de kieslijst hieronder. */
   leads?: ScanLead[];
+  /** Eerder voltooide scans — om terug te openen of te verwijderen. */
+  opgeslagenScans?: OpgeslagenScan[];
 }) {
+  const router = useRouter();
   const [url, setUrl] = useState(beginUrl);
   const [niche, setNiche] = useState("");
   const [leadZoek, setLeadZoek] = useState("");
@@ -158,6 +177,12 @@ export function WebsiteScanner({
   const [host, setHost] = useState<string>("");
   const [pushBezig, setPushBezig] = useState(false);
   const [gepusht, setGepusht] = useState(false);
+  const [openBezig, setOpenBezig] = useState<string | null>(null);
+  const [verwijderBezig, setVerwijderBezig] = useState<string | null>(null);
+  const [deelBezig, setDeelBezig] = useState<string | null>(null);
+  const [gekopieerd, setGekopieerd] = useState<string | null>(null);
+  /** De zojuist bewaarde scan — om er direct een klantrapport van te openen. */
+  const [laatsteScanId, setLaatsteScanId] = useState<string | null>(null);
   const bronRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
@@ -175,6 +200,7 @@ export function WebsiteScanner({
     setRapport(null);
     setGepusht(false);
     setVoorbeeld(null);
+    setLaatsteScanId(null);
     try {
       setHost(new URL(/^https?:\/\//i.test(url) ? url : `https://${url}`).host);
     } catch {
@@ -187,6 +213,9 @@ export function WebsiteScanner({
     // overal hetzelfde — alleen GET met query-parameters, geen POST-body.
     const params = new URLSearchParams({ url: url.trim() });
     if (niche.trim()) params.set("niche", niche.trim());
+    // De bedrijfsnaam komt van de gekozen lead en gaat mee naar de omslag van
+    // het klantrapport.
+    if (leadZoek.trim()) params.set("bedrijf", leadZoek.trim());
     const bron = new EventSource(`/api/scan/stream?${params}`);
     bronRef.current = bron;
 
@@ -201,6 +230,10 @@ export function WebsiteScanner({
       if (event.type === "klaar" || event.type === "fout") {
         bron.close();
         setBezig(false);
+        if (event.type === "klaar" && event.scanId) setLaatsteScanId(event.scanId);
+        // De scan is net bewaard (website_scans) — de geschiedenis hieronder
+        // bijwerken zodat hij er meteen bij staat.
+        if (event.type === "klaar") router.refresh();
       }
     };
 
@@ -228,6 +261,117 @@ export function WebsiteScanner({
     }
   }
 
+  /**
+   * Zet een bewaard rapport rechtstreeks in de weergave — zonder de scan
+   * opnieuw te draaien. Bouwt de stappenlijst na uit de al bewaarde
+   * bevindingen, in plaats van live gebeurtenissen te volgen.
+   */
+  function laadRapport(r: ScanRapport) {
+    bronRef.current?.close();
+    setBezig(false);
+    setFout(null);
+    setUrl(r.url);
+    setNiche(r.niche ?? "");
+    setHost(r.host);
+    setVoorbeeld(r.voorbeeld ?? null);
+    setGepusht(false);
+    setGekozenLeadId(null);
+    setTotaal({ score: r.totaalScore, oordeel: oordeelVan(r.totaalScore).label });
+    setRapport(r);
+
+    const vindbaarheid = r.vindbaarheid as { bevindingen?: Bevinding[] } | undefined;
+    const beveiliging = r.beveiliging as { percentage?: number } | undefined;
+
+    setStappen({
+      ophalen: { status: "goed", samenvatting: "" },
+      vindbaarheid: {
+        status: vindbaarheid?.bevindingen?.every((b) => b.goed) ?? true ? "goed" : "aandacht",
+        samenvatting: "",
+        data: r.vindbaarheid,
+      },
+      structured_data: {
+        status: r.geo.score >= 70 ? "goed" : "aandacht",
+        samenvatting: `${r.geo.score}/100`,
+        data: r.geo,
+      },
+      content: { status: "goed", samenvatting: "" },
+      beveiliging: {
+        status: (beveiliging?.percentage ?? 100) >= 70 ? "goed" : "aandacht",
+        samenvatting: "",
+        data: r.beveiliging,
+      },
+      scripts: { status: "goed", samenvatting: "", data: r.scripts },
+      snelheid: {
+        status: (r.techniek.score ?? 0) >= 70 ? "goed" : "aandacht",
+        samenvatting: r.techniek.score !== null ? `${r.techniek.score}/100` : (r.techniek.fout ?? "Niet gemeten"),
+        data: r.techniek,
+      },
+      zichtbaarheid: {
+        status: r.zichtbaarheid.score !== null && r.zichtbaarheid.score >= 50 ? "goed" : "aandacht",
+        samenvatting:
+          r.zichtbaarheid.getest > 0
+            ? `${r.zichtbaarheid.gevonden} van ${r.zichtbaarheid.getest} modellen noemt dit bedrijf`
+            : "Geen niche gemeten",
+        data: r.zichtbaarheid.resultaten,
+      },
+    });
+  }
+
+  async function bekijkOpgeslagenScan(id: string) {
+    if (openBezig) return;
+    setOpenBezig(id);
+    setFout(null);
+    try {
+      const res = await laadOpgeslagenScan(id);
+      if (res.ok && res.rapport) laadRapport(res.rapport);
+      else setFout(res.fout ?? "Kon de scan niet laden.");
+    } finally {
+      setOpenBezig(null);
+    }
+  }
+
+  /**
+   * Maakt (of hergebruikt) het deelbare adres en opent het in een nieuw tabblad.
+   * De link belandt ook op het klembord, zodat hij zo in een mail kan.
+   */
+  async function deelOpgeslagenScan(id: string) {
+    if (deelBezig) return;
+    setDeelBezig(id);
+    setFout(null);
+    try {
+      const res = await deelScan(id);
+      if (!res.ok || !res.url) {
+        setFout(res.fout ?? "Kon geen deellink maken.");
+        return;
+      }
+      const volledig = `${window.location.origin}${res.url}`;
+      try {
+        await navigator.clipboard.writeText(volledig);
+        setGekopieerd(id);
+        window.setTimeout(() => setGekopieerd(null), 2500);
+      } catch {
+        // Klembord geweigerd (geen https, of de gebruiker staat het niet toe).
+        // Het openen hieronder werkt dan nog steeds.
+      }
+      window.open(volledig, "_blank", "noopener");
+      router.refresh();
+    } finally {
+      setDeelBezig(null);
+    }
+  }
+
+  async function verwijderOpgeslagenScan(id: string) {
+    if (!window.confirm("Weet u zeker dat u deze scan wilt verwijderen?")) return;
+    setVerwijderBezig(id);
+    try {
+      const res = await verwijderScan(id);
+      if (res.ok) router.refresh();
+      else setFout(res.fout ?? "Verwijderen mislukt.");
+    } finally {
+      setVerwijderBezig(null);
+    }
+  }
+
   function verwerk(event: {
     type: string;
     stap?: string;
@@ -238,6 +382,7 @@ export function WebsiteScanner({
     oordeel?: string;
     resultaat?: ScanRapport;
     melding?: string;
+    scanId?: string | null;
   }) {
     if (event.type === "stap_start" && event.stap) {
       setStappen((v) => ({ ...v, [event.stap!]: { status: "bezig", samenvatting: "" } }));
@@ -369,6 +514,67 @@ export function WebsiteScanner({
         {fout && (
           <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{fout}</p>
         )}
+
+        {opgeslagenScans.length > 0 && (
+          <div className="mt-5 border-t border-navy/10 pt-4">
+            <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-navy/50">
+              <Clock size={13} /> Eerdere scans ({opgeslagenScans.length})
+            </p>
+            <ul className="flex flex-wrap gap-2">
+              {opgeslagenScans.map((s) => (
+                <li
+                  key={s.id}
+                  className="flex items-center gap-1.5 rounded-lg border border-navy/15 bg-navy/[0.02] py-1 pl-2.5 pr-1.5 text-xs"
+                >
+                  <button
+                    type="button"
+                    onClick={() => bekijkOpgeslagenScan(s.id)}
+                    disabled={openBezig !== null}
+                    className="inline-flex items-center gap-1.5 text-navy hover:underline disabled:opacity-50"
+                  >
+                    {openBezig === s.id ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <span className={`font-semibold ${oordeelVan(s.totaal_score).kleur}`}>
+                        {s.totaal_score}
+                      </span>
+                    )}
+                    {s.host} · {s.created_at.slice(0, 10)}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deelOpgeslagenScan(s.id)}
+                    disabled={deelBezig !== null}
+                    aria-label="Klantrapport openen en link kopiëren"
+                    title="Klantrapport openen en link kopiëren"
+                    className="text-navy/30 hover:text-navy disabled:opacity-50"
+                  >
+                    {deelBezig === s.id ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : gekopieerd === s.id ? (
+                      <Check size={12} className="text-emerald-600" />
+                    ) : (
+                      <ExternalLink size={12} />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => verwijderOpgeslagenScan(s.id)}
+                    disabled={verwijderBezig !== null}
+                    aria-label="Scan verwijderen"
+                    className="text-navy/30 hover:text-red-600 disabled:opacity-50"
+                  >
+                    {verwijderBezig === s.id ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <Trash2 size={12} />
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </section>
 
       {(bezig || klaar) && (
@@ -436,7 +642,21 @@ export function WebsiteScanner({
                 </p>
                 <p className="mt-0.5 truncate text-sm text-navy/70">{host}</p>
               </div>
-              {rapport && <ScanPdfKnop rapport={rapport} />}
+              {laatsteScanId && (
+                <button
+                  type="button"
+                  onClick={() => deelOpgeslagenScan(laatsteScanId)}
+                  disabled={deelBezig !== null}
+                  className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-navy/20 px-4 py-2 text-sm font-medium text-navy hover:bg-navy/5 disabled:opacity-60"
+                >
+                  {deelBezig === laatsteScanId ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <ExternalLink size={15} />
+                  )}
+                  Klantrapport openen
+                </button>
+              )}
               {gekozenLeadId && (
                 <button
                   type="button"

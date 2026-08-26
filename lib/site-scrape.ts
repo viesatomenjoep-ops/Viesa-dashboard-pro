@@ -1,4 +1,5 @@
 import "server-only";
+import { decodeEntities, vindKop, vindNavigatie, vindSecties } from "@/lib/site-parse";
 
 /**
  * Haalt écht beeld en tekst van de bestaande site van een lead op — geen AI,
@@ -17,6 +18,15 @@ import "server-only";
 export type SiteEchtContent = {
   titel: string | null;
   beschrijving: string | null;
+  /** De echte kop (h1) van de pagina — de zin die het bedrijf zelf koos. */
+  kop: string | null;
+  /**
+   * Echte koppen met de tekst eronder. Vervangt de verzonnen diensten in het
+   * sjabloon door wat dit bedrijf werkelijk aanbiedt.
+   */
+  secties: { titel: string; tekst: string }[];
+  /** De menu-items uit de navigatie — de echte paginanamen. */
+  navigatie: string[];
   /** Absolute URL's, og:image eerst, gededuped, logo/icoon-achtige weggefilterd. */
   afbeeldingen: string[];
   /** Het logo van het bedrijf zelf — apart van `afbeeldingen`, die het juist weren. */
@@ -72,20 +82,14 @@ function vindMerkkleur(html: string): string | null {
   return null;
 }
 
-function decodeEntities(s: string): string {
-  return s
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#0?39;/g, "'")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">");
-}
-
 /** Haalt best-effort echte content van een website op (fetch + parsing, geen AI). */
 export async function haalEchteContent(url: string): Promise<SiteEchtContent> {
   const leeg: SiteEchtContent = {
     titel: null,
     beschrijving: null,
+    kop: null,
+    secties: [],
+    navigatie: [],
     afbeeldingen: [],
     logo: null,
     merkkleur: null,
@@ -141,5 +145,14 @@ export async function haalEchteContent(url: string): Promise<SiteEchtContent> {
   const logo = vindLogo(html, net);
   const merkkleur = vindMerkkleur(html);
 
-  return { titel, beschrijving, afbeeldingen, logo, merkkleur };
+  return {
+    titel,
+    beschrijving,
+    kop: vindKop(html),
+    secties: vindSecties(html),
+    navigatie: vindNavigatie(html),
+    afbeeldingen,
+    logo,
+    merkkleur,
+  };
 }

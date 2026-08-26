@@ -12,7 +12,7 @@
  *
  * Draaien:  npm run test:audit
  */
-import { parseConcurrenten, hostVan, doelGevonden } from "../lib/audit.ts";
+import { parseConcurrenten, hostVan, doelGevonden, kiesGeminiModel } from "../lib/audit.ts";
 
 let goed = 0;
 let fout = 0;
@@ -75,6 +75,12 @@ test("subdomein van het doel telt mee", doelGevonden("example.com", met("https:/
 test("ander domein telt niet", doelGevonden("viesa-automations.nl", met("https://concurrent.nl")), false);
 test("deelstring mag niet matchen", doelGevonden("viesa.nl", met("https://nietviesa.nl")), false);
 test("leeg doel", doelGevonden("", met("https://a.nl")), false);
+
+console.log("\nkiesGeminiModel — Google's modelnamen verschillen per account");
+test("de nieuwste flash wint", kiesGeminiModel(["gemini-1.5-flash", "gemini-2.5-flash", "gemini-1.5-pro"]), "gemini-2.5-flash");
+test("thinking-varianten tellen niet mee", kiesGeminiModel(["gemini-2.5-flash-thinking", "gemini-2.0-flash"]), "gemini-2.0-flash");
+test("zonder flash valt hij terug op het eerste model", kiesGeminiModel(["gemini-2.5-pro"]), "gemini-2.5-pro");
+test("een lege lijst geeft null", kiesGeminiModel([]), null);
 
 console.log(`\n${goed} goed, ${fout} fout\n`);
 process.exit(fout === 0 ? 0 : 1);

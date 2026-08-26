@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { vraagAlleModellen } from "@/lib/audit-modellen";
+import { vraagAlleModellenMetCache } from "@/lib/audit-modellen";
 import type { AuditResultaten } from "@/lib/audit";
 import {
   analyseerGeo,
@@ -74,12 +74,12 @@ export async function POST(request: Request) {
   const wilZichtbaarheid = body.met_zichtbaarheid !== false && Boolean(niche);
 
   // 2. Techniek en zichtbaarheid tegelijk — de trage delen naast elkaar.
-  type Zichtbaarheid = { resultaten: AuditResultaten | null; fout?: string };
+  type Zichtbaarheid = { resultaten: AuditResultaten | null; fout?: string; hergebruikt?: boolean };
 
   const zichtbaarheidTaak: Promise<Zichtbaarheid> =
     wilZichtbaarheid && niche
-      ? vraagAlleModellen(niche, url)
-          .then((r): Zichtbaarheid => ({ resultaten: r }))
+      ? vraagAlleModellenMetCache(niche, url)
+          .then((r): Zichtbaarheid => ({ resultaten: r.resultaten, hergebruikt: r.hergebruikt }))
           .catch(
             (e): Zichtbaarheid => ({
               resultaten: null,
@@ -118,6 +118,11 @@ export async function POST(request: Request) {
   }
   if (pagespeed.fout) waarschuwingen.push(pagespeed.fout);
   if (zichtbaarheid.fout) waarschuwingen.push(zichtbaarheid.fout);
+  if (zichtbaarheid.hergebruikt) {
+    waarschuwingen.push(
+      "AI-zichtbaarheid hergebruikt van een eerdere meting in dezelfde niche (< 24u oud) — geen nieuwe modelkosten.",
+    );
+  }
   if (!niche) {
     waarschuwingen.push(
       "Geen niche opgegeven en niet af te leiden uit de pagina — de AI-zichtbaarheid is daarom niet gemeten.",
