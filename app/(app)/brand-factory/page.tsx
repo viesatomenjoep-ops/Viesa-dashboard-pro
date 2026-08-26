@@ -32,16 +32,16 @@ export default async function BrandFactoryPage() {
       </div>
 
       {/* KPI's */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         {[
           { label: "Merken", waarde: totaalMerken },
           { label: "Concepten", waarde: totaalConcepten },
           { label: "Renders", waarde: totaalRenders.toLocaleString("nl-NL") },
           { label: "Batches", waarde: merken?.reduce((s, m) => s + (m.batches || 0), 0) ?? 0 },
         ].map((kpi) => (
-          <div key={kpi.label} className="bg-white rounded-xl border border-gray-200 p-4">
-            <p className="text-2xl font-bold text-[#19445B]">{kpi.waarde}</p>
-            <p className="text-sm text-gray-500">{kpi.label}</p>
+          <div key={kpi.label} className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4">
+            <p className="text-xl font-bold text-[#19445B] sm:text-2xl">{kpi.waarde}</p>
+            <p className="text-xs text-gray-500 sm:text-sm">{kpi.label}</p>
           </div>
         ))}
       </div>

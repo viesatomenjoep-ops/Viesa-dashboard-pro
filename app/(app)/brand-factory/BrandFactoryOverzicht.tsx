@@ -51,8 +51,9 @@ export function BrandFactoryOverzicht({
 
       {/* Merken-tabel */}
       {tab === "merken" && (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-white rounded-xl border border-gray-200">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="text-left text-gray-500 border-b border-gray-100">
                 <th className="px-4 py-3 font-medium">Merk</th>
@@ -99,6 +100,7 @@ export function BrandFactoryOverzicht({
               ))}
             </tbody>
           </table>
+          </div>
           {merken.length > 0 && (
             <div className="px-4 py-2 text-xs text-gray-400 border-t border-gray-50">
               {merken.length} merken · {merken.reduce((s, m) => s + m.renders, 0).toLocaleString("nl-NL")} totale renders
