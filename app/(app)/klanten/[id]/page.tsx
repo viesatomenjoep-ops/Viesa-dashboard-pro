@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Kaart } from "@/components/ui/Kaart";
@@ -170,64 +171,68 @@ export default async function KlantDetail({
         {/* Gegevens */}
         <form action={werkKlantBij.bind(null, klant.id)} className="lg:col-span-2">
           <Kaart>
-            <Groep>Bedrijf &amp; adres</Groep>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Veld label="Bedrijf" naam="bedrijf" waarde={klant.bedrijf} verplicht />
-              <WebsiteVeld waarde={klant.website} />
-              <KlantLogoUpload initieel={klant.logo_url} />
-              <Veld label="Straat + nr" naam="straat" waarde={klant.straat} />
-              <Veld label="Postcode" naam="postcode" waarde={klant.postcode} />
-              <Veld label="Stad" naam="stad" waarde={klant.stad} />
-              <LandRegio land={klant.land} regio={klant.regio ?? ""} className={inputCls} toonLabels />
-            </div>
-
-            <Groep>Contactpersoon</Groep>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Veld label="Contactpersoon" naam="contact_naam" waarde={klant.contact_naam} />
-              <Veld label="Functie" naam="functie" waarde={klant.functie} />
-              <Veld label="Voornaam" naam="voornaam" waarde={klant.voornaam} />
-              <Veld label="Achternaam" naam="achternaam" waarde={klant.achternaam} />
-              <Veld label="Seniority" naam="seniority" waarde={klant.seniority} />
-              <Veld label="Afdeling" naam="afdeling" waarde={klant.afdeling} />
-              <Veld label="E-mail" naam="email" waarde={klant.email} type="email" />
-              <Veld label="Telefoon (algemeen)" naam="telefoon" waarde={klant.telefoon} />
-              <Veld label="Direct telefoonnr" naam="telefoon_contact" waarde={klant.telefoon_contact} />
-              <Veld label="LinkedIn" naam="linkedin" waarde={klant.linkedin} />
-              <Veld label="Twitter / X" naam="twitter" waarde={klant.twitter} />
-            </div>
-
-            <Groep>Vindplaats (Google)</Groep>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Veld label="Google rating" naam="rating_google" waarde={klant.rating_google !== null ? String(klant.rating_google) : ""} type="number" />
-              <Veld label="Aantal reviews" naam="aantal_reviews" waarde={klant.aantal_reviews !== null ? String(klant.aantal_reviews) : ""} type="number" />
-              <Veld label="Google place_id" naam="place_id" waarde={klant.place_id} />
-            </div>
-
-            <Groep>Kwalificatie</Groep>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <KiesVrij label="IT-aanbod" naam="it_aanbod" waarde={klant.it_aanbod} opties={catLijsten.it_aanbod} lijstId="klant-it_aanbod" />
-              <KiesVrij label="Platform" naam="platform" waarde={klant.platform} opties={catLijsten.platform} lijstId="klant-platform" />
-              <KiesVrij label="Branche" naam="branche" waarde={klant.branche} opties={catLijsten.branche} lijstId="klant-branche" />
-              <KiesVrij label="Bedrijfsgrootte" naam="bedrijfsgrootte" waarde={klant.bedrijfsgrootte} opties={catLijsten.bedrijfsgrootte} lijstId="klant-bedrijfsgrootte" />
-              <Veld label="Aantal medewerkers" naam="aantal_medewerkers" waarde={klant.aantal_medewerkers !== null ? String(klant.aantal_medewerkers) : ""} type="number" />
-              <Veld label="Score (0-100)" naam="score" waarde={String(klant.score ?? 50)} type="number" />
-              <div>
-                <label className="mb-1 block text-sm font-medium text-navy">Status</label>
-                <select name="status" defaultValue={klant.status ?? "actief"} className={inputCls}>
-                  {KLANT_STATUSSEN.map((s) => (
-                    <option key={s.key} value={s.key}>{s.label}</option>
-                  ))}
-                </select>
+            <Sectie titel="Bedrijf & adres" open>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Veld label="Bedrijf" naam="bedrijf" waarde={klant.bedrijf} verplicht />
+                <WebsiteVeld waarde={klant.website} />
+                <KlantLogoUpload initieel={klant.logo_url} />
+                <Veld label="Straat + nr" naam="straat" waarde={klant.straat} />
+                <Veld label="Postcode" naam="postcode" waarde={klant.postcode} />
+                <Veld label="Stad" naam="stad" waarde={klant.stad} />
+                <LandRegio land={klant.land} regio={klant.regio ?? ""} className={inputCls} toonLabels />
               </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-navy">Type</label>
-                <select name="type" defaultValue={klant.type} className={inputCls}>
-                  {KLANT_TYPES.map((t) => (
-                    <option key={t.key} value={t.key}>{t.label}</option>
-                  ))}
-                </select>
+            </Sectie>
+
+            <Sectie titel="Contactpersoon">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Veld label="Contactpersoon" naam="contact_naam" waarde={klant.contact_naam} />
+                <Veld label="Functie" naam="functie" waarde={klant.functie} />
+                <Veld label="Voornaam" naam="voornaam" waarde={klant.voornaam} />
+                <Veld label="Achternaam" naam="achternaam" waarde={klant.achternaam} />
+                <Veld label="Seniority" naam="seniority" waarde={klant.seniority} />
+                <Veld label="Afdeling" naam="afdeling" waarde={klant.afdeling} />
+                <Veld label="E-mail" naam="email" waarde={klant.email} type="email" />
+                <Veld label="Telefoon (algemeen)" naam="telefoon" waarde={klant.telefoon} />
+                <Veld label="Direct telefoonnr" naam="telefoon_contact" waarde={klant.telefoon_contact} />
+                <Veld label="LinkedIn" naam="linkedin" waarde={klant.linkedin} />
+                <Veld label="Twitter / X" naam="twitter" waarde={klant.twitter} />
               </div>
-            </div>
+            </Sectie>
+
+            <Sectie titel="Vindplaats (Google)">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Veld label="Google rating" naam="rating_google" waarde={klant.rating_google !== null ? String(klant.rating_google) : ""} type="number" />
+                <Veld label="Aantal reviews" naam="aantal_reviews" waarde={klant.aantal_reviews !== null ? String(klant.aantal_reviews) : ""} type="number" />
+                <Veld label="Google place_id" naam="place_id" waarde={klant.place_id} />
+              </div>
+            </Sectie>
+
+            <Sectie titel="Kwalificatie">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <KiesVrij label="IT-aanbod" naam="it_aanbod" waarde={klant.it_aanbod} opties={catLijsten.it_aanbod} lijstId="klant-it_aanbod" />
+                <KiesVrij label="Platform" naam="platform" waarde={klant.platform} opties={catLijsten.platform} lijstId="klant-platform" />
+                <KiesVrij label="Branche" naam="branche" waarde={klant.branche} opties={catLijsten.branche} lijstId="klant-branche" />
+                <KiesVrij label="Bedrijfsgrootte" naam="bedrijfsgrootte" waarde={klant.bedrijfsgrootte} opties={catLijsten.bedrijfsgrootte} lijstId="klant-bedrijfsgrootte" />
+                <Veld label="Aantal medewerkers" naam="aantal_medewerkers" waarde={klant.aantal_medewerkers !== null ? String(klant.aantal_medewerkers) : ""} type="number" />
+                <Veld label="Score (0-100)" naam="score" waarde={String(klant.score ?? 50)} type="number" />
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-navy">Status</label>
+                  <select name="status" defaultValue={klant.status ?? "actief"} className={inputCls}>
+                    {KLANT_STATUSSEN.map((s) => (
+                      <option key={s.key} value={s.key}>{s.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-navy">Type</label>
+                  <select name="type" defaultValue={klant.type} className={inputCls}>
+                    {KLANT_TYPES.map((t) => (
+                      <option key={t.key} value={t.key}>{t.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </Sectie>
 
             <div className="mt-3">
               <label className="mb-1 block text-sm font-medium text-navy">Notities</label>
@@ -393,12 +398,29 @@ function Veld({
   );
 }
 
-/** Subkopje binnen het formulier. */
-function Groep({ children }: { children: React.ReactNode }) {
+/**
+ * Inklapbare sectie binnen het formulier — puur HTML (`<details>`), dus geen
+ * client component nodig. Alles open tegelijk maakte deze pagina veel te
+ * onoverzichtelijk (secretaris/telefoonvelden staan er ook als er niets in
+ * zit); nu blijft alleen "Bedrijf & adres" standaard open.
+ */
+function Sectie({
+  titel,
+  open = false,
+  children,
+}: {
+  titel: string;
+  open?: boolean;
+  children: React.ReactNode;
+}) {
   return (
-    <p className="mb-3 mt-6 text-xs font-semibold uppercase tracking-wide text-navy/50 first:mt-0">
-      {children}
-    </p>
+    <details open={open} className="group mt-3 border-t border-navy/10 pt-3 first:mt-0 first:border-t-0 first:pt-0">
+      <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-navy/50 hover:text-navy">
+        <ChevronRight size={14} className="shrink-0 transition-transform group-open:rotate-90" />
+        {titel}
+      </summary>
+      <div className="mt-3">{children}</div>
+    </details>
   );
 }
 

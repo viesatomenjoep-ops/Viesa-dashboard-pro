@@ -11,6 +11,7 @@ import { zoekLeadsViaGooglePlaces } from "@/lib/google-places";
 import { verrijkLead } from "@/lib/ai/verrijking";
 import { genereerPrototype } from "@/lib/ai/prototype";
 import { bouwStatischPrototype, type PrototypeType } from "@/lib/website-sjabloon";
+import type { ScanRapport } from "@/lib/scan";
 
 /** Snel een lead toevoegen — alleen bedrijf is verplicht. */
 export async function maakLead(formData: FormData) {
@@ -290,6 +291,38 @@ export async function maakActiviteit(leadId: string, formData: FormData) {
     omschrijving: leeg(formData.get("omschrijving")),
   });
   revalidatePath(`/leads/${leadId}`);
+}
+
+/**
+ * Zet een voltooide websitescan als rapport in het activiteitenlog van een
+ * lead — een bewuste keuze van de gebruiker, geen automatisch gedrag bij elke
+ * scan. Bewaart het volledige resultaat (data), zodat de PDF later opnieuw
+ * gegenereerd kan worden zonder de scan te herhalen.
+ */
+export async function pushScanRapportNaarLead(
+  leadId: string,
+  resultaat: ScanRapport,
+): Promise<{ ok: boolean; fout?: string }> {
+  if (!leadId) return { ok: false, fout: "Geen lead gekozen." };
+  const supabase = createClient();
+  const oordeel =
+    resultaat.totaalScore >= 75
+      ? "Goed zichtbaar"
+      : resultaat.totaalScore >= 50
+        ? "Matig zichtbaar"
+        : "Vrijwel onzichtbaar";
+  const { error } = await supabase.from("activiteiten").insert({
+    lead_id: leadId,
+    type: "rapport",
+    titel: `Websitescan — score ${resultaat.totaalScore}`,
+    omschrijving: `${resultaat.host} · ${oordeel}`,
+    status: "afgerond",
+    afgerond_op: new Date().toISOString(),
+    data: resultaat,
+  });
+  if (error) return { ok: false, fout: error.message };
+  revalidatePath(`/leads/${leadId}`);
+  return { ok: true };
 }
 
 /** Plant een follow-up (activiteit type follow_up met datum). */

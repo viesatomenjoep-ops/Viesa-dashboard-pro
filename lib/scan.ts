@@ -41,6 +41,20 @@ export type ScanResultaat = {
   waarschuwingen: string[];
 };
 
+/**
+ * Het rapport zoals de streamende scanner ('m opbouwt): hetzelfde als
+ * ScanResultaat, plus de losse checks die alleen in die route bestaan
+ * (beveiliging, scripts, vindbaarheid) en de og:image-preview. Dit is wat er
+ * bewaard wordt bij "push naar lead" en wat de PDF opbouwt — zonder de scan
+ * opnieuw te hoeven draaien.
+ */
+export type ScanRapport = ScanResultaat & {
+  beveiliging?: unknown;
+  scripts?: unknown;
+  vindbaarheid?: unknown;
+  voorbeeld?: string | null;
+};
+
 const HAAL_TIMEOUT_MS = 15_000;
 
 /** Vult een kaal domein aan tot een volledige URL. */

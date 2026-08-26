@@ -8,6 +8,7 @@ import {
   normaliseerUrl,
   techniekScore,
   totaalScore,
+  type ScanRapport,
 } from "@/lib/scan";
 import {
   controleerBeveiliging,
@@ -38,7 +39,7 @@ export const maxDuration = 300;
 type Event =
   | { type: "stap_start"; stap: string }
   | { type: "stap_klaar"; stap: string; goed: boolean; samenvatting: string; data?: unknown }
-  | { type: "totaal"; score: number; oordeel: string }
+  | { type: "totaal"; score: number; oordeel: string; resultaat: ScanRapport }
   | { type: "fout"; melding: string }
   | { type: "klaar" };
 
@@ -232,12 +233,51 @@ export async function POST(request: Request) {
           geo: structured?.score ?? 0,
           techniek,
         });
+        const oordeel = score >= 75 ? "Goed zichtbaar" : score >= 50 ? "Matig zichtbaar" : "Vrijwel onzichtbaar";
+        const voorbeeld = voorbeeldAfbeelding(site.html, url);
 
-        stuur({
-          type: "totaal",
-          score,
-          oordeel: score >= 75 ? "Goed zichtbaar" : score >= 50 ? "Matig zichtbaar" : "Vrijwel onzichtbaar",
-        });
+        // Het volledige rapport — dit is wat "push naar lead" en de PDF
+        // gebruiken, zonder de scan opnieuw te hoeven draaien.
+        const resultaat: ScanRapport = {
+          url,
+          host,
+          niche: niche ?? null,
+          paginatitel: structured?.paginatitel ?? null,
+          totaalScore: score,
+          geo: structured ?? {
+            score: 0,
+            bevindingen: [],
+            voorgesteldeNiche: null,
+            paginatitel: null,
+            vermoedelijkJsSite: false,
+          },
+          techniek: {
+            score: techniek,
+            scores: pagespeed?.scores ?? {
+              prestatie: null,
+              seo: null,
+              toegankelijkheid: null,
+              bestPractices: null,
+              lcp: null,
+            },
+            fout: pagespeed?.fout,
+          },
+          zichtbaarheid: {
+            score: zichtbaarheidScore,
+            gevonden: zichtbaarheid
+              ? Object.values(zichtbaarheid).filter((m) => m.success && m.target_found).length
+              : 0,
+            getest: zichtbaarheid ? Object.values(zichtbaarheid).filter((m) => m.success).length : 0,
+            resultaten: zichtbaarheid,
+          },
+          waarschuwingen: site.waarschuwingen,
+          beveiliging,
+          scripts,
+          vindbaarheid: geo,
+          voorbeeld,
+        };
+
+        stuur({ type: "totaal", score, oordeel, resultaat });
 
         // 5. Bewaren, best effort — de gebruiker wacht op het resultaat, niet
         //    op onze administratie.
@@ -250,7 +290,6 @@ export async function POST(request: Request) {
           });
         }
 
-        const voorbeeld = voorbeeldAfbeelding(site.html, url);
         stuur({ type: "stap_klaar", stap: "voorbeeld", goed: true, samenvatting: "", data: { voorbeeld } });
 
         stuur({ type: "klaar" });

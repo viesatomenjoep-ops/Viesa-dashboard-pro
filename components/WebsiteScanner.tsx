@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import {
   AlertTriangle,
   Bot,
+  Check,
   CheckCircle2,
   Circle,
   FileSearch,
@@ -13,11 +14,14 @@ import {
   Lock,
   Radar,
   Search,
+  Send,
   ShieldCheck,
   XCircle,
 } from "lucide-react";
 import type { Bevinding } from "@/lib/geo-analyse";
+import type { ScanRapport } from "@/lib/scan";
 import { ZoekKies } from "@/components/ZoekKies";
+import { pushScanRapportNaarLead } from "@/app/(app)/leads/acties";
 
 /**
  * Websitescanner: één URL erin, en de controles komen er live één voor één
@@ -143,12 +147,16 @@ export function WebsiteScanner({
   const [url, setUrl] = useState(beginUrl);
   const [niche, setNiche] = useState("");
   const [leadZoek, setLeadZoek] = useState("");
+  const [gekozenLeadId, setGekozenLeadId] = useState<string | null>(null);
   const [bezig, setBezig] = useState(false);
   const [fout, setFout] = useState<string | null>(null);
   const [stappen, setStappen] = useState<Record<string, StapState>>(beginState());
   const [totaal, setTotaal] = useState<{ score: number; oordeel: string } | null>(null);
+  const [rapport, setRapport] = useState<ScanRapport | null>(null);
   const [voorbeeld, setVoorbeeld] = useState<string | null>(null);
   const [host, setHost] = useState<string>("");
+  const [pushBezig, setPushBezig] = useState(false);
+  const [gepusht, setGepusht] = useState(false);
   const controllerRef = useRef<AbortController | null>(null);
 
   async function scan() {
@@ -161,6 +169,8 @@ export function WebsiteScanner({
     setFout(null);
     setStappen(beginState());
     setTotaal(null);
+    setRapport(null);
+    setGepusht(false);
     setVoorbeeld(null);
     try {
       setHost(new URL(/^https?:\/\//i.test(url) ? url : `https://${url}`).host);
@@ -214,6 +224,19 @@ export function WebsiteScanner({
     }
   }
 
+  async function pushNaarLead() {
+    if (!gekozenLeadId || !rapport || pushBezig) return;
+    setPushBezig(true);
+    setFout(null);
+    try {
+      const res = await pushScanRapportNaarLead(gekozenLeadId, rapport);
+      if (res.ok) setGepusht(true);
+      else setFout(res.fout ?? "Push naar lead mislukt.");
+    } finally {
+      setPushBezig(false);
+    }
+  }
+
   function verwerk(event: {
     type: string;
     stap?: string;
@@ -222,6 +245,7 @@ export function WebsiteScanner({
     data?: unknown;
     score?: number;
     oordeel?: string;
+    resultaat?: ScanRapport;
     melding?: string;
   }) {
     if (event.type === "stap_start" && event.stap) {
@@ -242,6 +266,7 @@ export function WebsiteScanner({
       }));
     } else if (event.type === "totaal" && typeof event.score === "number") {
       setTotaal({ score: event.score, oordeel: event.oordeel ?? "" });
+      if (event.resultaat) setRapport(event.resultaat);
     } else if (event.type === "fout") {
       setFout(event.melding ?? "De scan is mislukt.");
     }
@@ -299,6 +324,7 @@ export function WebsiteScanner({
                   setUrl(gekozen.website);
                   if (gekozen.branche) setNiche(gekozen.branche);
                   setLeadZoek(gekozen.waarde);
+                  setGekozenLeadId(gekozen.id);
                 }
               }}
               placeholder="Zoek op bedrijfsnaam…"
@@ -419,6 +445,25 @@ export function WebsiteScanner({
                 </p>
                 <p className="mt-0.5 truncate text-sm text-navy/70">{host}</p>
               </div>
+              {gekozenLeadId && (
+                <button
+                  type="button"
+                  onClick={pushNaarLead}
+                  disabled={pushBezig || gepusht}
+                  className={`inline-flex shrink-0 items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-70 ${
+                    gepusht ? "bg-emerald-100 text-emerald-700" : "bg-navy text-white hover:bg-navy/90"
+                  }`}
+                >
+                  {pushBezig ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : gepusht ? (
+                    <Check size={15} />
+                  ) : (
+                    <Send size={15} />
+                  )}
+                  {gepusht ? "Op de lead gezet" : "Push naar lead"}
+                </button>
+              )}
             </div>
           </section>
 
