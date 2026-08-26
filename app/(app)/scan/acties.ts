@@ -31,8 +31,23 @@ export async function laadOpgeslagenScan(
  * delen levert dezelfde link op — anders zou een eerder verstuurde mail
  * stilletjes doodlopen.
  */
+export type RapportVariant = "volledig" | "kort" | "voorstel";
+
+/** Het pad achter de deelsleutel, per document. */
+const VARIANT_PAD: Record<RapportVariant, string> = {
+  volledig: "",
+  kort: "/kort",
+  voorstel: "/voorstel",
+};
+
 export async function deelScan(
   id: string,
+  /**
+   * Welk van de drie documenten geopend moet worden. De deelsleutel is voor
+   * alle drie dezelfde — ze staan op hetzelfde adres met een achtervoegsel —
+   * dus delen hoeft maar één keer, welke je ook als eerste opent.
+   */
+  variant: RapportVariant = "volledig",
 ): Promise<{ ok: boolean; url?: string; fout?: string }> {
   const supabase = createClient();
 
@@ -55,7 +70,7 @@ export async function deelScan(
   }
 
   revalidatePath("/scan");
-  return { ok: true, url: `/rapport/${sleutel}` };
+  return { ok: true, url: `/rapport/${sleutel}${VARIANT_PAD[variant]}` };
 }
 
 /** Verwijdert een bewaarde scan uit de geschiedenis. */

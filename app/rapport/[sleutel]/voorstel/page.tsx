@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { legWeergaveVast } from "@/lib/rapport/weergave";
 import { Voorstel } from "@/components/rapport/Voorstel";
 
 /**
@@ -35,11 +36,16 @@ export default async function VoorstelBijScan({ params }: { params: { sleutel: s
 
   const { data, error } = await supabase
     .from("website_scans")
-    .select("host, bedrijf, totaal_score")
+    .select("id, host, bedrijf, totaal_score")
     .eq("deelsleutel", params.sleutel)
     .maybeSingle();
 
   if (error || !data) notFound();
+
+  // Vastleggen dat dit document geopend is — het sterkste belsignaal dat we
+  // hebben. Niet awaiten: de bezoeker wacht op zijn rapport, niet op onze
+  // administratie (zie lib/rapport/weergave.ts).
+  void legWeergaveVast(data.id as string, "voorstel");
 
   return (
     <Voorstel

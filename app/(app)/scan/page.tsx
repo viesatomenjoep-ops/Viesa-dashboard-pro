@@ -1,6 +1,7 @@
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { WebsiteScanner } from "@/components/WebsiteScanner";
 import { createClient } from "@/lib/supabase/server";
+import { telWeergaven, hoeLangGeleden } from "@/lib/rapport/weergave-telling";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,31 @@ export default async function ScanPagina({
     .order("created_at", { ascending: false })
     .limit(50);
 
+  // Hoe vaak de klantrapporten geopend zijn. Best effort: de tabel bestaat pas
+  // na migratie 0049, en de scanpagina hoort daar niet op te wachten.
+  let weergaven = new Map<string, { aantal: number; laatst: string }>();
+  try {
+    const { data } = await supabase
+      .from("rapport_weergaven")
+      .select("scan_id, bekeken_op")
+      .order("bekeken_op", { ascending: false })
+      .limit(2000);
+    const geteld = telWeergaven(data ?? []);
+    weergaven = new Map(
+      Array.from(geteld.values()).map((w) => [
+        w.scanId,
+        { aantal: w.aantal, laatst: hoeLangGeleden(w.laatst) },
+      ]),
+    );
+  } catch {
+    /* rapport_weergaven nog niet aanwezig */
+  }
+
+  const scansMetWeergaven = (scans ?? []).map((s) => ({
+    ...s,
+    weergaven: weergaven.get(s.id) ?? null,
+  }));
+
   return (
     <>
       <PaginaKop
@@ -41,7 +67,7 @@ export default async function ScanPagina({
       <WebsiteScanner
         beginUrl={searchParams.url ?? ""}
         leads={leads ?? []}
-        opgeslagenScans={scans ?? []}
+        opgeslagenScans={scansMetWeergaven}
       />
     </>
   );
