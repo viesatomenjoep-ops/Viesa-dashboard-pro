@@ -4,7 +4,9 @@ import "server-only";
  * Haalt écht beeld en tekst van de bestaande site van een lead op — geen AI,
  * puur een fetch + wat regex-parsing, dus nog steeds 0 tokens. Gebruikt door
  * de branchesjablonen om het prototype op maat te maken: hun eigen foto in
- * plaats van een generiek kleurvlak, hun eigen paginatitel als extra regel.
+ * plaats van een generiek kleurvlak, hun eigen paginatitel als extra regel,
+ * hun eigen logo in plaats van een initialenbadge, en (als de site dat zelf
+ * opgeeft via theme-color) hun eigen merkkleur in plaats van de archetypekleur.
  *
  * Best-effort en met een harde tijdslimiet — lukt het niet (site traag,
  * blokkeert bots, geen afbeeldingen), dan valt het sjabloon terug op het
@@ -17,6 +19,10 @@ export type SiteEchtContent = {
   beschrijving: string | null;
   /** Absolute URL's, og:image eerst, gededuped, logo/icoon-achtige weggefilterd. */
   afbeeldingen: string[];
+  /** Het logo van het bedrijf zelf — apart van `afbeeldingen`, die het juist weren. */
+  logo: string | null;
+  /** Merkkleur uit <meta name="theme-color">, als de site die zelf opgeeft. */
+  merkkleur: string | null;
 };
 
 const TIMEOUT_MS = 6000;
@@ -38,6 +44,34 @@ function metaContent(html: string, patroon: RegExp): string | null {
   return m ? m[1].trim() : null;
 }
 
+/** Zoekt een logo: eerst een <img> die zichzelf als logo aanmerkt, anders het app-icoon. */
+function vindLogo(html: string, basis: string): string | null {
+  for (const m of Array.from(html.matchAll(/<img\b[^>]*>/gi))) {
+    const tag = m[0];
+    if (!/logo/i.test(tag)) continue;
+    const src = tag.match(/\bsrc=["']([^"']+)["']/i)?.[1];
+    if (!src || /^data:/i.test(src)) continue;
+    const abs = absoluut(src, basis);
+    if (abs) return abs;
+  }
+  const appleIcon = html.match(
+    /<link[^>]+rel=["']apple-touch-icon["'][^>]+href=["']([^"']+)["']/i,
+  )?.[1];
+  if (appleIcon) return absoluut(appleIcon, basis);
+
+  const icon = html.match(/<link[^>]+rel=["'][^"']*icon[^"']*["'][^>]+href=["']([^"']+)["']/i)?.[1];
+  if (icon && !/\.svg(\?|#|$)/i.test(icon)) return absoluut(icon, basis);
+
+  return null;
+}
+
+/** Merkkleur uit <meta name="theme-color">, als geldige hex — anders null. */
+function vindMerkkleur(html: string): string | null {
+  const kleur = html.match(/<meta[^>]+name=["']theme-color["'][^>]+content=["']([^"']+)["']/i)?.[1];
+  if (kleur && /^#[0-9a-f]{6}$/i.test(kleur.trim())) return kleur.trim();
+  return null;
+}
+
 function decodeEntities(s: string): string {
   return s
     .replace(/&amp;/g, "&")
@@ -49,7 +83,13 @@ function decodeEntities(s: string): string {
 
 /** Haalt best-effort echte content van een website op (fetch + parsing, geen AI). */
 export async function haalEchteContent(url: string): Promise<SiteEchtContent> {
-  const leeg: SiteEchtContent = { titel: null, beschrijving: null, afbeeldingen: [] };
+  const leeg: SiteEchtContent = {
+    titel: null,
+    beschrijving: null,
+    afbeeldingen: [],
+    logo: null,
+    merkkleur: null,
+  };
   const net = /^https?:\/\//i.test(url) ? url : `https://${url}`;
 
   let html: string;
@@ -98,5 +138,8 @@ export async function haalEchteContent(url: string): Promise<SiteEchtContent> {
     afbeeldingen.push(abs);
   }
 
-  return { titel, beschrijving, afbeeldingen };
+  const logo = vindLogo(html, net);
+  const merkkleur = vindMerkkleur(html);
+
+  return { titel, beschrijving, afbeeldingen, logo, merkkleur };
 }

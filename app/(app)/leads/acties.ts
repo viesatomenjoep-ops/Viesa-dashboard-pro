@@ -9,7 +9,7 @@ import { bewaarCategorieWaarden } from "@/lib/categorieen";
 import { zoekLeadsViaGoogleMaps } from "@/lib/apify";
 import { zoekLeadsViaGooglePlaces } from "@/lib/google-places";
 import { verrijkLead } from "@/lib/ai/verrijking";
-import { bouwStatischPrototype, type PrototypeType } from "@/lib/website-sjabloon";
+import { bouwStatischPrototype, type DesignStijl, type PrototypeType } from "@/lib/website-sjabloon";
 import { haalEchteContent } from "@/lib/site-scrape";
 import type { ScanRapport } from "@/lib/scan";
 
@@ -216,6 +216,7 @@ export async function laadSjabloonPrototype(
   leadId: string,
   type: PrototypeType = "website",
   branche?: string,
+  stijl?: DesignStijl,
 ): Promise<{ ok: boolean; id?: string; html?: string; fout?: string }> {
   const supabase = createClient();
   const { data, error } = await supabase
@@ -235,6 +236,7 @@ export async function laadSjabloonPrototype(
     plaats: data.plaats,
     branche: branche?.trim() || data.branche,
     type,
+    stijl: stijl ?? null,
     echt,
   });
 

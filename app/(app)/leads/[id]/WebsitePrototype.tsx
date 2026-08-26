@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LayoutTemplate, Loader2, MonitorSmartphone, Smartphone, Trash2 } from "lucide-react";
 import { laadSjabloonPrototype, verwijderPrototype } from "../acties";
-import { SJABLOON_BRANCHES } from "@/lib/website-sjabloon";
+import { DESIGN_SYSTEMS, SJABLOON_BRANCHES, type DesignStijl } from "@/lib/website-sjabloon";
 
 type Type = "website" | "app";
 
@@ -35,6 +35,7 @@ export function WebsitePrototype({
   const router = useRouter();
   const [type, setType] = useState<Type>("website");
   const [sjabloonBranche, setSjabloonBranche] = useState("");
+  const [designStijl, setDesignStijl] = useState("");
   const [bezig, setBezig] = useState(false);
   const [verwijderBezig, setVerwijderBezig] = useState<string | null>(null);
   const [fout, setFout] = useState<string | null>(null);
@@ -45,7 +46,7 @@ export function WebsitePrototype({
     setBezig(true);
     setFout(null);
     try {
-      const res = await laadSjabloonPrototype(leadId, type, sjabloonBranche || undefined);
+      const res = await laadSjabloonPrototype(leadId, type, sjabloonBranche || undefined, (designStijl || undefined) as DesignStijl | undefined);
       if (!res.ok) setFout(res.fout ?? "Kon geen sjabloon laden.");
       else {
         setHtml(res.html ?? null);
@@ -123,10 +124,8 @@ export function WebsitePrototype({
           </button>
         </div>
 
-        <label className="block min-w-[220px] flex-1 sm:max-w-xs">
-          <span className="mb-1 block text-xs font-medium text-navy/50">
-            Branchesjabloon — elk met een eigen ontwerp
-          </span>
+        <label className="block min-w-[200px] flex-1 sm:max-w-[240px]">
+          <span className="mb-1 block text-xs font-medium text-navy/50">Inhoud (branche)</span>
           <select
             value={sjabloonBranche}
             onChange={(e) => setSjabloonBranche(e.target.value)}
@@ -136,6 +135,22 @@ export function WebsitePrototype({
             {SJABLOON_BRANCHES.map((b) => (
               <option key={b} value={b}>
                 {b}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="block min-w-[200px] flex-1 sm:max-w-[240px]">
+          <span className="mb-1 block text-xs font-medium text-navy/50">Design system</span>
+          <select
+            value={designStijl}
+            onChange={(e) => setDesignStijl(e.target.value)}
+            className="w-full rounded-md border border-navy/20 px-2 py-1.5 text-xs text-navy outline-none focus:border-navy"
+          >
+            <option value="">Automatisch (past bij de branche)</option>
+            {DESIGN_SYSTEMS.map((d) => (
+              <option key={d.key} value={d.key}>
+                {d.naam}
               </option>
             ))}
           </select>
