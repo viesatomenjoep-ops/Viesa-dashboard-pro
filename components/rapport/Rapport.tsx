@@ -29,21 +29,17 @@ export function Rapport({ rapport }: { rapport: RapportData }) {
 
       <HerkomstBlok herkomst={rapport.herkomst} nietBeoordeeld={rapport.nietBeoordeeld} />
 
-      <section id="afspraak" style={{ background: "var(--navy)", color: "var(--wit)" }}>
-        <div className="rap-breed" style={{ padding: "52px 24px" }}>
-          <div className="rap-stapel" style={{ gap: 17 }}>
-            <h2 style={{ color: "var(--wit)" }}>Zullen we dit samen doornemen?</h2>
-            <p className="rap-lees" style={{ color: "#C3D0DE" }}>
+      <section id="afspraak" style={{ background: "var(--navy)", color: "var(--zand)" }}>
+        <div className="rap-breed" style={{ padding: "58px 24px" }}>
+          <div className="rap-stapel" style={{ gap: 18 }}>
+            <h2 style={{ color: "var(--zand)" }}>Zullen we dit samen doornemen?</h2>
+            <p className="rap-lees" style={{ color: "#B9C2D4" }}>
               Een half uur, en u weet wat er moet gebeuren en wat het kost. We lopen de punten
               hierboven langs op volgorde van wat het meeste oplevert.
             </p>
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 6 }}>
-              <a
-                className="rap-knop"
-                href="mailto:info@viesa-automations.nl"
-                style={{ background: "var(--terracotta)" }}
-              >
-                Plan een gesprek
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 8 }}>
+              <a className="rap-knop rap-knop-accent" href="mailto:info@viesa-automations.nl">
+                Plan een strategiegesprek
                 <span aria-hidden="true">→</span>
               </a>
               <span className="rap-alleen-scherm">

@@ -51,11 +51,14 @@
   padding: 26px 28px;
 }
 
-/* ---------- omslag ---------- */
-.rap-omslag { background: var(--diepnavy); color: var(--wit); padding: 56px 0 48px; }
-.rap-omslag h1 { color: var(--wit); }
-.rap-merkregel { display: flex; align-items: center; gap: 11px; margin-bottom: 34px; }
-.rap-ruit { width: 14px; height: 14px; background: var(--terracotta); transform: rotate(45deg); flex: none; }
+/* ---------- omslag ----------
+   De opmaak van de landingspagina: navy als grond (niet dieper navy — juist op
+   deze kleur valt het hexlogo weg en leest alleen de witte V, precies zoals in
+   de kop van de site), crèmekleurige tekst in plaats van zuiver wit, en de
+   cijfers onder een haarlijn in plaats van in een kader. */
+.rap-omslag { background: var(--navy); color: var(--zand); padding: 60px 0 52px; }
+.rap-omslag h1 { color: var(--zand); }
+.rap-merkregel { display: flex; align-items: center; gap: 11px; margin-bottom: 40px; }
 .rap-merknaam {
   font-family: var(--letter-data);
   font-size: .72rem; text-transform: uppercase; letter-spacing: .2em; color: #8FA1BD;
@@ -63,11 +66,17 @@
 
 .rap-tegels {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
-  gap: 1px; background: rgba(255,255,255,.14);
-  border: 1px solid rgba(255,255,255,.14); margin-top: 34px;
+  gap: 0; margin-top: 44px;
+  border-top: 1px solid rgba(243,240,233,.16);
 }
-.rap-tegel { background: var(--diepnavy); padding: 17px 19px; }
-.rap-tegel b { display: block; font-size: 1.5rem; font-weight: 800; letter-spacing: -0.03em; color: var(--wit); }
+.rap-tegel {
+  padding: 20px 22px 4px 0;
+  border-bottom: 1px solid rgba(243,240,233,.16);
+}
+.rap-tegel b {
+  display: block; font-size: 1.6rem; font-weight: 800;
+  letter-spacing: -0.03em; color: var(--zand);
+}
 .rap-tegel span {
   display: block; margin-top: 3px;
   font-family: var(--letter-data);
@@ -208,8 +217,17 @@
   font-size: .95rem; font-weight: 600; cursor: pointer;
 }
 .rap-knop:hover { background: var(--diepnavy); }
+
+/* De hoofdknop op een navy vlak: terracotta pil, zoals op de site. */
+.rap-knop-accent { background: var(--terracotta); color: var(--zand); }
+.rap-knop-accent:hover { background: #C9522F; }
+
+/* De tweede knop ernaast: omlijnd, niet gevuld — hij hoort niet te concurreren
+   met de terracotta. Op een navy vlak leent hij zijn rand van de tekstkleur. */
 .rap-knop-stil { background: transparent; color: var(--navy); border: 1px solid var(--lijn); }
 .rap-knop-stil:hover { background: var(--zanddiep); }
+#afspraak .rap-knop-stil { color: var(--zand); border-color: rgba(243,240,233,.35); }
+#afspraak .rap-knop-stil:hover { background: rgba(243,240,233,.1); }
 
 .rap :focus-visible { outline: 2px solid var(--terracotta); outline-offset: 2px; }
 

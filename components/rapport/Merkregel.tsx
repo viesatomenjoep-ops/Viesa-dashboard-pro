@@ -30,13 +30,15 @@ export function Merkregel({
         style={{
           fontWeight: 800,
           fontSize: hoogte * 0.47,
-          letterSpacing: "-0.01em",
+          // Ruime letterafstand zoals in de kop van de site; zonder die ruimte
+          // plakt de wordmark aan elkaar en verliest hij zijn rust.
+          letterSpacing: "0.05em",
           lineHeight: 1,
-          color: donker ? "#F3F0E9" : "var(--navy)",
+          color: donker ? "var(--zand)" : "var(--navy)",
         }}
       >
         VIESA
-        <span style={{ fontWeight: 500, color: donker ? "#8FA1BD" : "var(--zacht)" }}>
+        <span style={{ fontWeight: 400, color: donker ? "#8FA1BD" : "var(--zacht)" }}>
           {" "}
           AUTOMATIONS
         </span>

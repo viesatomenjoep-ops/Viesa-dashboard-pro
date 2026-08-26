@@ -39,16 +39,16 @@ export function RapportOmslag({ rapport }: { rapport: Rapport }) {
         <div
           style={{
             display: "flex",
-            gap: 30,
+            gap: 34,
             alignItems: "center",
             flexWrap: "wrap",
-            marginTop: 22,
+            marginTop: 26,
           }}
         >
           <Ringgrafiek score={totaalScore} norm={80} maat={132} toonNorm={false} />
-          <div className="rap-stapel" style={{ gap: 9, flex: "1 1 300px" }}>
+          <div className="rap-stapel" style={{ gap: 12, flex: "1 1 300px" }}>
             <h1>{bedrijf ?? host}</h1>
-            <p style={{ color: "#B9C2D4", fontSize: "1.05rem" }}>
+            <p style={{ color: "#B9C2D4", fontSize: "1.08rem", maxWidth: "44ch" }}>
               {totaalScore === null ? (
                 "Er kon te weinig gemeten worden voor één totaaloordeel."
               ) : (
