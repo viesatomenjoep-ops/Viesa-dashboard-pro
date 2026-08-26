@@ -34,6 +34,8 @@ import {
 import { Phone } from "lucide-react";
 import { LeadVerrijking } from "./LeadVerrijking";
 import { WebsitePrototype } from "./WebsitePrototype";
+import { ScanPdfKnop } from "@/components/ScanPdfKnop";
+import type { ScanRapport } from "@/lib/scan";
 
 export default async function LeadDetail({
   params,
@@ -284,6 +286,9 @@ export default async function LeadDetail({
                       )}
                     </div>
                     <div className="flex items-center gap-3">
+                      {a.type === "rapport" && Boolean(a.data) && (
+                        <ScanPdfKnop rapport={a.data as ScanRapport} />
+                      )}
                       {a.follow_up_datum && (
                         <span className="text-xs text-oranje">
                           {datumKort(a.follow_up_datum)}

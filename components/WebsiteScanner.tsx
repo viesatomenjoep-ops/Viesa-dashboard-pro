@@ -21,6 +21,7 @@ import {
 import type { Bevinding } from "@/lib/geo-analyse";
 import type { ScanRapport } from "@/lib/scan";
 import { ZoekKies } from "@/components/ZoekKies";
+import { ScanPdfKnop } from "@/components/ScanPdfKnop";
 import { pushScanRapportNaarLead } from "@/app/(app)/leads/acties";
 
 /**
@@ -445,6 +446,7 @@ export function WebsiteScanner({
                 </p>
                 <p className="mt-0.5 truncate text-sm text-navy/70">{host}</p>
               </div>
+              {rapport && <ScanPdfKnop rapport={rapport} />}
               {gekozenLeadId && (
                 <button
                   type="button"
