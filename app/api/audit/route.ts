@@ -47,8 +47,14 @@ function vereisSleutel(naam: string, waarde: string | undefined): string {
 }
 
 async function fetchOpenAI(niche: string): Promise<Concurrent[]> {
+  // `organization` alleen meesturen als het is ingesteld. Nodig zodra een
+  // account bij meerdere organisaties hoort — dan weet OpenAI anders niet
+  // welke het gebruik moet afrekenen. Dit is géén sleutel: een org-ID (org-…)
+  // identificeert alleen de organisatie.
+  const { sleutel: org } = schoonSleutel(process.env.OPENAI_ORG_ID);
   const client = new OpenAI({
     apiKey: vereisSleutel("OPENAI_API_KEY", process.env.OPENAI_API_KEY),
+    ...(org ? { organization: org } : {}),
   });
   const res = await client.chat.completions.create({
     model: MODELLEN.openai,

@@ -246,3 +246,35 @@ Env: `OPENAI_API_KEY`, `GEMINI_API_KEY`, `PERPLEXITY_API_KEY` (`ANTHROPIC_API_KE
 bestond al). Model-ID's zijn te overschrijven via `OPENAI_MODEL`, `CLAUDE_MODEL`,
 `GEMINI_MODEL`, `PERPLEXITY_MODEL` — zo hoef je bij een nieuwe modelversie niet
 te deployen.
+
+## 13. Outreach-agents (Claude Code)
+
+Vijf subagents in `.claude/agents/` plus het commando `/outreach` in
+`.claude/commands/`. Ze draaien in Claude Code, niet in het dashboard — het zijn
+Markdown-definities, geen applicatiecode.
+
+De keten: `lead-scout` (domeinen uit gratis, ToS-conforme bronnen) →
+`prospect-dossier` (dossier van één A4, gescoord 0–30) → `belscript-schrijver`
+en `mailscript-schrijver` → `outreach-regisseur` (stuurt de keten aan en levert
+een werklijst).
+
+Volledige ronde:
+
+```
+/outreach "groothandel woninginrichting" "West-Brabant" 40
+```
+
+Twee dingen die in de agents zelf zijn vastgelegd en niet per ongeluk mogen
+verdwijnen:
+
+- **Bronnen**: geen Indeed, geen LinkedIn, geen Maps-scraping. Niet uit
+  voorzichtigheid maar omdat handhaving reëel is — en de careers-pagina van het
+  bedrijf zelf geeft hetzelfde signaal.
+- **Geen persoonsgegevens**: functietitels en afdelingsmailboxen, geen namen.
+  Daarmee blijft gerechtvaardigd belang als AVG-grondslag overeind.
+
+Geen agent verstuurt iets. De laatste meter is menselijk.
+
+Het scoringsmodel is niet opnieuw bedacht: `prospect-dossier` gebruikt de drie
+assen uit de bestaande skill `webshop-prospector` (ouderdom · administratieve
+bezetting · Excel-waarschijnlijkheid), inclusief de tiergrenzen op 24/18/12.
