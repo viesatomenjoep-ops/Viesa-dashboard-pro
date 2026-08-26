@@ -60,6 +60,15 @@ export function WebsitePrototype({
   function bekijk(p: OpgeslagenPrototype) {
     setHtml(p.html);
     setWeergaveType(p.type);
+    setType(p.type);
+    setFout(null);
+  }
+
+  function wisselType(nieuw: Type) {
+    setType(nieuw);
+    // Anders blijft een oud voorbeeld van het andere type zichtbaar, terwijl
+    // de Website/App-knop al iets anders laat zien — verwarrend.
+    setHtml(null);
     setFout(null);
   }
 
@@ -95,7 +104,7 @@ export function WebsitePrototype({
         <div className="inline-flex rounded-lg border border-navy/15 p-0.5">
           <button
             type="button"
-            onClick={() => setType("website")}
+            onClick={() => wisselType("website")}
             className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium ${
               type === "website" ? "bg-navy text-white" : "text-navy/60 hover:bg-navy/5"
             }`}
@@ -104,7 +113,7 @@ export function WebsitePrototype({
           </button>
           <button
             type="button"
-            onClick={() => setType("app")}
+            onClick={() => wisselType("app")}
             className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium ${
               type === "app" ? "bg-navy text-white" : "text-navy/60 hover:bg-navy/5"
             }`}
