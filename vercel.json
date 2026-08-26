@@ -8,10 +8,6 @@
     {
       "path": "/api/cron/dagupdate",
       "schedule": "0 20 * * *"
-    },
-    {
-      "path": "/api/cron/dagbriefing",
-      "schedule": "0 7 * * *"
     }
   ]
 }
