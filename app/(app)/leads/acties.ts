@@ -248,6 +248,18 @@ export async function laadSjabloonPrototype(
   return { ok: true, id: rij?.id, html };
 }
 
+/** Verwijdert een bewaard prototype (sjabloon of AI) van een lead. */
+export async function verwijderPrototype(
+  id: string,
+  leadId: string,
+): Promise<{ ok: boolean; fout?: string }> {
+  const supabase = createClient();
+  const { error } = await supabase.from("website_prototypes").delete().eq("id", id);
+  if (error) return { ok: false, fout: error.message };
+  revalidatePath(`/leads/${leadId}`);
+  return { ok: true };
+}
+
 /** Past gekozen verrijkingsvelden toe op de lead (bevestigingsstap). */
 export async function pasVerrijkingToe(
   leadId: string,

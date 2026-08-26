@@ -44,7 +44,8 @@ Regels:
 - Geen JavaScript.
 - Mobile-first, toegankelijk (voldoende contrast, semantische HTML), met een duidelijke call-to-action.
 - Verzin geen namen, prijzen, testimonials of cijfers die niet zijn aangeleverd — baseer copy op de echte bedrijfsnaam en branche.
-- Schrijf de tekst op de pagina in het Nederlands.`;
+- Schrijf de tekst op de pagina in het Nederlands.
+- Houd de CSS beknopt (geen herhaalde of overbodige regels) — de pagina moet in ruim voldoende ruimte binnen het antwoord passen, dus schrijf geen langere pagina dan nodig voor een goed eerste-indruk-prototype.`;
 
 function prompt(l: LeadRij, url: string, websiteTekst: string, type: PrototypeType): string {
   const vorm =
@@ -104,13 +105,21 @@ export async function genereerPrototype(
     const client = new Anthropic({ apiKey: sleutel });
     const stream = client.messages.stream({
       model,
-      max_tokens: 6000,
+      max_tokens: 8000,
       system: SYSTEM,
       messages: [{ role: "user", content: prompt(l, url, websiteTekst, type) }],
     });
     const bericht = await stream.finalMessage();
     if (bericht.stop_reason === "refusal") {
       return { ok: false, fout: "Het model weigerde deze opdracht." };
+    }
+    if (bericht.stop_reason === "max_tokens") {
+      // De pagina is afgekapt halverwege — dat geeft ongeldige/lege HTML in
+      // de preview. Beter een duidelijke fout dan een stil leeg voorbeeld.
+      return {
+        ok: false,
+        fout: "Het prototype werd te lang en is afgekapt. Probeer het opnieuw, of vraag om een kortere pagina.",
+      };
     }
     tokensIn = bericht.usage?.input_tokens ?? 0;
     tokensUit = bericht.usage?.output_tokens ?? 0;

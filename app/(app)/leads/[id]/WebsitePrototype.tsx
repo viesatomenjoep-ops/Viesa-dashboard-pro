@@ -1,10 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { LayoutTemplate, Loader2, MonitorSmartphone, Smartphone, Wand2 } from "lucide-react";
-import { genereerWebsitePrototype, laadSjabloonPrototype } from "../acties";
+import { useRouter } from "next/navigation";
+import {
+  LayoutTemplate,
+  Loader2,
+  MonitorSmartphone,
+  Smartphone,
+  Trash2,
+  Wand2,
+} from "lucide-react";
+import { genereerWebsitePrototype, laadSjabloonPrototype, verwijderPrototype } from "../acties";
 
 type Type = "website" | "app";
+
+export type OpgeslagenPrototype = {
+  id: string;
+  type: Type;
+  bron: "sjabloon" | "ai";
+  html: string;
+  created_at: string;
+};
 
 /**
  * Website/app-prototype voor een lead — verkoopmateriaal: "kijk wat we voor je
@@ -12,19 +28,27 @@ type Type = "website" | "app";
  *  - Sjabloon (standaard): direct, 0 tokens, gebaseerd op het branchethema.
  *  - AI: maatwerk op basis van de bestaande website, kost een klein aantal
  *    tokens (getoond na afloop) — voor als het sjabloon niet specifiek genoeg is.
+ *
+ * Elke generatie wordt bewaard (website_prototypes) — hieronder staat een
+ * lijst van eerdere prototypes van deze lead, aan te klikken om terug te zien.
  */
 export function WebsitePrototype({
   leadId,
   standaardUrl,
+  opgeslagen,
 }: {
   leadId: string;
   standaardUrl: string;
+  opgeslagen: OpgeslagenPrototype[];
 }) {
+  const router = useRouter();
   const [type, setType] = useState<Type>("website");
   const [url, setUrl] = useState(standaardUrl);
   const [bezig, setBezig] = useState<"sjabloon" | "ai" | null>(null);
+  const [verwijderBezig, setVerwijderBezig] = useState<string | null>(null);
   const [fout, setFout] = useState<string | null>(null);
   const [html, setHtml] = useState<string | null>(null);
+  const [weergaveType, setWeergaveType] = useState<Type>("website");
   const [tokens, setTokens] = useState<{ in: number; uit: number } | null>(null);
 
   async function sjabloon() {
@@ -34,7 +58,11 @@ export function WebsitePrototype({
     try {
       const res = await laadSjabloonPrototype(leadId, type);
       if (!res.ok) setFout(res.fout ?? "Kon geen sjabloon laden.");
-      else setHtml(res.html ?? null);
+      else {
+        setHtml(res.html ?? null);
+        setWeergaveType(type);
+        router.refresh();
+      }
     } finally {
       setBezig(null);
     }
@@ -48,10 +76,30 @@ export function WebsitePrototype({
       if (!res.ok) setFout(res.fout);
       else {
         setHtml(res.html);
+        setWeergaveType(type);
         setTokens({ in: res.tokensIn, uit: res.tokensUit });
+        router.refresh();
       }
     } finally {
       setBezig(null);
+    }
+  }
+
+  function bekijk(p: OpgeslagenPrototype) {
+    setHtml(p.html);
+    setWeergaveType(p.type);
+    setTokens(null);
+    setFout(null);
+  }
+
+  async function verwijder(id: string) {
+    setVerwijderBezig(id);
+    try {
+      const res = await verwijderPrototype(id, leadId);
+      if (!res.ok) setFout(res.fout ?? "Verwijderen mislukt.");
+      else router.refresh();
+    } finally {
+      setVerwijderBezig(null);
     }
   }
 
@@ -135,13 +183,52 @@ export function WebsitePrototype({
         </p>
       )}
 
+      {/* Eerder gemaakte prototypes van deze lead */}
+      {opgeslagen.length > 0 && (
+        <div className="mt-4 border-t border-navy/10 pt-3">
+          <p className="mb-2 text-xs font-medium text-navy/50">
+            Opgeslagen prototypes ({opgeslagen.length})
+          </p>
+          <ul className="flex flex-wrap gap-2">
+            {opgeslagen.map((p) => (
+              <li
+                key={p.id}
+                className="flex items-center gap-1.5 rounded-lg border border-navy/15 bg-navy/[0.02] py-1 pl-2.5 pr-1.5 text-xs"
+              >
+                <button
+                  type="button"
+                  onClick={() => bekijk(p)}
+                  className="inline-flex items-center gap-1.5 text-navy hover:underline"
+                >
+                  {p.type === "app" ? <Smartphone size={12} /> : <MonitorSmartphone size={12} />}
+                  {p.bron === "ai" ? "AI" : "Sjabloon"} · {p.created_at.slice(0, 10)}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => verwijder(p.id)}
+                  disabled={verwijderBezig !== null}
+                  aria-label="Prototype verwijderen"
+                  className="text-navy/30 hover:text-red-600 disabled:opacity-50"
+                >
+                  {verwijderBezig === p.id ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : (
+                    <Trash2 size={12} />
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {html && (
         <div className="mt-4 flex justify-center overflow-hidden rounded-xl border border-navy/10 bg-achtergrond p-4">
           <iframe
             title="Prototype"
             srcDoc={html}
             sandbox="allow-same-origin"
-            className={type === "app" ? "h-[640px] w-[340px] rounded-2xl border-0" : "h-[520px] w-full rounded-lg border-0 bg-white"}
+            className={weergaveType === "app" ? "h-[640px] w-[340px] rounded-2xl border-0" : "h-[520px] w-full rounded-lg border-0 bg-white"}
           />
         </div>
       )}
