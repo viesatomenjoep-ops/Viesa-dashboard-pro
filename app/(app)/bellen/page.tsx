@@ -17,6 +17,7 @@ import { euro, datumKort } from "@/lib/format";
 import { scoreToon, type Lead } from "@/lib/leads";
 import { bewaarBelNotitie } from "../leads/acties";
 import { BelSuggesties } from "./BelSuggesties";
+import { HandmatigToevoegen, type BellijstKandidaat } from "./HandmatigToevoegen";
 import { BelVenster, type BelscriptOptie } from "./BelVenster";
 import { haalVanBellijst, legGesprekVast } from "./acties";
 import { contextVanKlant } from "@/lib/variabelen";
@@ -37,6 +38,22 @@ async function haalBellijst(): Promise<{ leads: Lead[]; schemaOntbreekt: boolean
     return { leads: (data ?? []) as Lead[], schemaOntbreekt: false };
   } catch {
     return { leads: [], schemaOntbreekt: true };
+  }
+}
+
+/** Leads die nog niet op de bellijst staan — kandidaten voor handmatig toevoegen. */
+async function haalKandidaten(): Promise<BellijstKandidaat[]> {
+  const supabase = createClient();
+  try {
+    const { data, error } = await supabase
+      .from("leads")
+      .select("id, bedrijf, plaats")
+      .or("bellen.is.null,bellen.eq.false")
+      .order("bedrijf", { ascending: true });
+    if (error) throw error;
+    return data ?? [];
+  } catch {
+    return [];
   }
 }
 
@@ -105,11 +122,12 @@ function isAchterstallig(datum: string | null): boolean {
 }
 
 export default async function BellenPagina() {
-  const [{ leads, schemaOntbreekt }, scripts, terugbellen, fonio] = await Promise.all([
+  const [{ leads, schemaOntbreekt }, scripts, terugbellen, fonio, kandidaten] = await Promise.all([
     haalBellijst(),
     haalBelscripts(),
     haalTerugbellijst(),
     haalFonio(),
+    haalKandidaten(),
   ]);
 
   const gemScore =
@@ -175,6 +193,9 @@ export default async function BellenPagina() {
           <FonioDemo {...fonio} />
         </div>
       )}
+
+      {/* Zelf een lead kiezen, los van de AI-suggesties hieronder */}
+      <HandmatigToevoegen kandidaten={kandidaten} />
 
       {/* AI-suggesties */}
       <div className="mb-8">
