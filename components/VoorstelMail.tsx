@@ -152,13 +152,15 @@ export function VoorstelMail({
               </label>
             )}
 
-            {/* Een scan zonder deelsleutel is niet openbaar te openen. Dat hier
-                zeggen is beter dan een mail versturen met een dode knop erin. */}
+            {/* Het voorbeeld hiernaast toont nog geen scanlinks, want een
+                voorbeeld hoort niets te veranderen. Bij het versturen krijgt de
+                scan zijn deelsleutel alsnog — dat hier zeggen scheelt de vraag
+                waarom het blok ontbreekt. */}
             {gekozenScan && !gekozenScan.deelsleutel && (
-              <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-800">
-                Deze scan is nog niet gedeeld, dus er kan geen link mee. Open&nbsp;hem
-                eerst op <span className="font-medium">Scan</span> via het
-                deel-icoon; dan komt het rapport er vanzelf bij te staan.
+              <p className="rounded-lg bg-navy/[0.04] px-3 py-2 text-xs leading-relaxed text-navy/60">
+                Deze scan is nog niet gedeeld. Bij het versturen maken we de
+                deelbare link automatisch aan; in het voorbeeld hiernaast staat
+                het scanblok daarom nog niet.
               </p>
             )}
           </div>

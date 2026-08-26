@@ -187,7 +187,9 @@ export async function verstuurVoorstel(formData: FormData): Promise<void> {
   }
 
   const supabase = createClient();
-  const opzet = await voorstelOpzet(supabase, { bedrijf, scanId });
+  // magDelen: bij het versturen mag een nog niet gedeelde scan zijn sleutel
+  // krijgen, zodat de knoppen in de mail werken.
+  const opzet = await voorstelOpzet(supabase, { bedrijf, scanId, magDelen: true });
 
   try {
     const { id } = await verstuurMail({
@@ -220,6 +222,8 @@ export async function verstuurVoorstel(formData: FormData): Promise<void> {
   }
 
   revalidatePath("/mail");
+  // De scangeschiedenis kan een verse deelsleutel hebben gekregen.
+  revalidatePath("/scan");
   redirect("/mail?verzonden=1");
 }
 
