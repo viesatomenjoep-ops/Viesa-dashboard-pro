@@ -7,6 +7,8 @@ import { verstuurMail, mailHtml, mailHtmlRijk, saniteerHtml } from "@/lib/resend
 import { BEDRIJF } from "@/lib/bedrijf";
 import { triageMail } from "@/lib/ai/mailtriage";
 import { voorstelOpzet } from "@/lib/mail/voorstel-opzet";
+import { tegelOpzet } from "@/lib/mail/tegel-opzet";
+import type { PromoVelden } from "@/lib/mail/promo-tegels";
 
 type MailMap = "inbox" | "verzonden" | "concepten" | "prullenbak" | "archief";
 
@@ -235,6 +237,78 @@ export async function verstuurVoorstel(formData: FormData): Promise<void> {
  * voorbeeld dat op een ander pad tot stand komt dan de echte mail is geen
  * voorbeeld maar een gok.
  */
+/**
+ * Verstuurt de promomail met de dienstentegels — de landingspagina in één
+ * mail, met de tekst zoals die in het venster is bewerkt.
+ *
+ * Net als `verstuurVoorstel` een eigen actie en niet `verstuurBericht`: de
+ * mail is zelf al een compleet ontwerp en mag niet nog eens in de
+ * `mailHtmlRijk()`-wikkel. De HTML wordt hier gebouwd en niet in de browser,
+ * zodat wat de ontvanger krijgt letterlijk uit `promoTegelsMail()` komt.
+ */
+export async function verstuurPromo(formData: FormData): Promise<void> {
+  const naar = String(formData.get("naar") ?? "").trim();
+  const klantId = String(formData.get("klant_id") ?? "").trim() || null;
+  const velden: PromoVelden = {
+    onderwerp: String(formData.get("onderwerp") ?? "").trim(),
+    aanhef: String(formData.get("aanhef") ?? "").trim(),
+    intro: String(formData.get("intro") ?? "").trim(),
+    slot: String(formData.get("slot") ?? "").trim(),
+    diensten: formData.getAll("diensten").map(String),
+  };
+
+  if (!naar || !velden.aanhef || !velden.intro) {
+    redirect("/mail?fout=" + encodeURIComponent("Vul ontvanger, aanhef en intro in."));
+  }
+
+  const opzet = tegelOpzet(velden);
+  const supabase = createClient();
+
+  try {
+    const { id } = await verstuurMail({
+      naar,
+      onderwerp: opzet.onderwerp,
+      html: opzet.html,
+      tekst: opzet.tekst,
+    });
+    await supabase.from("emails").insert({
+      richting: "uitgaand",
+      map: "verzonden",
+      van: BEDRIJF.email,
+      van_naam: BEDRIJF.naam,
+      naar,
+      onderwerp: opzet.onderwerp,
+      html: opzet.html,
+      tekst: opzet.tekst,
+      snippet: opzet.tekst.replace(/\s+/g, " ").slice(0, 140),
+      gelezen: true,
+      status: "verzonden",
+      provider_id: id,
+      klant_id: klantId,
+      heeft_bijlagen: false,
+    });
+  } catch (e) {
+    redirect(
+      "/mail?fout=" +
+        encodeURIComponent(e instanceof Error ? e.message : "Versturen mislukt."),
+    );
+  }
+
+  revalidatePath("/mail");
+  redirect("/mail?verzonden=1");
+}
+
+/**
+ * Bouwt de promomail op met de velden zoals ze nu in het venster staan —
+ * dezelfde weg als het versturen, maar dan om 'm eerst te laten zien.
+ */
+export async function voorbeeldPromo(
+  velden: PromoVelden,
+): Promise<{ onderwerp: string; html: string }> {
+  const opzet = tegelOpzet(velden);
+  return { onderwerp: opzet.onderwerp, html: opzet.html };
+}
+
 export async function voorbeeldVoorstel(invoer: {
   bedrijf?: string | null;
   scanId?: string | null;

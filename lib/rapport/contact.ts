@@ -38,6 +38,17 @@ export function whatsappLink(host: string): string | null {
 }
 
 /**
+ * Dezelfde knop, maar voor mails waar géén scan bij hoort (de promomail met de
+ * dienstentegels). Het scanbericht hierboven zou daar raar staan: de ontvanger
+ * heeft geen Deep Scan bekeken en zou zich afvragen welke.
+ */
+export function whatsappLinkAlgemeen(): string | null {
+  if (!WHATSAPP_NUMMER) return null;
+  const bericht = "Hallo Viesa, ik ontving jullie mail over automatisering en wil daar graag over doorpraten.";
+  return `https://wa.me/${WHATSAPP_NUMMER}?text=${encodeURIComponent(bericht)}`;
+}
+
+/**
  * De agenda waarin de klant zelf een gesprek inplant (Calendly, Cal.com,
  * Google Afspraakschema's — wat dan ook, het is één link).
  *
