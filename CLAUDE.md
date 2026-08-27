@@ -106,6 +106,10 @@ auth via `BRAND_FACTORY_SECRET`), `POST /api/audit` (vier LLM's parallel via
   (tabellen: leads, activiteiten, offertes, facturen, projecten, notities,
   design_docs, whiteboards, stickies, drive_links, prospector_runs, integraties;
   + view `omzet_per_maand`). Voorbeelddata: `supabase/seed.sql`.
+- **Migratie 0050** (`website_scans.heeft_afdruk`): een gegenereerde kolom die
+  zegt of er een schermafdruk in het bewaarde rapport zit. Nodig om er een knop
+  "beeld ophalen" naast te zetten zonder de data-URI van tientallen kilobytes
+  vijftig keer mee te sturen.
 - **Migratie 0049** (`rapport_weergaven`): legt vast wanneer een klantrapport
   geopend wordt — het sterkste belsignaal dat er is. Bewust géén policy voor
   `anon`: het rapport is openbaar, maar de bezoeker schrijft niet zelf. De
@@ -360,3 +364,22 @@ Env (alle optioneel):
   logo uit `public/viesa-hex.png` van het dashboard zelf — dat bestand staat er
   gegarandeerd. Wijs je naar een adres dat geen afbeelding teruggeeft, dan opent
   elke prospect de mail met een gebroken plaatje in het briefhoofd.
+
+## 15. Beweging
+
+`components/rapport/beweging.css` brengt de bewegingstaal van de landingspagina
+naar de klantdocumenten: dezelfde easing (`cubic-bezier(.2,.8,.2,1)` voor
+binnenkomen), dezelfde 6px-fade, dezelfde getekende ring. Drie regels:
+
+- **Zonder JavaScript.** De reveals lopen op `animation-timeline: view()` achter
+  een `@supports`. Kent de browser dat niet, dan staat alles er gewoon.
+- **Niets beweegt op papier.** Een animatie die halverwege bevriest tijdens het
+  afdrukken geeft een half doorzichtige PDF.
+- **`prefers-reduced-motion` is opt-in**, niet opt-out: alles zit ín een
+  `no-preference`-blok, zodat een vergeten regel nooit tóch beweegt.
+
+**E-mail kan dit niet.** Gmail gooit `<style>`-blokken weg en Outlook rendert met
+de opmaakmotor van Word: geen keyframes, geen transitions, geen SVG. Het enige
+wat daar beweegt is een GIF. De bestaande `public/viesa-logo-animatie.gif` heeft
+een witte achtergrond en past dus niet op het navy briefhoofd — wil je daar
+beweging, dan moet die GIF eerst op navy worden gezet.

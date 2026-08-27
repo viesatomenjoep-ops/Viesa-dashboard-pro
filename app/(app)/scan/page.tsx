@@ -27,11 +27,35 @@ export default async function ScanPagina({
     .neq("website", "")
     .order("bedrijf", { ascending: true });
 
-  const { data: scans } = await supabase
-    .from("website_scans")
-    .select("id, url, host, niche, totaal_score, created_at")
-    .order("created_at", { ascending: false })
-    .limit(50);
+  // heeft_afdruk komt uit migratie 0050. Bestaat de kolom nog niet, dan valt de
+  // query terug op de oude selectie in plaats van de pagina te laten vallen.
+  const kolommen = "id, url, host, niche, totaal_score, created_at";
+  let scans: {
+    id: string;
+    url: string;
+    host: string;
+    niche: string | null;
+    totaal_score: number;
+    created_at: string;
+    heeft_afdruk?: boolean;
+  }[] = [];
+  {
+    const met = await supabase
+      .from("website_scans")
+      .select(`${kolommen}, heeft_afdruk`)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (met.error) {
+      const zonder = await supabase
+        .from("website_scans")
+        .select(kolommen)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      scans = zonder.data ?? [];
+    } else {
+      scans = met.data ?? [];
+    }
+  }
 
   // Hoe vaak de klantrapporten geopend zijn. Best effort: de tabel bestaat pas
   // na migratie 0049, en de scanpagina hoort daar niet op te wachten.
@@ -53,7 +77,7 @@ export default async function ScanPagina({
     /* rapport_weergaven nog niet aanwezig */
   }
 
-  const scansMetWeergaven = (scans ?? []).map((s) => ({
+  const scansMetWeergaven = scans.map((s) => ({
     ...s,
     weergaven: weergaven.get(s.id) ?? null,
   }));

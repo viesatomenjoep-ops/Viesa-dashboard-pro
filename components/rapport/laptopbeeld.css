@@ -10,10 +10,16 @@
   width: 100%;
   max-width: 620px;
   margin: 0;
+  /* Niets binnen dit blok mag breder worden dan het blok zelf. De voet stak
+     hiervoor 12% uit, en op een telefoon betekende dat een rapport dat je van
+     rechts naar links kon slepen. */
+  overflow: hidden;
 }
 
 /* Het scherm: de rand van het deksel. */
 .lap-scherm {
+  width: 89%;
+  margin: 0 auto;
   border-radius: 12px 12px 4px 4px;
   padding: 9px 9px 0;
   overflow: hidden;
@@ -94,13 +100,13 @@
 }
 
 /* De voet: scharnier plus het uitsparinkje waar je 'm openklapt. */
+/* De basis is breder dan het deksel — dat is wat een laptop een laptop maakt.
+   Vroeger stak hij daarvoor buiten zijn eigen doos; nu is het deksel smaller en
+   vult de voet de volle breedte. Zelfde beeld, geen overloop. */
 .lap-voet {
   position: relative;
   height: 13px;
-  margin: 0 auto;
-  width: 112%;
-  max-width: none;
-  transform: translateX(-5.35%);
+  width: 100%;
   border-radius: 0 0 12px 12px;
 }
 .lap-donker .lap-voet {

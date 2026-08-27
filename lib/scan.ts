@@ -3,6 +3,7 @@ import { schoonSleutel } from "@/lib/geheimen";
 import { analyseerGeo, type GeoAnalyse } from "@/lib/geo-analyse";
 import type { AuditResultaten } from "@/lib/audit";
 import { kiesTweedePagina, type PaginaMeting } from "@/lib/rapport/paginas";
+import { kiesSchermafdruk, type LighthouseBeeld } from "@/lib/scan-afdruk";
 
 /**
  * Websitescanner: haalt de site op, meet hem, en telt drie oordelen samen.
@@ -279,21 +280,11 @@ export async function haalSchermafdruk(url: string): Promise<string | null> {
     );
     if (!res.ok) return null;
 
-    const data = (await res.json()) as {
-      lighthouseResult?: {
-        audits?: Record<string, { details?: { data?: string } }>;
-        fullPageScreenshot?: { screenshot?: { data?: string } };
-      };
-    };
-    const lh = data.lighthouseResult;
-    // final-screenshot is het beeld boven de vouw op laptopformaat — precies
-    // wat er in een laptopbeeld hoort. De volledige pagina is de terugval.
-    const afdruk =
-      lh?.audits?.["final-screenshot"]?.details?.data ??
-      lh?.fullPageScreenshot?.screenshot?.data ??
-      null;
-
-    return typeof afdruk === "string" && afdruk.startsWith("data:image/") ? afdruk : null;
+    const data = (await res.json()) as { lighthouseResult?: LighthouseBeeld };
+    // Het uitpakken zit in een pure functie, want dit is precies het soort code
+    // dat stil faalt als Google een veld verplaatst — en dan opent een klant
+    // zijn rapport met een leeg laptopbeeld. Zie lib/scan-afdruk.ts.
+    return kiesSchermafdruk(data.lighthouseResult);
   } catch {
     return null;
   } finally {

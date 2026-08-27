@@ -1,0 +1,134 @@
+/* ============================================================================
+   Beweging — de bewegingstaal van de landingspagina, in de klantdocumenten
+   ----------------------------------------------------------------------------
+   Overgenomen uit `Viesa Landing Page.dc.html`: dezelfde easing-familie
+   (cubic-bezier(.2,.8,.2,1) voor binnenkomen, .4,0,.2,1 voor de rest), dezelfde
+   afstand (6px omhoog bij een fade), en dezelfde manier om een ring te tekenen
+   (stroke-dashoffset). Zo voelt een rapport als hetzelfde merk als de site.
+
+   Drie regels waar niet vanaf geweken wordt:
+
+   1. Zonder JavaScript. Het rapport is een leesdocument; er hoort geen
+      observer-bundel naar de browser voor iets decoratiefs. De reveals lopen op
+      `animation-timeline: view()`, achter een `@supports`. Kent de browser dat
+      niet (Safari, Firefox op dit moment), dan staat alles er gewoon — geen
+      lege pagina, geen terugval om te onderhouden.
+
+   2. Niets beweegt op papier. Een animatie die halverwege bevriest tijdens het
+      afdrukken levert een half doorzichtige PDF op. Zie het print-blok onderaan.
+
+   3. Wie zegt geen beweging te willen, krijgt geen beweging. Alles zit in een
+      `prefers-reduced-motion: no-preference`-blok — opt-in, niet opt-out, zodat
+      een vergeten regel nooit tóch beweegt.
+
+   E-mail staat hier bewust buiten: Gmail gooit `<style>`-blokken weg en Outlook
+   rendert met de opmaakmotor van Word. Daar bestaat geen animatie, alleen een
+   bewegende GIF. Zie de toelichting in lib/mail/promo-mail.ts.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: no-preference) {
+  /* -------------------------------------------------------------------------
+     De ring die zichzelf tekent
+     -------------------------------------------------------------------------
+     Werkt overal, want dit is een gewone animatie bij het laden. De begin- en
+     eindwaarde komen als custom property uit de component mee, want de
+     eindstand verschilt per cijfer. */
+  .rap-ring-boog {
+    animation: rapRingTeken 1.15s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  @keyframes rapRingTeken {
+    from { stroke-dashoffset: var(--rap-ring-leeg); }
+    to   { stroke-dashoffset: var(--rap-ring-doel); }
+  }
+
+  /* -------------------------------------------------------------------------
+     De balken in de scorematrix groeien vanaf links
+     -------------------------------------------------------------------------
+     Op transform en niet op width: dat scheelt de browser een herberekening van
+     de indeling per frame, en het scheelt ons een balk die tijdens het groeien
+     de tekst ernaast verschuift. */
+  .mtx-vul,
+  .mtx-ongemeten {
+    transform-origin: left center;
+    animation: rapBalkGroei 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  .sam-verdeling > span,
+  .sam-saldo-balk > span {
+    transform-origin: left center;
+    animation: rapBalkGroei 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  @keyframes rapBalkGroei {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+  }
+
+  /* -------------------------------------------------------------------------
+     Binnenkomen tijdens het scrollen
+     -------------------------------------------------------------------------
+     `animation-timeline: view()` koppelt de animatie aan de plek van het
+     element in beeld in plaats van aan de tijd. Geen observer, geen bundel.
+
+     De reeks eindigt op `entry 60%`: ruim voordat het element in het midden
+     staat is hij klaar. Een reveal die pas afmaakt als je er middenin kijkt,
+     leest als traagheid in plaats van als beweging. */
+  @supports (animation-timeline: view()) {
+    .rap-onderdeel .rap-onderdeel-kop,
+    .rap-onderdeel .rap-methode,
+    .rap-onderdeel .rap-meting,
+    .rap-onderdeel .rap-oordeel,
+    .mtx-rij,
+    .bev,
+    .sam-kaart,
+    .vst-kaart,
+    .vst-pijler,
+    .vst-scankaart {
+      animation: rapOnthul linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 60%;
+    }
+
+    /* De kaarten in een raster komen niet allemaal tegelijk: een kleine
+       vertraging per kolom geeft het beeld richting, zoals op de site. Meer dan
+       twee stappen wordt onrustig. */
+    .bev:nth-child(even),
+    .sam-kaart:nth-child(even),
+    .vst-kaart:nth-child(even) {
+      animation-range: entry 6% entry 66%;
+    }
+  }
+
+  @keyframes rapOnthul {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Papier
+   ---------------------------------------------------------------------------
+   Alles uit. Een animatie die tijdens het afdrukken halverwege staat, levert
+   een half doorzichtige of half getekende PDF op — en dat is precies het soort
+   slordigheid waar deze rapporten niet tegen kunnen.
+   ------------------------------------------------------------------------- */
+@media print {
+  .rap *,
+  .rap *::before,
+  .rap *::after {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* De ring is de uitzondering op "transform: none": zijn boog staat op
+     -90 graden gedraaid zodat hij bovenaan begint, en dat is geen animatie maar
+     zijn normale stand. */
+  .rap-ring svg {
+    transform: rotate(-90deg) !important;
+  }
+  .rap-ring-boog {
+    stroke-dashoffset: var(--rap-ring-doel) !important;
+  }
+}

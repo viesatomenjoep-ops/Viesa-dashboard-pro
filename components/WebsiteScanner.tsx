@@ -11,6 +11,7 @@ import {
   Clock,
   Cpu,
   ExternalLink,
+  Camera,
   Eye,
   FileSearch,
   Gauge,
@@ -39,6 +40,7 @@ import { ZoekKies } from "@/components/ZoekKies";
 import { pushScanRapportNaarLead } from "@/app/(app)/leads/acties";
 import {
   deelScan,
+  haalAfdrukVoorScan,
   laadOpgeslagenScan,
   verwijderScan,
   type RapportVariant,
@@ -164,6 +166,11 @@ export type OpgeslagenScan = {
   created_at: string;
   /** Hoe vaak het klantrapport geopend is, en wanneer voor het laatst. */
   weergaven?: { aantal: number; laatst: string } | null;
+  /**
+   * Of er een schermafdruk van de site bij zit. Scans van vóór die functie
+   * hebben er geen, en tonen dan een leeg laptopbeeld op de rapportomslag.
+   */
+  heeft_afdruk?: boolean;
 };
 
 export function WebsiteScanner({
@@ -195,6 +202,7 @@ export function WebsiteScanner({
   const [verwijderBezig, setVerwijderBezig] = useState<string | null>(null);
   const [deelBezig, setDeelBezig] = useState<string | null>(null);
   const [gekopieerd, setGekopieerd] = useState<string | null>(null);
+  const [afdrukBezig, setAfdrukBezig] = useState<string | null>(null);
   /** De zojuist bewaarde scan — om er direct een klantrapport van te openen. */
   const [laatsteScanId, setLaatsteScanId] = useState<string | null>(null);
   const bronRef = useRef<EventSource | null>(null);
@@ -347,6 +355,24 @@ export function WebsiteScanner({
       router.refresh();
     } finally {
       setDeelBezig(null);
+    }
+  }
+
+  /**
+   * Haalt alsnog een schermafdruk op voor een scan die er geen heeft, zodat de
+   * omslag van het rapport de site van de klant toont in plaats van een leeg
+   * venster. Scheelt een volledige herscan.
+   */
+  async function haalAfdruk(id: string) {
+    if (afdrukBezig) return;
+    setAfdrukBezig(id);
+    setFout(null);
+    try {
+      const res = await haalAfdrukVoorScan(id);
+      if (res.ok) router.refresh();
+      else setFout(res.fout ?? "Ophalen mislukt.");
+    } finally {
+      setAfdrukBezig(null);
     }
   }
 
@@ -584,6 +610,25 @@ export function WebsiteScanner({
                       );
                     })}
                   </span>
+
+                  {/* Alleen tonen als het beeld ontbreekt: anders staat er een
+                      knop die niets toevoegt. */}
+                  {s.heeft_afdruk === false && (
+                    <button
+                      type="button"
+                      onClick={() => haalAfdruk(s.id)}
+                      disabled={afdrukBezig !== null}
+                      title="Schermafdruk van de site alsnog ophalen — duurt ongeveer een halve minuut"
+                      className="inline-flex shrink-0 items-center gap-1 rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-800 hover:border-amber-400 disabled:opacity-50"
+                    >
+                      {afdrukBezig === s.id ? (
+                        <Loader2 size={11} className="animate-spin" />
+                      ) : (
+                        <Camera size={11} strokeWidth={1.75} />
+                      )}
+                      Beeld ophalen
+                    </button>
+                  )}
 
                   <button
                     type="button"
