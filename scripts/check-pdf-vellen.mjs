@@ -18,7 +18,24 @@
  * Geen onderdeel van `npm test`: het heeft een draaiende server en een browser
  * nodig. Draai het na elke wijziging aan de afdrukopmaak.
  */
-import { chromium } from "playwright";
+/*
+ * Playwright staat bewust niet in package.json: het is een browser van een paar
+ * honderd megabyte die alleen dit ene script nodig heeft, en die hoort niet in
+ * de installatie van iedereen die het dashboard draait. Ontbreekt hij, dan is
+ * de melding hieronder duidelijker dan een stacktrace over een module.
+ */
+let chromium;
+try {
+  ({ chromium } = await import("playwright"));
+} catch {
+  console.error(
+    "\nPlaywright ontbreekt — dit script heeft een echte browser nodig om de\n" +
+      "PDF te kunnen afdrukken en de vellen te meten.\n\n" +
+      "  npm i -D playwright && npx playwright install chromium\n\n" +
+      "Daarna, met een draaiende server:  npm run check:pdf\n",
+  );
+  process.exit(1);
+}
 
 /** Onder dit percentage inkt leest een vel als leeg. */
 const DREMPEL = 8;

@@ -67,6 +67,19 @@ test("web: de adresbalk", vol.html.includes("uwdomein.nl"), true);
 test("dashboard: de meters", vol.html.includes("UREN BESPAARD"), true);
 test("de teller telt tot zes", vol.html.includes("01 / 06") && vol.html.includes("06 / 06"), true);
 
+console.log("\nOp een telefoon — de tegels moeten onder elkaar vallen");
+/* Gemeten met een echte browser valt de mail bij 320px binnen 305px en bij
+   390px binnen 375px. Wat een test zonder browser wél kan bewaken zijn de twee
+   dingen waardoor dat stukgaat: de media query die de kolommen laat stapelen,
+   en een tabel die breder is dan de 600px-omhulling. */
+test("er is een media query voor smalle schermen", vol.html.includes("@media only screen and (max-width:600px)"), true);
+test("de kolommen stapelen daar", /\.kolom\s*\{[^}]*display:block/.test(vol.html), true);
+test("de omhulling mag krimpen", /\.omhulsel\s*\{[^}]*max-width:100%/.test(vol.html), true);
+const breed = (body.match(/width:(\d{3,})px/g) ?? [])
+  .map((s) => Number(s.replace(/\D/g, "")))
+  .filter((n) => n > 600);
+test("niets is breder dan de 600px-omhulling", breed, []);
+
 console.log("\nDe bewerkbare velden");
 const eigen = promoTegelsMail({
   ...basis,

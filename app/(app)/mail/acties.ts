@@ -178,6 +178,78 @@ export async function verwijderMail(id: string) {
  * ontvanger krijgt letterlijk uit `promotieMail()` komt en niet uit een editor
  * die er onderweg nog iets aan verandert.
  */
+/**
+ * Verstuurt een mail die zijn eigen opmaak al meebrengt (het voorstel, de
+ * promomail) en legt hem daarna vast in Verzonden.
+ *
+ * Dat "daarna" is de hele reden dat dit apart staat. Zaten het versturen en
+ * het vastleggen in één `try`, dan meldde het dashboard "Versturen mislukt"
+ * zodra alleen de logregel faalde — terwijl de mail al bij de prospect lag.
+ * Je stuurt hem dan nog een keer, en de prospect krijgt hem twee keer. Een
+ * ontbrekende regel in Verzonden is vervelend; een dubbele mail bij een
+ * prospect is schadelijk.
+ *
+ * Mislukt het versturen zelf, dan gaat deze functie er niet uit: `redirect()`
+ * werpt, en de aanroeper komt niet verder.
+ */
+async function verstuurEnLeg(
+  supabase: ReturnType<typeof createClient>,
+  invoer: {
+    naar: string;
+    klantId: string | null;
+    opzet: { onderwerp: string; html: string; tekst: string };
+  },
+): Promise<{ waarschuwing: string | null }> {
+  const { naar, klantId, opzet } = invoer;
+
+  let providerId: string | null = null;
+  try {
+    const { id } = await verstuurMail({
+      naar,
+      onderwerp: opzet.onderwerp,
+      html: opzet.html,
+      tekst: opzet.tekst,
+    });
+    providerId = id;
+  } catch (e) {
+    redirect(
+      "/mail?fout=" +
+        encodeURIComponent(e instanceof Error ? e.message : "Versturen mislukt."),
+    );
+  }
+
+  // Vanaf hier is de mail de deur uit. Wat hier nog misgaat is boekhouding.
+  const { error } = await supabase.from("emails").insert({
+    richting: "uitgaand",
+    map: "verzonden",
+    van: BEDRIJF.email,
+    van_naam: BEDRIJF.naam,
+    naar,
+    onderwerp: opzet.onderwerp,
+    html: opzet.html,
+    tekst: opzet.tekst,
+    snippet: opzet.tekst.replace(/\s+/g, " ").slice(0, 140),
+    gelezen: true,
+    status: "verzonden",
+    provider_id: providerId,
+    klant_id: klantId,
+    heeft_bijlagen: false,
+  });
+
+  return {
+    waarschuwing: error
+      ? "De mail is verstuurd, maar kon niet in Verzonden worden vastgelegd. Stuur hem niet opnieuw."
+      : null,
+  };
+}
+
+/** `?verzonden=1`, met de waarschuwing erachter als het vastleggen misging. */
+function naVersturen(waarschuwing: string | null): string {
+  return waarschuwing
+    ? `/mail?verzonden=1&fout=${encodeURIComponent(waarschuwing)}`
+    : "/mail?verzonden=1";
+}
+
 export async function verstuurVoorstel(formData: FormData): Promise<void> {
   const naar = String(formData.get("naar") ?? "").trim();
   const bedrijf = String(formData.get("bedrijf") ?? "").trim() || null;
@@ -193,40 +265,12 @@ export async function verstuurVoorstel(formData: FormData): Promise<void> {
   // krijgen, zodat de knoppen in de mail werken.
   const opzet = await voorstelOpzet(supabase, { bedrijf, scanId, magDelen: true });
 
-  try {
-    const { id } = await verstuurMail({
-      naar,
-      onderwerp: opzet.onderwerp,
-      html: opzet.html,
-      tekst: opzet.tekst,
-    });
-    await supabase.from("emails").insert({
-      richting: "uitgaand",
-      map: "verzonden",
-      van: BEDRIJF.email,
-      van_naam: BEDRIJF.naam,
-      naar,
-      onderwerp: opzet.onderwerp,
-      html: opzet.html,
-      tekst: opzet.tekst,
-      snippet: opzet.tekst.replace(/\s+/g, " ").slice(0, 140),
-      gelezen: true,
-      status: "verzonden",
-      provider_id: id,
-      klant_id: klantId,
-      heeft_bijlagen: false,
-    });
-  } catch (e) {
-    redirect(
-      "/mail?fout=" +
-        encodeURIComponent(e instanceof Error ? e.message : "Versturen mislukt."),
-    );
-  }
+  const { waarschuwing } = await verstuurEnLeg(supabase, { naar, klantId, opzet });
 
   revalidatePath("/mail");
   // De scangeschiedenis kan een verse deelsleutel hebben gekregen.
   revalidatePath("/scan");
-  redirect("/mail?verzonden=1");
+  redirect(naVersturen(waarschuwing));
 }
 
 /**
@@ -264,38 +308,10 @@ export async function verstuurPromo(formData: FormData): Promise<void> {
   const opzet = tegelOpzet(velden);
   const supabase = createClient();
 
-  try {
-    const { id } = await verstuurMail({
-      naar,
-      onderwerp: opzet.onderwerp,
-      html: opzet.html,
-      tekst: opzet.tekst,
-    });
-    await supabase.from("emails").insert({
-      richting: "uitgaand",
-      map: "verzonden",
-      van: BEDRIJF.email,
-      van_naam: BEDRIJF.naam,
-      naar,
-      onderwerp: opzet.onderwerp,
-      html: opzet.html,
-      tekst: opzet.tekst,
-      snippet: opzet.tekst.replace(/\s+/g, " ").slice(0, 140),
-      gelezen: true,
-      status: "verzonden",
-      provider_id: id,
-      klant_id: klantId,
-      heeft_bijlagen: false,
-    });
-  } catch (e) {
-    redirect(
-      "/mail?fout=" +
-        encodeURIComponent(e instanceof Error ? e.message : "Versturen mislukt."),
-    );
-  }
+  const { waarschuwing } = await verstuurEnLeg(supabase, { naar, klantId, opzet });
 
   revalidatePath("/mail");
-  redirect("/mail?verzonden=1");
+  redirect(naVersturen(waarschuwing));
 }
 
 /**
