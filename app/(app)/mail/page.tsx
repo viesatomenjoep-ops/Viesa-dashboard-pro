@@ -22,6 +22,7 @@ import { sorteerMetFavorietenBovenaan } from "@/lib/sjablonen";
 import { wisselFavoriet } from "../sjablonen/acties";
 import { MailOpstellen, type KlantOptie, type MailRapport } from "@/components/MailOpstellen";
 import { VoorstelMail, type VoorstelScan } from "@/components/VoorstelMail";
+import { PromoTegelMail } from "@/components/PromoTegelMail";
 import type { ScanRapport } from "@/lib/scan";
 import { VerzondenMelding } from "@/components/VerzondenMelding";
 import { MailLeesPaneel } from "@/components/MailLeesPaneel";
@@ -31,6 +32,8 @@ import {
   verstuurBericht,
   verstuurVoorstel,
   voorbeeldVoorstel,
+  verstuurPromo,
+  voorbeeldPromo,
   wisselSter,
   verplaatsMail,
   verwijderMail,
@@ -258,6 +261,19 @@ export default async function MailPagina({
         titel="E-mail"
         actie={
           <div className="flex flex-wrap items-center gap-2">
+          <VolScherm
+            label="Promomail"
+            titel="Promomail — de landingspagina in één mail, zelf te bewerken"
+            breed="6xl"
+            toon="navy"
+          >
+            <PromoTegelMail
+              verstuurActie={verstuurPromo}
+              voorbeeldActie={voorbeeldPromo}
+              geconfigureerd={geconfigureerd}
+              klanten={klanten.map((k) => ({ bedrijf: k.bedrijf, email: k.email }))}
+            />
+          </VolScherm>
           <VolScherm
             label="Voorstel versturen"
             titel="Viesa-voorstel — ons aanbod in één mail"

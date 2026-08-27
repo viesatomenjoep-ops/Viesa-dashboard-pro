@@ -87,8 +87,9 @@ De middleware (`middleware.ts`) beschermt alle routes.
   drukt de pagina af, er is geen tweede sjabloon. Elke opening wordt vastgelegd
   (migratie 0049, `lib/rapport/weergave.ts`) en verschijnt als belsignaal in de
   scangeschiedenis. Voorbeelden achter de login op `/rapport-voorbeeld`,
-  `/rapport-voorbeeld/kort`, `/rapport-voorbeeld/voorstel` en
-  `/rapport-voorbeeld/mail` (de voorstelmail, met de omgevingswaarden erboven).
+  `/rapport-voorbeeld/kort`, `/rapport-voorbeeld/voorstel`,
+  `/rapport-voorbeeld/mail` (de voorstelmail, met de omgevingswaarden erboven)
+  en `/rapport-voorbeeld/promo` (de bewerkbare tegelmail, zie §14).
 - `/brand-factory` — **Brand Factory dashboard**: overzicht van merken,
   concepten, renders en batches. Data komt binnen via `POST /api/brand-factory/sync`
   vanuit het lokale Brand Factory-project op de Mac (na elke batch-render).
@@ -355,6 +356,24 @@ Twee documenten, dezelfde teksten, heel andere opmaak:
   bij eerste opening kapot uit. Bewaakt door `scripts/test-promo-mail.mjs`.
 - **`components/rapport/Voorstel.tsx`** — hetzelfde aanbod in de
   rapport-huisstijl, afdrukbaar als derde PDF naast de korte en lange scan.
+
+Daarnaast is er een derde document: **`lib/mail/promo-tegels.ts`** — de
+**tegelmail** (Mail → Promomail). Geen rapportblok, maar de zes diensten als de
+dienstentegels van de landingspagina, elk met een klein vignet: golfvorm,
+chatbubbels, koppelnodes, afvinklijst, ladende site, KPI-meters. Drie regels
+die hier gelden:
+
+- **De scène moet stilstaand kloppen.** Alle beweging zit in klassen in het
+  `<style>`-blok: Apple Mail en iOS spelen die af, Gmail en Outlook gooien ze
+  weg en tonen het stilstaande tafereel. Nooit een vignet bouwen dat pas klopt
+  als het beweegt, en nooit inline `animation` (dan bewaakt de test het niet).
+- **Het accent is hier `#E2603F`** — dat van de landingspagina, niet het
+  dashboard-teal. Deze mail moet aanvoelen als de site waar de prospect op
+  doorklikt; het dashboard is voor ons.
+- **Bewerkbaar is alleen tekst** (onderwerp, aanhef, intro, afsluiting, en
+  welke tegels meegaan — `standaardPromoVelden()` vult het venster). Het
+  ontwerp ligt vast; voorbeeld en verzending lopen allebei door
+  `lib/mail/tegel-opzet.ts`. Bewaakt door `scripts/test-promo-tegels.mjs`.
 
 Versturen gaat via **Mail → Voorstel versturen**. Dat is een eigen server-action
 (`verstuurVoorstel`), níét de gewone `verstuurBericht`: die wikkelt de inhoud in
