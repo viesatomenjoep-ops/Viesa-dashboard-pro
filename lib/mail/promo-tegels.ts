@@ -496,21 +496,18 @@ export function promoTegelsMail(invoer: PromoTegelsInvoer): PromoTegelsMail {
     <td class="rand" style="background:${K.navy};padding:26px 32px 30px 32px;font-family:${LETTER};">
       <table role="presentation" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <!-- Het beeldmerk op een zandkleurig tegeltje: het logo is een navy
-               hexagon en valt recht op het navy briefhoofd weg. En blokkeert
-               een mailprogramma afbeeldingen, dan staat er een net vlakje in
-               plaats van een gebroken plaatje. Vandaar ook alt="". -->
-          <td width="38" valign="middle">
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-              <tr>
-                <td width="38" height="38" align="center" valign="middle"
-                    style="width:38px;height:38px;background:${K.zand};border-radius:9px;">
-                  <img src="${veilig(logoUrl)}" width="26" height="26" alt="" style="display:block;width:26px;height:26px;border:0;">
-                </td>
-              </tr>
-            </table>
+          <!-- Het beeldmerk kaal op het navy, precies zoals de kop van de
+               landingspagina. Geen tegeltje eromheen: het PNG is doorzichtig,
+               de zeshoek zakt weg in het navy en de witte V blijft staan — dat
+               ís het merk. Een lichtgekleurd vlakje eromheen maakt er een
+               losse sticker van die op de site nergens voorkomt.
+
+               alt="" omdat de naam er in leesbare tekst naast staat; blokkeert
+               een mailprogramma afbeeldingen, dan mist er niets. -->
+          <td width="40" valign="middle">
+            <img src="${veilig(logoUrl)}" width="40" height="44" alt="" style="display:block;width:40px;height:44px;border:0;">
           </td>
-          <td valign="middle" style="padding-left:10px;font-size:15px;font-weight:800;letter-spacing:1.2px;color:${K.zand};">
+          <td valign="middle" style="padding-left:12px;font-size:15px;font-weight:800;letter-spacing:1.2px;color:${K.zand};">
             VIESA <span style="font-weight:400;color:${K.lichtblauw};">AUTOMATIONS</span>
           </td>
         </tr>

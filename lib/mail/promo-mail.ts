@@ -288,27 +288,18 @@ export function promotieMail(invoer: PromoMailInvoer): PromoMail {
     <td class="rand" style="background:${K.navy};padding:26px 32px 30px 32px;font-family:${LETTER};">
       <table role="presentation" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <!-- Het beeldmerk staat op een zandkleurig tegeltje, en dat is geen
-               versiering: het logo is een navy hexagon met een witte V. Recht op
-               het navy briefhoofd valt die hexagon weg en blijft er een zwevende
-               V over die niemand als logo herkent. Op zand leest hij zoals hij
-               bedoeld is.
+          <!-- Het beeldmerk kaal op het navy, precies zoals de kop van de
+               landingspagina. Geen tegeltje eromheen: het PNG is doorzichtig,
+               de zeshoek zakt weg in het navy en de witte V blijft staan — dat
+               ís het merk. Een lichtgekleurd vlakje eromheen maakt er een
+               losse sticker van die op de site nergens voorkomt.
 
-               Het tegeltje doet nog iets: de meeste mailprogramma's blokkeren
-               afbeeldingen bij de eerste opening, en dan staat er een net
-               zandkleurig vlakje in plaats van een gebroken-plaatje-icoon.
-               Vandaar ook alt="" — de naam staat er in tekst naast. -->
-          <td width="38" valign="middle">
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-              <tr>
-                <td width="38" height="38" align="center" valign="middle"
-                    style="width:38px;height:38px;background:${K.zand};border-radius:9px;">
-                  <img src="${veilig(logoUrl)}" width="26" height="26" alt="" style="display:block;width:26px;height:26px;border:0;">
-                </td>
-              </tr>
-            </table>
+               alt="" omdat de naam er in leesbare tekst naast staat; blokkeert
+               een mailprogramma afbeeldingen, dan mist er niets. -->
+          <td width="40" valign="middle">
+            <img src="${veilig(logoUrl)}" width="40" height="44" alt="" style="display:block;width:40px;height:44px;border:0;">
           </td>
-          <td valign="middle" style="padding-left:10px;font-size:15px;font-weight:800;letter-spacing:1.2px;color:${K.zand};">
+          <td valign="middle" style="padding-left:12px;font-size:15px;font-weight:800;letter-spacing:1.2px;color:${K.zand};">
             VIESA <span style="font-weight:400;color:${K.lichtblauw};">AUTOMATIONS</span>
           </td>
         </tr>

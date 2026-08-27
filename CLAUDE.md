@@ -389,8 +389,12 @@ Env (alle optioneel):
 Het logo in de mail heeft **geen** variabele: het bestand staat in `public/` en
 het adres komt van Vercel zelf (`VERCEL_PROJECT_PRODUCTION_URL`). Dat was wél
 instelbaar, en dat heeft twee keer een gebroken plaatje in het briefhoofd van
-een prospect opgeleverd. Het staat bovendien op een zandkleurig tegeltje: het
-beeldmerk is een navy hexagon, en recht op het navy briefhoofd valt die weg.
+een prospect opgeleverd. Het staat **kaal op het navy**, zoals in de kop van de
+landingspagina: `viesa-hex.png` is doorzichtig, de zeshoek zakt weg in het navy
+en de witte V blijft staan — dat ís het merk. Er heeft ooit een zandkleurig
+tegeltje omheen gezeten uit angst dat de zeshoek zou wegvallen; dat maakte er
+een losse sticker van die op de site nergens voorkomt. Nooit meer een vlakje om
+het logo, in geen enkele mailing.
 
 ## 15. Beweging
 
@@ -407,6 +411,10 @@ binnenkomen), dezelfde 6px-fade, dezelfde getekende ring. Drie regels:
 
 **E-mail kan dit niet.** Gmail gooit `<style>`-blokken weg en Outlook rendert met
 de opmaakmotor van Word: geen keyframes, geen transitions, geen SVG. Het enige
-wat daar beweegt is een GIF. De bestaande `public/viesa-logo-animatie.gif` heeft
-een witte achtergrond en past dus niet op het navy briefhoofd — wil je daar
-beweging, dan moet die GIF eerst op navy worden gezet.
+wat daar beweegt is een GIF, en die van ons kan niet: `public/viesa-logo-animatie.gif`
+heeft een **harde witte doos** om de zeshoek. Op een witte mailachtergrond zie
+je dat niet, maar in een donkere weergave — op een telefoon eerder regel dan
+uitzondering — zit er een wit blokje om het logo. Daarom staat overal het
+doorzichtige `viesa-logo.png` / `viesa-hex.png`, en beweegt het briefhoofd
+alleen via CSS (Apple Mail). Wil je hier ooit weer een GIF, maak hem dan eerst
+doorzichtig.

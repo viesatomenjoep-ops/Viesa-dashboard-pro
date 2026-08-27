@@ -1,5 +1,5 @@
 import "server-only";
-import { BEDRIJF, adresRegel, logoAbsoluut, logoAnimatieAbsoluut } from "@/lib/bedrijf";
+import { BEDRIJF, adresRegel, logoAbsoluut } from "@/lib/bedrijf";
 import { lettertypeStack } from "@/lib/lettertypes";
 
 /**
@@ -83,8 +83,14 @@ export function mailBriefhoofd(): string {
   <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 20px;">
     <tr>
       <td class="viesa-logo" style="vertical-align:middle; padding:0 12px 14px 0; width:48px;">
+        <!-- Het doorzichtige PNG, niet de geanimeerde GIF: die heeft een harde
+             witte doos om de zeshoek. Op een witte mailachtergrond zie je dat
+             niet, maar zodra de lezer zijn mail donker heeft staan — en dat is
+             op een telefoon eerder regel dan uitzondering — zit er een wit
+             blokje om het logo. Een merk hoort op elke ondergrond te kloppen.
+             De beweging zit hieronder in CSS; Apple Mail speelt die af. -->
         <a href="${BEDRIJF.websiteUrl}" style="text-decoration:none; border:0;">
-          <img src="${logoAnimatieAbsoluut()}" alt="" width="44" height="49" style="display:block; border:0;" />
+          <img src="${logoAbsoluut()}" alt="" width="44" height="49" style="display:block; border:0;" />
         </a>
       </td>
       <td class="viesa-naam" style="vertical-align:middle; padding:0 0 14px;">
@@ -108,7 +114,9 @@ export function mailBriefhoofd(): string {
  * stilstaand briefhoofd in plaats van een leeg vlak.
  *
  * Waar het écht speelt: Apple Mail op Mac en iPhone. Gmail en Outlook laten
- * animaties niet toe; voor die clients is een geanimeerde GIF de enige weg.
+ * animaties niet toe; daar staat het briefhoofd stil. Een GIF zou daar wél
+ * bewegen, maar de onze heeft een witte doos om het merk — zie het briefhoofd
+ * hierboven.
  *
  * `prefers-reduced-motion` wordt gerespecteerd — wie beweging heeft uitgezet,
  * krijgt het stilstaande briefhoofd.
@@ -178,8 +186,8 @@ export function saniteerHtml(html: string): string {
 
 /**
  * Huisstijl-conforme HTML-wikkel om een reeds-opgemaakte HTML-body: briefhoofd
- * met het geanimeerde logo, de titel, de inhoud, en onderaan het logo met adres
- * en contactgegevens — alles in navy.
+ * met het logo, de titel, de inhoud, en onderaan het logo met adres en
+ * contactgegevens — alles in navy.
  *
  * `lettertype` is een sleutel uit `lib/lettertypes.ts`; de bijbehorende stack
  * wordt inline op de buitenste container gezet zodat alles binnenin hem erft.
