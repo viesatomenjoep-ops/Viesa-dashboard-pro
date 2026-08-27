@@ -358,12 +358,11 @@ Env (alle optioneel):
 - `NEXT_PUBLIC_WHATSAPP` — nummer zonder plus of spaties; leeg = de terugval in
   `lib/rapport/contact.ts`
 - `NEXT_PUBLIC_AFSPRAAK_URL` — Cal.com-link; leeg = de knop wordt een mailtje
-- `NEXT_PUBLIC_LOGO_URL` — volledige https-URL van het logo voor de mail.
-  Bewust níét `NEXT_PUBLIC_SITE_URL`: die stuurt ook de Google-login-redirect
-  aan, en de marketingsite is niet het dashboard. **Laat hem leeg**, dan komt het
-  logo uit `public/viesa-hex.png` van het dashboard zelf — dat bestand staat er
-  gegarandeerd. Wijs je naar een adres dat geen afbeelding teruggeeft, dan opent
-  elke prospect de mail met een gebroken plaatje in het briefhoofd.
+Het logo in de mail heeft **geen** variabele: het bestand staat in `public/` en
+het adres komt van Vercel zelf (`VERCEL_PROJECT_PRODUCTION_URL`). Dat was wél
+instelbaar, en dat heeft twee keer een gebroken plaatje in het briefhoofd van
+een prospect opgeleverd. Het staat bovendien op een zandkleurig tegeltje: het
+beeldmerk is een navy hexagon, en recht op het navy briefhoofd valt die weg.
 
 ## 15. Beweging
 
