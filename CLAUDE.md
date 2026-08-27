@@ -208,6 +208,15 @@ Bij elke gemelde fout die niet nog eens mag gebeuren: hier bijwerken.
   occurred" zag in plaats van zijn rapport. Alles wat uit zo'n kolom komt gaat nu
   eerst door `lib/rapport/heelScan.ts`. Een ontbrekende meting wordt `null`,
   nooit nul: nul leest als een slechte uitslag.
+- **Een halfleeg vel zie je niet in de code.** Liet je de onderdelen op papier
+  doorlopen, dan eindigde het ene halverwege een vel en begon het volgende
+  eronder — en soms bleven er twee regels op een verder leeg blad achter. Elk
+  onderdeel begint nu op een eigen vel (`break-before: page`), en de
+  afdrukafstanden zijn zo afgesteld dat een onderdeel er ook op past. Bewijs met
+  `npm run check:pdf` (server moet draaien): die telt per vel hoeveel pixels van
+  wit afwijken en slaat alarm onder de 8%. Meten met `getBoundingClientRect`
+  werkt hier níét — dat gaf 1115px waar het vel 1123px is, terwijl de PDF alsnog
+  omsloeg.
 - **Papier is geen telefoon.** Een A4 is ~794 CSS-px breed, dus een
   `@media (max-width: 900px)`-regel slaat in de afdrukweergave óók aan. De
   omslag stapelde daardoor, de laptop werd paginabreed en de rest schoof van het
