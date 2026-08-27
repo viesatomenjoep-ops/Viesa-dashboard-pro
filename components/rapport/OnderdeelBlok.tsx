@@ -37,10 +37,10 @@ export function OnderdeelBlok({ onderdeel }: { onderdeel: Onderdeel }) {
       <span className="rap-ond-band" style={{ background: `var(--${stand})` }} aria-hidden="true" />
 
       <div className="rap-breed">
-        <div className="rap-stapel" style={{ gap: 30 }}>
+        <div className="rap-stapel rap-ond-stapel">
           {/* Kop met de score ernaast */}
           <div className="rap-onderdeel-kop">
-            <div className="rap-stapel rap-lees" style={{ gap: 12, flex: "1 1 380px" }}>
+            <div className="rap-stapel rap-lees rap-ond-titel">
               <span className="rap-ond-nr">
                 <b>{String(nummer).padStart(2, "0")}</b>
                 <span className="rap-label">{naam}</span>
@@ -62,7 +62,7 @@ export function OnderdeelBlok({ onderdeel }: { onderdeel: Onderdeel }) {
           </div>
 
           {metingen.length > 0 && (
-            <div className="rap-stapel" style={{ gap: 40 }}>
+            <div className="rap-stapel rap-metingen">
               {metingen.map((m) => (
                 <Meetbalk key={m.titel} meting={m} />
               ))}
@@ -70,7 +70,7 @@ export function OnderdeelBlok({ onderdeel }: { onderdeel: Onderdeel }) {
           )}
 
           {vaststellingen.length > 0 && (
-            <div className="rap-stapel" style={{ gap: 26 }}>
+            <div className="rap-stapel rap-vaststellingen">
               {vaststellingen.map((v) => (
                 <VaststellingRegel key={v.titel} vaststelling={v} />
               ))}

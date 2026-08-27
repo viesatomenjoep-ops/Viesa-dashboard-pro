@@ -21,7 +21,8 @@
     "test:promo-mail": "tsx scripts/test-promo-mail.mjs",
     "test:scan-stappen": "tsx scripts/test-scan-stappen.mjs",
     "test:weergaven": "tsx scripts/test-weergaven.mjs",
-    "test:scan-afdruk": "tsx scripts/test-scan-afdruk.mjs"
+    "test:scan-afdruk": "tsx scripts/test-scan-afdruk.mjs",
+    "check:pdf": "node scripts/check-pdf-vellen.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",

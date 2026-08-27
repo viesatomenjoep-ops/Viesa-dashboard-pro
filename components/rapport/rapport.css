@@ -246,6 +246,12 @@
 
 /* ---------- onderdeel ---------- */
 .rap-onderdeel { padding: 52px 0; border-bottom: 1px solid var(--lijn); scroll-margin-top: 76px; }
+/* Als klasse en niet inline, zodat het afdrukblok ze kan temperen zonder
+   !important — een onderdeel moet op papier op één vel passen. */
+.rap-ond-stapel { gap: 30px; }
+.rap-ond-titel { gap: 12px; flex: 1 1 380px; }
+.rap-metingen { gap: 40px; }
+.rap-vaststellingen { gap: 26px; }
 .rap-onderdeel-kop { display: flex; gap: 26px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; }
 
 /* ---------- herkomst ---------- */
@@ -478,7 +484,7 @@
 @page { size: A4; margin: 0; }
 
 @media print {
-  .rap { background: var(--wit); font-size: 10.2pt; line-height: 1.45; }
+  .rap { background: var(--wit); font-size: 9.9pt; line-height: 1.42; }
 
   /* De marge komt nu van ons, zodat de gekleurde vlakken tot de rand lopen. */
   .rap-breed { max-width: none; padding: 0 14mm; }
@@ -487,14 +493,53 @@
   .rap-tabs, .rap-alleen-scherm { display: none !important; }
   .rap-alleen-papier { display: block !important; }
 
-  /* Doorlopen in plaats van elk onderdeel een eigen vel. Wat níét mag breken is
-     een blok dat als geheel gelezen wordt — een meetbalk met zijn duiding, een
-     bevinding met zijn advies. */
+  /* Elk onderdeel begint op een eigen vel.
+     ------------------------------------------------------------------------
+     Dat is niet alleen netter, het lost het echte probleem op: liet je ze
+     doorlopen, dan eindigde het ene onderdeel halverwege een vel en begon het
+     volgende eronder. Zo'n vel leest als twee halve hoofdstukken en niet als
+     een hoofdstuk.
+
+     Voorwaarde is wel dat een onderdeel ook echt op één vel past — anders ruil
+     je het ene halve vel in voor het andere. Vandaar de strakkere afstanden
+     hieronder: gemeten past het langste onderdeel nu binnen één A4. */
   .rap-onderdeel {
-    break-before: auto;
-    padding: 14pt 0;
-    border-bottom: 1px solid var(--lijn);
+    break-before: page;
+    break-inside: auto;
+    padding: 0 0 8pt;
+    border-bottom: 0;
   }
+  .rap-ond-band { height: 3pt; }
+
+  /* De afstanden die een onderdeel te hoog maakten. */
+  .rap-ond-stapel { gap: 8pt; }
+  .rap-ond-titel { gap: 5pt; }
+  .rap-metingen { gap: 11pt; }
+  .rap-vaststellingen { gap: 9pt; }
+  .rap-onderdeel-kop { gap: 12pt; padding-top: 6pt; }
+  .rap-onderdeel h2 { font-size: 15pt; }
+
+  /* De waardevlag boven een meetbalk heeft op papier minder lucht nodig dan op
+     een scherm: het steeltje mag korter. */
+  /* Een meetbalk staat er twee keer in een onderdeel, dus elk pixeltje kader
+     telt hier dubbel. De vlag, de zonenamen en de as mogen dichter op elkaar:
+     op papier hoeft er geen ruimte te zijn voor een muisaanwijzer. */
+  .rap-balk { padding-top: 19pt; }
+  .rap-balk-steel { height: 9pt; }
+  .rap-balk-namen { height: 13pt; margin-bottom: 3pt; }
+  .rap-balk-naam { font-size: 7.6pt; }
+  .rap-balk-as { height: 11pt; margin-top: 4pt; }
+  .rap-balk-tik { font-size: 6.6pt; }
+  .rap-balk-vlag b { font-size: 8.4pt; }
+  .rap-meting { gap: 5pt; }
+  .rap-meting-kop h3 { font-size: 10.2pt; }
+  .rap-oordeel { padding: 7pt 10pt; }
+
+  .rap-oordeel { gap: 4pt; }
+  .rap-acties { gap: 6pt; }
+  .rap-actie-nr { width: 14pt; height: 14pt; font-size: 6.5pt; }
+  .rap-groepkop { font-size: 10.2pt; gap: 6pt; }
+  .rap-groeptal { font-size: 6pt; padding: 1pt 6pt; }
   .rap-onderdeel-kop, .rap-meting, .rap-bevinding, .rap-vaststelling,
   .rap-oordeel, .rap-actie, .rap-tech-groep, .rap-kaart {
     break-inside: avoid;
@@ -522,7 +567,7 @@
 
   /* De scorematrix is het blad waar in het gesprek naar gewezen wordt: die
      hoort in zijn geheel op één vel te staan, niet half. */
-  .rap-matrixblok { padding: 12pt 0; break-inside: avoid; break-after: page; }
+  .rap-matrixblok { padding: 12pt 0; break-inside: avoid; }
   .mtx-rij { padding: 7pt 10pt; gap: 10pt; break-inside: avoid; }
   .mtx-titel { font-size: 9.4pt; }
   .mtx-cijfer b { font-size: 13pt; }
@@ -530,12 +575,17 @@
 
   /* Een kaart die over een paginarand valt is precies wat een rapport
      slordig maakt — liever een gat onderaan het vel. */
-  .bev { break-inside: avoid; padding: 9pt 11pt 10pt; gap: 5pt; }
+  .bev { break-inside: avoid; padding: 7pt 10pt 8pt; gap: 4pt; }
   .bev-raster { grid-template-columns: 1fr 1fr; gap: 7pt; }
+
+  /* Eén bevinding in een groep hoeft geen halve kolom te zijn: in een smalle
+     kaart breekt dezelfde tekst over twee keer zoveel regels, en die hoogte
+     tikt door tot onderaan het vel. Over de volle breedte is hij korter. */
+  .bev-raster:has(> :only-child) { grid-template-columns: 1fr; }
   .bev-titel { font-size: 9.2pt; }
   .bev-uitleg, .bev-advies { font-size: 8.2pt; line-height: 1.4; }
 
-  .rap-methode { break-inside: avoid; padding-left: 10pt; }
+  .rap-methode { break-inside: avoid; padding-left: 9pt; gap: 3pt; }
   .rap-methode p { font-size: 8.2pt; }
 
   /* De omslag: laptop naast het cijfer, maar smaller — op A4 is de kolom
