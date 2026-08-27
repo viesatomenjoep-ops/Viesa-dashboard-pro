@@ -3,7 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import type { ScanRapport } from "@/lib/scan";
+import { haalSchermafdruk, type ScanRapport } from "@/lib/scan";
 
 /**
  * Laadt een eerder voltooide, bewaarde scan terug (website_scans) — zodat de
@@ -31,8 +31,23 @@ export async function laadOpgeslagenScan(
  * delen levert dezelfde link op — anders zou een eerder verstuurde mail
  * stilletjes doodlopen.
  */
+export type RapportVariant = "volledig" | "kort" | "voorstel";
+
+/** Het pad achter de deelsleutel, per document. */
+const VARIANT_PAD: Record<RapportVariant, string> = {
+  volledig: "",
+  kort: "/kort",
+  voorstel: "/voorstel",
+};
+
 export async function deelScan(
   id: string,
+  /**
+   * Welk van de drie documenten geopend moet worden. De deelsleutel is voor
+   * alle drie dezelfde — ze staan op hetzelfde adres met een achtervoegsel —
+   * dus delen hoeft maar één keer, welke je ook als eerste opent.
+   */
+  variant: RapportVariant = "volledig",
 ): Promise<{ ok: boolean; url?: string; fout?: string }> {
   const supabase = createClient();
 
@@ -55,7 +70,7 @@ export async function deelScan(
   }
 
   revalidatePath("/scan");
-  return { ok: true, url: `/rapport/${sleutel}` };
+  return { ok: true, url: `/rapport/${sleutel}${VARIANT_PAD[variant]}` };
 }
 
 /** Verwijdert een bewaarde scan uit de geschiedenis. */
@@ -63,6 +78,51 @@ export async function verwijderScan(id: string): Promise<{ ok: boolean; fout?: s
   const supabase = createClient();
   const { error } = await supabase.from("website_scans").delete().eq("id", id);
   if (error) return { ok: false, fout: error.message };
+  revalidatePath("/scan");
+  return { ok: true };
+}
+
+/**
+ * Haalt alsnog een schermafdruk op voor een bewaarde scan die er geen heeft.
+ *
+ * Nodig omdat de scanner die afdruk pas later is gaan ophalen: alles wat
+ * daarvóór gescand is, toont een leeg laptopbeeld op de omslag van het rapport.
+ * Opnieuw scannen zou werken maar kost een volledige ronde langs vier modellen
+ * en PageSpeed; dit haalt alleen het beeld en schrijft het bij in het bewaarde
+ * rapport.
+ *
+ * Ook bruikbaar als de afdruk de eerste keer niet lukte — PageSpeed weigert
+ * weleens onder druk, en dan is één klik genoeg om het opnieuw te proberen.
+ */
+export async function haalAfdrukVoorScan(
+  id: string,
+): Promise<{ ok: boolean; fout?: string }> {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from("website_scans")
+    .select("url, rapport")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) return { ok: false, fout: error.message };
+  if (!data) return { ok: false, fout: "Scan niet gevonden." };
+
+  const url = data.url as string;
+  const afdruk = await haalSchermafdruk(url);
+  if (!afdruk) {
+    return {
+      ok: false,
+      fout: "PageSpeed leverde geen schermafdruk. Probeer het over een paar minuten opnieuw.",
+    };
+  }
+
+  const rapport = { ...(data.rapport as Record<string, unknown>), schermafdruk: afdruk };
+  const { error: schrijfFout } = await supabase
+    .from("website_scans")
+    .update({ rapport })
+    .eq("id", id);
+  if (schrijfFout) return { ok: false, fout: schrijfFout.message };
+
   revalidatePath("/scan");
   return { ok: true };
 }

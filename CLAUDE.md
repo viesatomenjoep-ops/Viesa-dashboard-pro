@@ -84,8 +84,11 @@ De middleware (`middleware.ts`) beschermt alle routes.
   (RLS via de deelsleutel, migratie 0048). Drie documenten op hetzelfde adres:
   het volledige rapport, `/kort` (samenvatting van twee vellen) en `/voorstel`
   (wat Viesa aanbiedt). Alle drie zijn hetzelfde document als hun PDF — de knop
-  drukt de pagina af, er is geen tweede sjabloon. Voorbeelden achter de login op
-  `/rapport-voorbeeld`, `/rapport-voorbeeld/kort` en `/rapport-voorbeeld/voorstel`.
+  drukt de pagina af, er is geen tweede sjabloon. Elke opening wordt vastgelegd
+  (migratie 0049, `lib/rapport/weergave.ts`) en verschijnt als belsignaal in de
+  scangeschiedenis. Voorbeelden achter de login op `/rapport-voorbeeld`,
+  `/rapport-voorbeeld/kort`, `/rapport-voorbeeld/voorstel` en
+  `/rapport-voorbeeld/mail` (de voorstelmail, met de omgevingswaarden erboven).
 - `/brand-factory` — **Brand Factory dashboard**: overzicht van merken,
   concepten, renders en batches. Data komt binnen via `POST /api/brand-factory/sync`
   vanuit het lokale Brand Factory-project op de Mac (na elke batch-render).
@@ -103,6 +106,16 @@ auth via `BRAND_FACTORY_SECRET`), `POST /api/audit` (vier LLM's parallel via
   (tabellen: leads, activiteiten, offertes, facturen, projecten, notities,
   design_docs, whiteboards, stickies, drive_links, prospector_runs, integraties;
   + view `omzet_per_maand`). Voorbeelddata: `supabase/seed.sql`.
+- **Migratie 0050** (`website_scans.heeft_afdruk`): een gegenereerde kolom die
+  zegt of er een schermafdruk in het bewaarde rapport zit. Nodig om er een knop
+  "beeld ophalen" naast te zetten zonder de data-URI van tientallen kilobytes
+  vijftig keer mee te sturen.
+- **Migratie 0049** (`rapport_weergaven`): legt vast wanneer een klantrapport
+  geopend wordt — het sterkste belsignaal dat er is. Bewust géén policy voor
+  `anon`: het rapport is openbaar, maar de bezoeker schrijft niet zelf. De
+  server legt het vast met de service-role sleutel, anders kan iedereen met een
+  deellink de teller volschrijven. Opgeslagen wordt het minimum (scan, soort,
+  tijdstip) — geen IP, geen user-agent, geen cookie.
 - **Migratie 0040** (belgesprekken): `activiteiten.uitkomst` (bereikt, voicemail,
   niet_opgenomen, terugbellen, afspraak, geen_interesse), `leads.belpogingen`, en
   `sjablonen.type` uitgebreid met `'belscript'`.
@@ -347,5 +360,26 @@ Env (alle optioneel):
 - `NEXT_PUBLIC_AFSPRAAK_URL` — Cal.com-link; leeg = de knop wordt een mailtje
 - `NEXT_PUBLIC_LOGO_URL` — volledige https-URL van het logo voor de mail.
   Bewust níét `NEXT_PUBLIC_SITE_URL`: die stuurt ook de Google-login-redirect
-  aan, en de marketingsite is niet het dashboard. Leeg = `/viesa-hex.png` uit
-  de public-map van het dashboard.
+  aan, en de marketingsite is niet het dashboard. **Laat hem leeg**, dan komt het
+  logo uit `public/viesa-hex.png` van het dashboard zelf — dat bestand staat er
+  gegarandeerd. Wijs je naar een adres dat geen afbeelding teruggeeft, dan opent
+  elke prospect de mail met een gebroken plaatje in het briefhoofd.
+
+## 15. Beweging
+
+`components/rapport/beweging.css` brengt de bewegingstaal van de landingspagina
+naar de klantdocumenten: dezelfde easing (`cubic-bezier(.2,.8,.2,1)` voor
+binnenkomen), dezelfde 6px-fade, dezelfde getekende ring. Drie regels:
+
+- **Zonder JavaScript.** De reveals lopen op `animation-timeline: view()` achter
+  een `@supports`. Kent de browser dat niet, dan staat alles er gewoon.
+- **Niets beweegt op papier.** Een animatie die halverwege bevriest tijdens het
+  afdrukken geeft een half doorzichtige PDF.
+- **`prefers-reduced-motion` is opt-in**, niet opt-out: alles zit ín een
+  `no-preference`-blok, zodat een vergeten regel nooit tóch beweegt.
+
+**E-mail kan dit niet.** Gmail gooit `<style>`-blokken weg en Outlook rendert met
+de opmaakmotor van Word: geen keyframes, geen transitions, geen SVG. Het enige
+wat daar beweegt is een GIF. De bestaande `public/viesa-logo-animatie.gif` heeft
+een witte achtergrond en past dus niet op het navy briefhoofd — wil je daar
+beweging, dan moet die GIF eerst op navy worden gezet.

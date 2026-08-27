@@ -5,6 +5,7 @@ import { Merkregel } from "./Merkregel";
 import { Contactblok } from "./Contactblok";
 import { AfdrukKnop } from "./AfdrukKnop";
 import "./rapport.css";
+import "./beweging.css";
 import "./voorstel.css";
 
 /**

@@ -109,7 +109,11 @@ test("zonder agenda valt de knop terug op mailto", kaal.html.includes("mailto:co
 test("met agenda wijst de knop daarheen", vol.html.includes("https://cal.com/viesa/audit"), true);
 
 test("het logo heeft een absolute URL", vol.html.includes("https://www.viesa-automations.nl/viesa-hex.png"), true);
-test("het logo heeft een alt-tekst", /<img[^>]+alt="Viesa"/.test(vol.html), true);
+// Een lege alt is hier de juiste alt: het beeldmerk is decoratie, want de naam
+// staat er in tekst naast. Wat níét mag is een ontbrekend alt-attribuut —
+// mailprogramma's tonen dan de bestandsnaam, en schermlezers lezen die voor.
+test("het logo heeft een expliciete, lege alt", /<img[^>]+alt=""/.test(vol.html), true);
+test("er is geen img zonder alt", /<img(?![^>]*\balt=)[^>]*>/.test(vol.html), false);
 
 test(
   "alle zes diensten staan erin",

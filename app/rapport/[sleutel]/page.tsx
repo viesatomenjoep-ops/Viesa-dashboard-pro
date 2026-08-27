@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { legWeergaveVast } from "@/lib/rapport/weergave";
 import { Rapport } from "@/components/rapport/Rapport";
 import { rapportVanScan } from "@/lib/rapport/vanScan";
 import type { ScanRapport } from "@/lib/scan";
@@ -39,11 +40,16 @@ export default async function GedeeldRapport({ params }: { params: { sleutel: st
 
   const { data, error } = await supabase
     .from("website_scans")
-    .select("rapport, created_at, bedrijf")
+    .select("id, rapport, created_at, bedrijf")
     .eq("deelsleutel", params.sleutel)
     .maybeSingle();
 
   if (error || !data?.rapport) notFound();
+
+  // Vastleggen dat dit document geopend is — het sterkste belsignaal dat we
+  // hebben. Niet awaiten: de bezoeker wacht op zijn rapport, niet op onze
+  // administratie (zie lib/rapport/weergave.ts).
+  void legWeergaveVast(data.id as string, "volledig");
 
   const rapport = rapportVanScan(data.rapport as ScanRapport, {
     bedrijf: (data.bedrijf as string | null) ?? null,

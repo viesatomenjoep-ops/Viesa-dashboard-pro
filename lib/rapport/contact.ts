@@ -64,12 +64,23 @@ export function afspraakDoel(host: string): { href: string; agenda: boolean } {
  * inloggen op de verkeerde plek uit. Twee dingen die niets met elkaar te maken
  * hebben, horen niet aan dezelfde variabele te hangen.
  *
- * De terugval is de kopie in `public/` van het dashboard zelf: die staat er
- * gegarandeerd en wordt over https geserveerd, wat een mail nodig heeft.
+ * De standaard is de kopie in `public/viesa-hex.png` van het dashboard zelf, en
+ * dat is met opzet ook de aanbevolen waarde: die staat er gegarandeerd, wordt
+ * over https geserveerd, en wij bepalen wanneer hij verandert. Wijs je naar een
+ * bestand op de marketingsite dat er niet blijkt te staan, dan opent elke
+ * prospect de mail met een gebroken plaatje in het briefhoofd — en dat is
+ * precies één keer gebeurd.
+ *
+ * Vul deze variabele dus alleen als je het logo écht ergens anders host, en
+ * controleer dan eerst of het adres een afbeelding teruggeeft.
  */
 export function logoUrlVoorMail(): string {
+  // Alleen een absolute https-URL overneemt het. Een relatief pad of een
+  // http-adres doet het niet in mail, en dan is de eigen kopie beter dan een
+  // gebroken plaatje.
   const eigen = (process.env.NEXT_PUBLIC_LOGO_URL ?? "").trim();
-  if (eigen) return eigen;
+  if (/^https:\/\/\S+$/.test(eigen)) return eigen;
+
   const basis = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://viesa-dashboard-pro.vercel.app")
     .replace(/\/$/, "");
   return `${basis}/viesa-hex.png`;

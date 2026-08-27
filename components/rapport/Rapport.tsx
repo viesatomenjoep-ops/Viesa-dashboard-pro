@@ -10,6 +10,7 @@ import { AfdrukKnop } from "./AfdrukKnop";
 import { Contactblok } from "./Contactblok";
 import { Merkregel } from "./Merkregel";
 import "./rapport.css";
+import "./beweging.css";
 import "./laptopbeeld.css";
 
 /**

@@ -9,6 +9,7 @@ import { Scorematrix } from "./Scorematrix";
 import { Contactblok } from "./Contactblok";
 import { AfdrukKnop } from "./AfdrukKnop";
 import "./rapport.css";
+import "./beweging.css";
 import "./laptopbeeld.css";
 import "./samenvatting.css";
 

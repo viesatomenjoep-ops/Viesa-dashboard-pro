@@ -11,6 +11,8 @@ import {
   Clock,
   Cpu,
   ExternalLink,
+  Camera,
+  Eye,
   FileSearch,
   Gauge,
   Globe,
@@ -36,7 +38,13 @@ import {
 } from "@/lib/scan-stappen";
 import { ZoekKies } from "@/components/ZoekKies";
 import { pushScanRapportNaarLead } from "@/app/(app)/leads/acties";
-import { deelScan, laadOpgeslagenScan, verwijderScan } from "@/app/(app)/scan/acties";
+import {
+  deelScan,
+  haalAfdrukVoorScan,
+  laadOpgeslagenScan,
+  verwijderScan,
+  type RapportVariant,
+} from "@/app/(app)/scan/acties";
 
 /**
  * Websitescanner: één URL erin, en de controles komen er live één voor één
@@ -156,6 +164,13 @@ export type OpgeslagenScan = {
   niche: string | null;
   totaal_score: number;
   created_at: string;
+  /** Hoe vaak het klantrapport geopend is, en wanneer voor het laatst. */
+  weergaven?: { aantal: number; laatst: string } | null;
+  /**
+   * Of er een schermafdruk van de site bij zit. Scans van vóór die functie
+   * hebben er geen, en tonen dan een leeg laptopbeeld op de rapportomslag.
+   */
+  heeft_afdruk?: boolean;
 };
 
 export function WebsiteScanner({
@@ -187,6 +202,7 @@ export function WebsiteScanner({
   const [verwijderBezig, setVerwijderBezig] = useState<string | null>(null);
   const [deelBezig, setDeelBezig] = useState<string | null>(null);
   const [gekopieerd, setGekopieerd] = useState<string | null>(null);
+  const [afdrukBezig, setAfdrukBezig] = useState<string | null>(null);
   /** De zojuist bewaarde scan — om er direct een klantrapport van te openen. */
   const [laatsteScanId, setLaatsteScanId] = useState<string | null>(null);
   const bronRef = useRef<EventSource | null>(null);
@@ -316,12 +332,12 @@ export function WebsiteScanner({
    * Maakt (of hergebruikt) het deelbare adres en opent het in een nieuw tabblad.
    * De link belandt ook op het klembord, zodat hij zo in een mail kan.
    */
-  async function deelOpgeslagenScan(id: string) {
+  async function deelOpgeslagenScan(id: string, variant: RapportVariant = "volledig") {
     if (deelBezig) return;
-    setDeelBezig(id);
+    setDeelBezig(`${id}:${variant}`);
     setFout(null);
     try {
-      const res = await deelScan(id);
+      const res = await deelScan(id, variant);
       if (!res.ok || !res.url) {
         setFout(res.fout ?? "Kon geen deellink maken.");
         return;
@@ -329,7 +345,7 @@ export function WebsiteScanner({
       const volledig = `${window.location.origin}${res.url}`;
       try {
         await navigator.clipboard.writeText(volledig);
-        setGekopieerd(id);
+        setGekopieerd(`${id}:${variant}`);
         window.setTimeout(() => setGekopieerd(null), 2500);
       } catch {
         // Klembord geweigerd (geen https, of de gebruiker staat het niet toe).
@@ -339,6 +355,24 @@ export function WebsiteScanner({
       router.refresh();
     } finally {
       setDeelBezig(null);
+    }
+  }
+
+  /**
+   * Haalt alsnog een schermafdruk op voor een scan die er geen heeft, zodat de
+   * omslag van het rapport de site van de klant toont in plaats van een leeg
+   * venster. Scheelt een volledige herscan.
+   */
+  async function haalAfdruk(id: string) {
+    if (afdrukBezig) return;
+    setAfdrukBezig(id);
+    setFout(null);
+    try {
+      const res = await haalAfdrukVoorScan(id);
+      if (res.ok) router.refresh();
+      else setFout(res.fout ?? "Ophalen mislukt.");
+    } finally {
+      setAfdrukBezig(null);
     }
   }
 
@@ -502,54 +536,112 @@ export function WebsiteScanner({
             <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-navy/50">
               <Clock size={13} /> Eerdere scans ({opgeslagenScans.length})
             </p>
-            <ul className="flex flex-wrap gap-2">
+            <ul className="flex flex-col gap-1.5">
               {opgeslagenScans.map((s) => (
                 <li
                   key={s.id}
-                  className="flex items-center gap-1.5 rounded-lg border border-navy/15 bg-navy/[0.02] py-1 pl-2.5 pr-1.5 text-xs"
+                  className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-navy/12 bg-white px-3 py-2"
                 >
+                  {/* Het cijfer en waar het over gaat. Klikken zet de scan
+                      terug in de weergave hierboven. */}
                   <button
                     type="button"
                     onClick={() => bekijkOpgeslagenScan(s.id)}
                     disabled={openBezig !== null}
-                    className="inline-flex items-center gap-1.5 text-navy hover:underline disabled:opacity-50"
+                    className="inline-flex min-w-0 flex-1 items-center gap-2 text-left disabled:opacity-50"
+                    title="Terugzetten in de scanweergave"
                   >
                     {openBezig === s.id ? (
-                      <Loader2 size={12} className="animate-spin" />
+                      <Loader2 size={14} className="shrink-0 animate-spin text-navy/40" />
                     ) : (
-                      <span className={`font-semibold ${oordeelVan(s.totaal_score).kleur}`}>
+                      <span
+                        className={`shrink-0 text-sm font-semibold tabular-nums ${oordeelVan(s.totaal_score).kleur}`}
+                      >
                         {s.totaal_score}
                       </span>
                     )}
-                    {s.host} · {s.created_at.slice(0, 10)}
+                    <span className="min-w-0 truncate text-sm text-navy">{s.host}</span>
+                    <span className="shrink-0 text-xs text-navy/35">
+                      {s.created_at.slice(0, 10)}
+                    </span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => deelOpgeslagenScan(s.id)}
-                    disabled={deelBezig !== null}
-                    aria-label="Klantrapport openen en link kopiëren"
-                    title="Klantrapport openen en link kopiëren"
-                    className="text-navy/30 hover:text-navy disabled:opacity-50"
-                  >
-                    {deelBezig === s.id ? (
-                      <Loader2 size={12} className="animate-spin" />
-                    ) : gekopieerd === s.id ? (
-                      <Check size={12} className="text-emerald-600" />
-                    ) : (
-                      <ExternalLink size={12} />
-                    )}
-                  </button>
+
+                  {/* Of de prospect zijn rapport geopend heeft. Dit is het
+                      belsignaal: wie gisteren keek, bel je vandaag. */}
+                  {s.weergaven && s.weergaven.aantal > 0 && (
+                    <span
+                      className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700"
+                      title={`Voor het laatst geopend: ${s.weergaven.laatst}`}
+                    >
+                      <Eye size={11} strokeWidth={1.75} />
+                      {s.weergaven.aantal}× · {s.weergaven.laatst}
+                    </span>
+                  )}
+
+                  {/* De drie documenten. Openen maakt de deellink aan als die
+                      er nog niet is, en zet 'm meteen op het klembord. */}
+                  <span className="flex shrink-0 items-center gap-1">
+                    {(
+                      [
+                        { variant: "kort", label: "Samenvatting" },
+                        { variant: "volledig", label: "Volledig" },
+                        { variant: "voorstel", label: "Voorstel" },
+                      ] as { variant: RapportVariant; label: string }[]
+                    ).map(({ variant, label }) => {
+                      const sleutel = `${s.id}:${variant}`;
+                      return (
+                        <button
+                          key={variant}
+                          type="button"
+                          onClick={() => deelOpgeslagenScan(s.id, variant)}
+                          disabled={deelBezig !== null}
+                          title={`${label} openen en de link kopiëren`}
+                          className="inline-flex items-center gap-1 rounded-md border border-navy/15 px-2 py-1 text-xs font-medium text-navy/70 hover:border-navy/30 hover:text-navy disabled:opacity-50"
+                        >
+                          {deelBezig === sleutel ? (
+                            <Loader2 size={11} className="animate-spin" />
+                          ) : gekopieerd === sleutel ? (
+                            <Check size={11} className="text-emerald-600" />
+                          ) : (
+                            <ExternalLink size={11} strokeWidth={1.75} />
+                          )}
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </span>
+
+                  {/* Alleen tonen als het beeld ontbreekt: anders staat er een
+                      knop die niets toevoegt. */}
+                  {s.heeft_afdruk === false && (
+                    <button
+                      type="button"
+                      onClick={() => haalAfdruk(s.id)}
+                      disabled={afdrukBezig !== null}
+                      title="Schermafdruk van de site alsnog ophalen — duurt ongeveer een halve minuut"
+                      className="inline-flex shrink-0 items-center gap-1 rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-800 hover:border-amber-400 disabled:opacity-50"
+                    >
+                      {afdrukBezig === s.id ? (
+                        <Loader2 size={11} className="animate-spin" />
+                      ) : (
+                        <Camera size={11} strokeWidth={1.75} />
+                      )}
+                      Beeld ophalen
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     onClick={() => verwijderOpgeslagenScan(s.id)}
                     disabled={verwijderBezig !== null}
                     aria-label="Scan verwijderen"
-                    className="text-navy/30 hover:text-red-600 disabled:opacity-50"
+                    title="Scan verwijderen"
+                    className="shrink-0 text-navy/25 hover:text-red-600 disabled:opacity-50"
                   >
                     {verwijderBezig === s.id ? (
-                      <Loader2 size={12} className="animate-spin" />
+                      <Loader2 size={13} className="animate-spin" />
                     ) : (
-                      <Trash2 size={12} />
+                      <Trash2 size={13} strokeWidth={1.75} />
                     )}
                   </button>
                 </li>

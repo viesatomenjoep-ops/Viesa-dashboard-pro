@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { STAND_LABEL, standVanScore } from "@/lib/rapport/schaal";
 
 /**
@@ -82,6 +83,16 @@ export function Ringgrafiek({
               fill="none"
               stroke={kleur}
               strokeWidth={dikte}
+              className="rap-ring-boog"
+              /* De begin- en eindstand als custom property, zodat de CSS de
+                 boog kan laten tekenen zonder per cijfer een eigen keyframe.
+                 Zie components/rapport/beweging.css. */
+              style={
+                {
+                  "--rap-ring-leeg": omtrek,
+                  "--rap-ring-doel": omtrek * (1 - deel),
+                } as CSSProperties
+              }
               strokeLinecap="round"
               strokeDasharray={omtrek}
               strokeDashoffset={omtrek * (1 - deel)}

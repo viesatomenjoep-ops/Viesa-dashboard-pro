@@ -1,6 +1,7 @@
 import { PaginaKop } from "@/components/ui/PaginaKop";
 import { WebsiteScanner } from "@/components/WebsiteScanner";
 import { createClient } from "@/lib/supabase/server";
+import { telWeergaven, hoeLangGeleden } from "@/lib/rapport/weergave-telling";
 
 export const dynamic = "force-dynamic";
 
@@ -26,11 +27,60 @@ export default async function ScanPagina({
     .neq("website", "")
     .order("bedrijf", { ascending: true });
 
-  const { data: scans } = await supabase
-    .from("website_scans")
-    .select("id, url, host, niche, totaal_score, created_at")
-    .order("created_at", { ascending: false })
-    .limit(50);
+  // heeft_afdruk komt uit migratie 0050. Bestaat de kolom nog niet, dan valt de
+  // query terug op de oude selectie in plaats van de pagina te laten vallen.
+  const kolommen = "id, url, host, niche, totaal_score, created_at";
+  let scans: {
+    id: string;
+    url: string;
+    host: string;
+    niche: string | null;
+    totaal_score: number;
+    created_at: string;
+    heeft_afdruk?: boolean;
+  }[] = [];
+  {
+    const met = await supabase
+      .from("website_scans")
+      .select(`${kolommen}, heeft_afdruk`)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (met.error) {
+      const zonder = await supabase
+        .from("website_scans")
+        .select(kolommen)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      scans = zonder.data ?? [];
+    } else {
+      scans = met.data ?? [];
+    }
+  }
+
+  // Hoe vaak de klantrapporten geopend zijn. Best effort: de tabel bestaat pas
+  // na migratie 0049, en de scanpagina hoort daar niet op te wachten.
+  let weergaven = new Map<string, { aantal: number; laatst: string }>();
+  try {
+    const { data } = await supabase
+      .from("rapport_weergaven")
+      .select("scan_id, bekeken_op")
+      .order("bekeken_op", { ascending: false })
+      .limit(2000);
+    const geteld = telWeergaven(data ?? []);
+    weergaven = new Map(
+      Array.from(geteld.values()).map((w) => [
+        w.scanId,
+        { aantal: w.aantal, laatst: hoeLangGeleden(w.laatst) },
+      ]),
+    );
+  } catch {
+    /* rapport_weergaven nog niet aanwezig */
+  }
+
+  const scansMetWeergaven = scans.map((s) => ({
+    ...s,
+    weergaven: weergaven.get(s.id) ?? null,
+  }));
 
   return (
     <>
@@ -41,7 +91,7 @@ export default async function ScanPagina({
       <WebsiteScanner
         beginUrl={searchParams.url ?? ""}
         leads={leads ?? []}
-        opgeslagenScans={scans ?? []}
+        opgeslagenScans={scansMetWeergaven}
       />
     </>
   );

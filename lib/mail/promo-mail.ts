@@ -288,8 +288,12 @@ export function promotieMail(invoer: PromoMailInvoer): PromoMail {
     <td class="rand" style="background:${K.navy};padding:26px 32px 30px 32px;font-family:${LETTER};">
       <table role="presentation" cellpadding="0" cellspacing="0" border="0">
         <tr>
+          <!-- Het beeldmerk is decoratie: de naam staat er in tekst naast. Vandaar
+               alt="" — de meeste mailprogramma's blokkeren afbeeldingen bij de
+               eerste opening, en dan is een leeg vakje netter dan het woord
+               "Viesa" in een pictogramkadertje naast de wordmark die er al staat. -->
           <td width="30" valign="middle">
-            <img src="${veilig(logoUrl)}" width="30" height="30" alt="Viesa" style="display:block;width:30px;height:30px;border:0;">
+            <img src="${veilig(logoUrl)}" width="30" height="30" alt="" style="display:block;width:30px;height:30px;border:0;">
           </td>
           <td valign="middle" style="padding-left:10px;font-size:15px;font-weight:800;letter-spacing:1.2px;color:${K.zand};">
             VIESA <span style="font-weight:400;color:${K.lichtblauw};">AUTOMATIONS</span>
