@@ -10,8 +10,6 @@ export const BEDRIJF = {
   telefoonRuw: "+3183052875",
   contactpersonen: ["Tom van Biene", "Joep Hellemons"],
   logo: "/viesa-logo.png",
-  /** Geanimeerde variant: schuift bij het openen van de mail open. */
-  logoAnimatie: "/viesa-logo-animatie.gif",
   website: "www.viesa-automations.nl",
   websiteUrl: "https://www.viesa-automations.nl",
 } as const;
@@ -28,14 +26,13 @@ export function logoAbsoluut(): string {
   return `${siteBasis()}${BEDRIJF.logo}`;
 }
 
-/**
- * Absolute URL naar het geanimeerde logo. Gebruik dit alléén bovenaan de mail:
- * een GIF is de enige animatie die Gmail toont, en één bewegend element in een
- * zakelijke mail is genoeg.
+/*
+ * Er was hier ook een `logoAnimatieAbsoluut()` voor viesa-logo-animatie.gif.
+ * Weggehaald, niet vergeten: die GIF heeft een witte doos om de zeshoek. Op
+ * een witte mailachtergrond valt dat niet op, maar in een donkere weergave zit
+ * er een wit blokje om het logo. Wil je hier ooit weer beweging, dan moet die
+ * GIF eerst doorzichtig (of op navy) gezet worden.
  */
-export function logoAnimatieAbsoluut(): string {
-  return `${siteBasis()}${BEDRIJF.logoAnimatie}`;
-}
 
 export function adresRegel(): string {
   return `${BEDRIJF.straat}, ${BEDRIJF.postcode} ${BEDRIJF.plaats}`;
