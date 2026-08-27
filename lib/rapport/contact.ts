@@ -58,28 +58,20 @@ export function afspraakDoel(host: string): { href: string; agenda: boolean } {
 /**
  * Het logo dat in de promotiemail komt te staan.
  *
- * Waarom dit niet uit `NEXT_PUBLIC_SITE_URL` wordt afgeleid: die variabele
- * stuurt óók de Google-login-redirect aan (`app/login/actions.ts`). Zou je die
- * op de marketingsite zetten om het logo daarvandaan te halen, dan komt
- * inloggen op de verkeerde plek uit. Twee dingen die niets met elkaar te maken
- * hebben, horen niet aan dezelfde variabele te hangen.
+ * Geen omgevingsvariabele meer. Die was er om het logo desnoods elders te
+ * kunnen hosten, maar hij heeft twee keer een gebroken plaatje in het
+ * briefhoofd van een prospect opgeleverd — één keer omdat het pad op de
+ * marketingsite niet bleek te bestaan. Het bestand staat in onze eigen
+ * public-map en wordt door onze eigen deploy geserveerd; dat is niets om
+ * instelbaar te maken.
  *
- * De standaard is de kopie in `public/viesa-hex.png` van het dashboard zelf, en
- * dat is met opzet ook de aanbevolen waarde: die staat er gegarandeerd, wordt
- * over https geserveerd, en wij bepalen wanneer hij verandert. Wijs je naar een
- * bestand op de marketingsite dat er niet blijkt te staan, dan opent elke
- * prospect de mail met een gebroken plaatje in het briefhoofd — en dat is
- * precies één keer gebeurd.
- *
- * Vul deze variabele dus alleen als je het logo écht ergens anders host, en
- * controleer dan eerst of het adres een afbeelding teruggeeft.
+ * De basis komt van Vercel zelf (`VERCEL_PROJECT_PRODUCTION_URL`), zodat er
+ * niets te configureren valt en het adres per definitie klopt. Draait het
+ * ergens anders, dan valt hij terug op NEXT_PUBLIC_SITE_URL.
  */
 export function logoUrlVoorMail(): string {
-  // Alleen een absolute https-URL overneemt het. Een relatief pad of een
-  // http-adres doet het niet in mail, en dan is de eigen kopie beter dan een
-  // gebroken plaatje.
-  const eigen = (process.env.NEXT_PUBLIC_LOGO_URL ?? "").trim();
-  if (/^https:\/\/\S+$/.test(eigen)) return eigen;
+  const vercel = (process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "").trim();
+  if (vercel) return `https://${vercel.replace(/^https?:\/\//, "").replace(/\/$/, "")}/viesa-hex.png`;
 
   const basis = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://viesa-dashboard-pro.vercel.app")
     .replace(/\/$/, "");
